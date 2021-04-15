@@ -1,0 +1,255 @@
+<template>
+  <div class="position_page">
+    <div class="header">
+      <!-- <van-image width="100%" height="400rpx" src="/static/images/home_bg_img3.png" /> -->
+      <div v-if="applyType === 1 && detailApplyDo.departmentOrArea === 2"
+           class="mode-wrap">
+        <div class="flex">
+          <div class="item"
+               :class="{'active':mode===1}"
+               @click="onClickMode(1)">围栏</div>
+          <div class="line"></div>
+          <div class="item"
+               :class="{'active':mode===2}"
+               @click="onClickMode(2)">全部</div>
+        </div>
+      </div>
+      <div class="search">
+        <div class="icon">
+          <van-icon name="search" />
+        </div>
+        <input type="text" value="{{searchData}}" placeholder="请输入工程编号" placeholder-class="placeholder" bindinput="onChage" />
+      </div>
+      <!-- <van-search background="#fff" @change="onChage" placeholder="查找地点" /> -->
+    </div>
+    <div class="list_wrap"
+         :class="{'other_list_wrap': applyType === 1 && detailApplyDo.departmentOrArea === 2}">
+      <div class="list_item"
+           @click="onSelect(item)"
+           v-for="item in searchData ? searchList : list"
+           :key="item.id">
+        {{ item.addressName }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import addTaskMixin from '@/mixins/addTaskMixin.js';
+import {
+  mapState,
+  mapMutations
+} from '@wepy/x';
+import store from '@/store';
+import eventHub from '@/common/eventHub';
+wepy.page({
+  store,
+  mixins: [addTaskMixin],
+  data: {
+    mode: 1,
+    type: 1,
+    applyType: 0,
+    searchData: '',
+    list: [],
+    searchList: [],
+    keyMaps: {},
+  },
+  onLoad({
+    code,
+    applyType,
+    type
+  }) {
+    this.type = Number(type)
+    this.applyType = Number(applyType)
+    this.initPage(code);
+    this.getAppPlatAddressMassage();
+  },
+  computed: {
+    ...mapState(['detailApplyDo']),
+    userId() {
+      return wepy.$auth.getUserId();
+    },
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    initPage(data) {
+      let title = '';
+      switch (data) {
+        case 'startPositionId':
+          title = '选择起始点';
+          this.keyMaps = {
+            addressName: 'startPositionName',
+            id: 'startPositionId',
+            positionGps: 'startPositionGps',
+          };
+          break;
+        case 'endPositionId':
+          title = '选择目的地';
+          this.keyMaps = {
+            addressName: 'endPositionName',
+            id: 'endPositionId',
+            positionGps: 'endPositionGps',
+          };
+          break;
+        case 'driverEndAddressMassage':
+          title = '选择结束地点';
+          this.keyMaps = {
+            addressName: 'addressName',
+            id: 'addressId',
+          };
+          break;
+        case 'platformTaskQuery':
+          title = '选择所在地';
+          this.keyMaps = {
+            addressName: 'addressName',
+            id: 'addressId',
+          };
+          break;
+        case 'platformGoodsQuery':
+          title = '选择所在地';
+          this.keyMaps = {
+            addressName: 'addressName',
+            id: 'addressId',
+          };
+          break;
+        case 'setDriverTaskRecord':
+          title = '选择结束地点';
+          this.keyMaps = {
+            addressName: 'addressName',
+            id: 'destinationGpsId',
+          };
+          break;
+        default:
+          break;
+      }
+      wx.setNavigationBarTitle({
+        title,
+      });
+    },
+    onClickMode(mode) {
+      this.mode = mode
+      this.getAppPlatAddressMassage()
+    },
+    onChage(e) {
+      this.searchData = e.$wx.detail.value;
+      let reg = new RegExp(this.searchData);
+      this.searchList = this.list.filter((item) => reg.test(item.addressName));
+    },
+    getAppPlatAddressMassage() {
+      let areaId = undefined
+      if (this.applyType === 1 && this.detailApplyDo.departmentOrArea === 2) {
+        areaId = this.mode === 1 ? this.detailApplyDo.craneAddress || undefined : undefined
+      }
+      wepy
+        .$api('app/address/getAppPlatAddressMassage', {
+          userId: this.userId,
+          applyType: this.applyType,
+          areaId,
+          type: this.type
+        })
+        .then((res) => {
+          this.list = res;
+        });
+    },
+    onSelect(item) {
+      for (let [k, v] of Object.entries(this.keyMaps)) {
+        this.detailApplyDo[v] = item[k];
+      }
+      this.setDetailApplyDo(this.detailApplyDo);
+      wx.navigateBack();
+    },
+  },
+});
+</script>
+
+<config>
+{
+    usingComponents: {
+          "van-image": "module:@vant/weapp/dist/image/index",
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.mode-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding: 24rpx 24rpx 0;
+}
+.flex {
+  display: flex;
+  width: 200rpx;
+  height: 60rpx;
+  align-items: center;
+  text-align: right;
+  background: #edf1f4;
+  border-radius: 8rpx;
+  .line {
+    height: 28rpx;
+    border-left: 2rpx solid black;
+  }
+  .item {
+    flex: 1;
+    font-size: 28rpx;
+    text-align: center;
+    padding: 10rpx;
+    color: #000;
+  }
+  .active {
+    background: #005bac !important;
+    border-radius: 8rpx;
+    color: #fff !important;
+  }
+}
+.position_page {
+  position: relative;
+  height: 100vh;
+  background: #fff;
+  overflow: hidden;
+}
+.header {
+  width: 100%;
+  // height: 180rpx;
+  .search{
+    background:#fff;
+    display:flex;
+    align-items: center;
+    position: relative;
+    padding: 20rpx;
+    .icon{
+      position:absolute;
+      font-size: 32rpx;
+      left:35rpx;
+      top:35rpx;
+    }
+    input{
+      background: #f7f8fa;
+      width: 100%;
+      padding: 12rpx 0 12rpx 60rpx;
+    }
+    .placeholder{
+      font-size: 28rpx;
+    }
+  }
+}
+.other_list_wrap {
+  top: 200rpx !important;
+}
+.list_wrap {
+  position: absolute;
+  width: 100%;
+  top: 110rpx;
+  bottom: 0;
+  padding: 0 24rpx;
+  border-top: 2rpx solid #ececec;
+  overflow-y: scroll;
+}
+.list_item {
+  padding: 24rpx 16rpx;
+  font-size: 28rpx;
+  color: #2b2b2b;
+  border-bottom: 2rpx solid #ececec;
+}
+</style>

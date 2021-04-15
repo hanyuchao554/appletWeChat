@@ -1,0 +1,309 @@
+<template>
+  <div class="taskList_page">
+    <div class="content">
+      <div class="car_wrap" v-for="item in list">
+        <div
+          :class="{ not_task: item.craneApplyDetailVoList.length }"
+          class="car_info item"
+        >
+          <div>
+            <div class="tag_drop">
+              <div class="drop"></div>
+              {{ item.carNumber }}
+            </div>
+            <div class="font-color-gray">{{ item.carTypeName }}</div>
+          </div>
+          <div>
+            <div class="car_info_s">
+              <van-icon color="#8E9298" name="clock-o" size="26rpx" />
+              <div>用时:{{ item.totalTime }}小时</div>
+            </div>
+            <div class="car_info_s">
+              <van-icon color="#8E9298" name="notes-o" size="26rpx" />
+              <div>任务:{{ item.taskNumber }}个</div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="item"
+          :class="{ not_task_item: item.craneApplyDetailVoList.length }"
+          v-for="subItem in item.craneApplyDetailVoList"
+        >
+          <div @click="goToEditForkliftTasks(subItem)">
+            <div class="item_header">
+              <div
+                v-if="subItem.isLinkage === 1"
+                class="tag"
+                style="background: #efa600"
+              >
+                联
+              </div>
+              <div class="item_header_t">
+                <div>申请驳运时间: {{ subItem.createDate }}</div>
+              </div>
+            </div>
+            <div class="font-26 item_header_tc">
+              {{ subItem.jobContentName }} {{ subItem.proCode }}
+              {{ subItem.goodsTypeName }}-{{ subItem.goodsCode }}
+            </div>
+            <div class="item_header_c">
+              {{ subItem.tranDeptName }}/{{ subItem.goodsWeight }}吨/{{
+                subItem.startTime
+              }}至{{ subItem.endTime }}
+            </div>
+          </div>
+          <div class="item_content">
+            <div
+              @click="goToEditForkliftTasks(subItem)"
+              class="item_content_left"
+            >
+              <div class="common_step">
+                <div class="common_step_left">
+                  <div class="common_step_left_t"></div>
+                  <div class="common_step_left_c"></div>
+                  <div class="common_step_left_b"></div>
+                </div>
+                <div class="common_step_center">
+                  <div class="ellipsis">
+                    起始地：{{ subItem.startPositionName }}
+                  </div>
+                  <div class="ellipsis">
+                    目的地：{{ subItem.endPositionName }}
+                  </div>
+                </div>
+              </div>
+              <!-- <div style="margin-top: 20rpx" class="font-24">
+                区域: {{ subItem.craneAddressName }}
+              </div>
+              <div class="font-24">{{ subItem.carTypeName }}: {{ subItem.carNumber || '' }}</div> -->
+            </div>
+            <div @click="hasEditAction(subItem)" class="item_content_right">
+              <text class="font-color-blue">编制 ></text>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <van-popup
+      v-if="show"
+      round
+      position="bottom"
+      :show="show"
+      @close="show = false"
+    >
+      <action
+        @onSelect="onSelect"
+        @onSuccess="onSuccess"
+        @close="show = false"
+      ></action>
+    </van-popup>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import store from '@/store';
+import { mapMutations } from '@wepy/x';
+import { applyStateEnum } from '@/enums';
+import CommonMixin from '@/mixins/commonMixin.js';
+
+wepy.page({
+  store,
+  mixins: [CommonMixin],
+  data: {
+    list: [],
+    show: false,
+  },
+  onShow() {
+    let isSuccessCallBack = wx.getStorageSync('isSuccessCallBack');
+    if (isSuccessCallBack) {
+      this.show = false;
+      wx.removeStorage({
+        key: 'isSuccessCallBack',
+      });
+    }
+    this.getTaskList();
+  },
+  onUnload() {
+    this.setDetailApplyDo();
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    hasEditAction(item) {
+      item._startTime = item.startTime;
+      item._endTime = item.endTime;
+      item.startTime = this.accDiv(new Date(item.startTime).getTime(), 1000);
+      item.endTime = this.accDiv(new Date(item.endTime).getTime(), 1000);
+      this.setDetailApplyDo(item);
+      this.show = true;
+    },
+    getTaskList() {
+      wepy.$loading();
+      wepy
+        .$api('app/craneApply/craneEditTaskList', {
+          applyType: 3,
+        })
+        .then((res) => {
+          this.list = [];
+          if (res && res.length) {
+            this.list = res.map((item) => {
+              item.totalTime = item.time ? (item.time / 60).toFixed(1) : '0.0';
+              item.craneApplyDetailVoList = item.craneApplyDetailVoList || [];
+              return item;
+            });
+            wx.hideToast();
+          } else {
+            wepy.$showToast('未查询到数据');
+          }
+        });
+    },
+    goToEditForkliftTasks(item) {
+      this.setDetailApplyDo(item);
+      wx.navigateTo({
+        url: `/pages/towerCrane/editForkliftTasks?applyId=${item.prsId}&carId=${item.carId}`,
+      });
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'塔吊-任务编制列表',
+    usingComponents: {
+      "van-popup": "module:@vant/weapp/dist/popup/index",
+      "action": "~@/pages/towerCrane/action",
+      "craneApplyCar": "~@/components/pop-up/craneApplyCar",
+      "craneApplyAddress": "~@/components/pop-up/craneApplyAddress",
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.taskList_page {
+  background: #f3f4f6;
+}
+// .taskList_page .content {
+//     padding-top: 24rpx;
+// }
+.item {
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 28rpx 26rpx;
+  box-sizing: border-box;
+}
+.item_header {
+  display: flex;
+  align-items: center;
+  font-size: 28rpx;
+  // line-height: 40rpx;
+}
+.item_header .tag {
+  color: #fff;
+  font-size: 22rpx;
+  padding: 5rpx 10rpx;
+  line-height: 32rpx;
+  border-radius: 5rpx;
+  font-weight: 500;
+  margin-right: 10rpx;
+}
+.item_header_c {
+  font-size: 22rpx;
+  color: #8e9298;
+  line-height: 32rpx;
+}
+.item_content {
+  display: flex;
+  justify-content: space-between;
+}
+.item_content_left {
+  width: 65%;
+  flex: auto;
+}
+.item_content_right {
+  display: flex;
+  align-items: flex-end;
+  text-align: right;
+  align-self: stretch;
+  font-size: 24rpx;
+  padding-bottom: 7rpx;
+  word-break: normal;
+  margin-left: 30rpx;
+}
+.item_content_right text {
+  flex: auto;
+  color: #bea365;
+}
+
+.taskList_page {
+  position: relative;
+  padding-bottom: 20rpx;
+}
+.header {
+  position: fixed;
+  width: 100%;
+  z-index: 99;
+}
+.content {
+  margin-top: 20rpx;
+}
+// .dropdown_item_cell {
+//     display: flex;
+//     align-items: center;
+//     font-size: 32rpx;
+//     line-height: 44rpx;
+//     border-bottom: 2rpx solid #ececec;
+//     padding: 20rpx;
+// }
+.item_header_t {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+.item_header_tc {
+  margin: 10rpx 0;
+}
+.item {
+  box-shadow: none !important;
+}
+.not_task {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+.not_task_item {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+.car_wrap {
+  &:not(:first-child) {
+    margin-top: 20rpx;
+  }
+  .not_task_item {
+    border-bottom: 2rpx solid #ececec;
+    margin-bottom: 0;
+  }
+}
+.car_info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 22rpx;
+  .car_info_s {
+    margin-left: 40rpx;
+  }
+  & > view,
+  .car_info_s {
+    display: flex;
+    align-items: center;
+    font-size: 22rpx;
+    & > view {
+      margin-left: 8rpx;
+    }
+  }
+}
+</style>

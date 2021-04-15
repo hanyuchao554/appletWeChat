@@ -1,0 +1,220 @@
+<template>
+  <div class="platformGoodsQuery_page">
+    <div class="content">
+      <div class="title required">当前所在地</div>
+      <div class="item" @click="goToPage('/pages/position/position?code=platformGoodsQuery&applyType=0&type=4')">
+        <div class="text">{{ upDataStr.addressName || '请选择所在地' }}</div>
+        <van-icon color="#8E9298" name="arrow-down" />
+      </div>
+      <div class="title required">驳运对象</div>
+      <div class="item" @click="goToPage('/pages/lighterage/lighterage?type=query')">
+        <div class="text">{{ goodsStr || '请选择驳运对象' }}</div>
+        <van-icon color="#8E9298" name="arrow-down" />
+      </div>
+    </div>
+    <div class="footer_btn_o">
+      <van-button custom-class="btn" type="default" @click="resat">重置搜索</van-button>
+      <van-button custom-class="btn" color="#005BAC" type="default" @click="submit">确定</van-button>
+    </div>
+    <van-popup v-if="hasCancelReason" round position="bottom" :show="hasCancelReason" @close="closePopUp">
+      <cancelReason @onSelect="onSelect"></cancelReason>
+    </van-popup>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import store from '@/store';
+  import {
+    mapState,
+    mapMutations
+  } from '@wepy/x';
+  import CommonMixin from '@/mixins/commonMixin.js';
+  import formatTimeTwo from '@/utils/moment.js';
+  wepy.page({
+    store,
+    mixins: [CommonMixin],
+    data: {
+      hasCancelReason: false,
+      isDisabled: false,
+      goodsStr: '请选择',
+      upData: {
+        goodsType: '',
+        addressId: '',
+        goodsCode: '',
+        proCode: ''
+      },
+      upDataStr: {
+        addressName: ''
+      }
+    },
+    onShow() {
+      this.getUpdata();
+    },
+    onUnload() {
+      this.setDetailApplyDoInit();
+    },
+    computed: {
+      ...mapState(['detailApplyDo'])
+    },
+    methods: {
+      ...mapMutations(['setDetailApplyDoInit']),
+      resat() {
+        this.upDataStr = {
+          addressName: ''
+        };
+        this.upData = {
+          goodsType: '',
+          addressId: '',
+          goodsCode: '',
+          proCode: ''
+        };
+        this.goodsStr = '请选择';
+        this.setDetailApplyDoInit();
+      },
+      getUpdata() {
+        this.goodsStr = '请选择'
+        if (this.detailApplyDo && this.detailApplyDo.addressId) {
+          this.upData.addressId = this.detailApplyDo.addressId;
+          this.upDataStr.addressName = this.detailApplyDo.addressName;
+        }
+        if (this.detailApplyDo && this.detailApplyDo.proCode) {
+          this.upData.proCode = this.detailApplyDo.proCode
+          this.goodsStr = this.detailApplyDo.proCode
+        }
+        if (this.detailApplyDo && this.detailApplyDo.goodsType) {
+          this.upData.goodsType = this.detailApplyDo.goodsType
+          this.goodsStr += `-${this.detailApplyDo.goodsType}`
+        }
+        if (this.detailApplyDo && this.detailApplyDo.goodsCode) {
+          this.upData.goodsCode = this.detailApplyDo.goodsCode
+          this.goodsStr += `-${this.detailApplyDo.goodsCode}`
+        }
+      },
+      goToPage(url) {
+        wx.navigateTo({
+          url
+        });
+      },
+      validData() {
+        if (!this.upData.addressId && !this.detailApplyDo.proCode) {
+          wepy.$showToast('请选择所在地或选择驳运对象');
+          return false;
+        }
+        return true;
+      },
+      submit() {
+        if (this.validData()) this.sendApi();
+      },
+      fliterData() {
+        let data = {};
+        console.log(this.detailApplyDo)
+        let upData = JSON.parse(JSON.stringify(this.upData));
+        for (let key in upData) {
+          if (upData[key]) data[key] = upData[key];
+        }
+        return data;
+      },
+      getTime(time) {
+        return time ? formatTimeTwo(time * 1000, 'Y-M-D h:m') : '';
+      },
+      getTimeT(time) {
+        return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+      },
+      sendApi() {
+        if (this.isDisabled) return;
+        wepy.$loading();
+        this.isDisabled = true;
+        let req = this.fliterData();
+        wepy.$api('app/query/platformGoodsQuery', req)
+          .then((res) => {
+            let leng = getCurrentPages().length;
+            let prePage = getCurrentPages()[leng - 2];
+            prePage.$wepy.list = res.map((item) => {
+              if (item.goodsDo) {
+                item.goodsDo.lastTranTime = this.getTime(item.goodsDo.lastTranTime);
+              }
+              if (item.goodsQueryDos && item.goodsQueryDos.length) {
+                item.goodsQueryDos = item.goodsQueryDos.map((subItem) => {
+                  subItem.startTimeStamp = this.getTime(subItem.startTimeStamp);
+                  subItem.endTimeStamp = this.getTime(subItem.endTimeStamp);
+                  subItem.carFullWeight = this.getWeight(subItem.carFullWeight);
+                  subItem.totalTime = subItem.totalTime ? (subItem.totalTime / 60).toFixed(1) : '0.0';
+                  return subItem;
+                });
+              } else {
+                item.goodsQueryDos = [];
+              }
+              return item;
+            });
+            wx.hideToast();
+            wx.navigateBack({
+              success: () => {
+                if (!res.length) {
+                  wepy.$showToast('未查询到物品');
+                }
+              }
+            });
+          })
+          .finally(() => (this.isDisabled = false));
+      }
+    }
+  });
+</script>
+
+<config>
+{
+    navigationBarTitleText:'对象查询',
+    usingComponents:{
+        "van-button": "module:@vant/weapp/dist/button/index",
+        "van-icon": "module:@vant/weapp/dist/icon/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+  .platformGoodsQuery_page {
+    height: 100%;
+    background: #fff;
+    font-size: 24rpx;
+  }
+  .content {
+    padding: 24rpx;
+  }
+  .title {
+    position: relative;
+    font-size: 28rpx;
+    font-weight: bold;
+    color: #2b2b2b;
+    line-height: 40rpx;
+    margin-bottom: 32rpx;
+  }
+  .title.required {
+    padding-left: 20rpx;
+  }
+  .required:after {
+    content: '*';
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 24rpx;
+    color: #e32c10;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 40rpx;
+    background: #edf1f4;
+    border-radius: 8rpx;
+    border: 2rpx solid #e4e5e5;
+    padding: 20rpx 40rpx;
+    box-sizing: border-box;
+    .text {
+      padding-right: 20rpx;
+      font-weight: 400;
+      color: #2b2b2b;
+    }
+  }
+</style>

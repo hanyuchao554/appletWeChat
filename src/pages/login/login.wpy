@@ -1,0 +1,187 @@
+<template>
+  <div class="login_page">
+    <van-image height="370rpx" width="100%" src="/static/images/home_bg_img2.png"></van-image>
+    <div class="content">
+      <div class="title">欢迎使用</div>
+      <div class="field_item">
+        <div style="flex: none">
+          <van-icon style="vertical-align: middle" name="/static/images/icon_user.png" size="44rpx"></van-icon>
+          <text class="">|</text>
+        </div>
+        <input type="text" @tap="onFocus('userNameFocus')" :focus="userNameFocus" v-model="updata.username" placeholder="请输入用户名" />
+      </div>
+      <div class="field_item">
+        <div style="flex: none">
+          <van-icon style="vertical-align: middle" name="/static/images/icon_lock.png" size="44rpx"></van-icon>
+          <text class="">|</text>
+        </div>
+        <input type="password" :focus="pawFocus" @tap="onFocus('pawFocus')" v-model="updata.password" placeholder="请输入密码" />
+      </div>
+      <div class="text-c">
+        <van-button custom-class="submitBtn" @click="submit" color="#005BAC" type="info" :disabled="btnDisabled">登录</van-button>
+      </div>
+      <div class="font-28 text-c">
+        <text>忘记密码</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import {
+    BaseDataKey
+  } from '@/constant';
+  import wepy from '@wepy/core';
+  import CommonMixin from '@/mixins/commonMixin.js';
+  wepy.page({
+    mixins: [CommonMixin],
+    data: {
+      updata: {
+        username: '',
+        password: ''
+      },
+      rules: {
+        username: {
+          message: '请输入用户名'
+        },
+        password: {
+          message: '请输入密码'
+        }
+      },
+      code: '',
+      userNameFocus: false,
+      pawFocus: false,
+      btnDisabled: false
+    },
+    onLoad() {
+      wx.hideHomeButton();
+      let data = wx.getStorageSync('login_key')
+      data && Object.assign(this.updata,data)
+    },
+    methods: {
+      async sendAppLaunch() {
+        this.btnDisabled = true;
+        try {
+          let system = wx.getSystemInfoSync();
+          let {
+            miniProgram,
+            miniProgram: {
+              version
+            }
+          } = wx.getAccountInfoSync();
+          let reg = /ios/gi;
+          let isIos = reg.test(system.system);
+          let res = await wepy.$api('appLaunch', {
+            clientOsVersion: system.version,
+            appVersion: version || '1.0',
+            clientOs: isIos ? 'ios' : 'Android',
+            clientScreenSize: `${system.screenWidth}*${system.screenWidth}`,
+            submitTime: this.accDiv(new Date().getTime(), 1000),
+            clientBrand: system.brand,
+            clientModel: system.model,
+            interfaceVersion: system.version,
+            id: '0',
+            clientImel: this.code
+          });
+          let {
+            publicKey,
+            uuid
+          } = res;
+          wepy.$encryptor.setPublicKey(publicKey); // 设置公钥
+          let str = JSON.stringify(this.updata);
+          let content = wepy.$encryptor.encrypt(str);
+          let baseData = await this.sendAppLogin({
+            content,
+            uuid
+          });
+          wx.setStorageSync(BaseDataKey, baseData);
+          wx.setStorageSync('login_key', this.updata);
+          wx.redirectTo({
+            url: '/pages/home'
+          });
+          this.btnDisabled = false;
+        } catch (error) {
+          this.btnDisabled = false;
+          wx.showToast({
+            title: error,
+            icon: 'none'
+          });
+        }
+      },
+      onFocus(key) {
+        // if(key === 'userNameFocus') {
+        //   this.pawFocus = false
+        // } else if(key === 'pawFocus'){
+        //   this.userNameFocus = false
+        // }
+        // this[key] = true
+      },
+      sendAppLogin(data) {
+        return wepy.$api('appLogin', data);
+      },
+      submit() {
+        if (this.btnDisabled) return;
+        let isValid = wepy.$valid.handleValid(this.rules, this.updata);
+        if (isValid) this.sendAppLaunch();
+      }
+    }
+  });
+</script>
+
+<config>
+{
+  navigationBarTitleText:'登录',
+      usingComponents: {
+          "van-field": "module:@vant/weapp/dist/field/index",
+          "van-image": "module:@vant/weapp/dist/image/index",
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+          "van-button": "module:@vant/weapp/dist/button/index",
+
+    }
+}
+</config>
+
+<style lang="less" scoped>
+  .login_page {
+    height: 100%;
+    background: #fff;
+  }
+  .content {
+    position: relative;
+    top: -20rpx;
+    background: #fff;
+    border-radius: 16rpx 16rpx 0 0;
+  }
+  .title {
+    // margin: 46rpx 0;
+    font-size: 48rpx;
+    font-weight: 600;
+    color: #2b2b2b;
+    padding: 48rpx 24rpx;
+  }
+  .field_item {
+    display: flex;
+    margin: 0 auto 32rpx;
+    align-items: center;
+    width: 702rpx;
+    padding: 0 20rpx;
+    box-sizing: border-box;
+    border-radius: 4px;
+    border: 2rpx solid #efefef;
+    text {
+      padding-left: 22rpx;
+      vertical-align: middle;
+      color: #efefef;
+    }
+    input {
+      width: 100%;
+      padding-left: 22rpx;
+      height: 88rpx;
+      box-sizing: border-box;
+    }
+  }
+  .submitBtn {
+    width: 702rpx;
+    margin-bottom: 44rpx;
+  }
+</style>

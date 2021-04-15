@@ -1,0 +1,313 @@
+<template>
+  <div class="taskList_page">
+    <!-- 下拉筛选列表 -->
+    <div class="header">
+      <div class="header_left">
+        <van-dropdown-menu style="margin-left: 20rpx;" :z-index="9999">
+          <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList">
+            <div class="dropdown_item_cell" @click="onClickDept(undefined)"> 所有部门</div>
+            <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
+          </van-dropdown-item>
+        </van-dropdown-menu>
+      </div>
+    </div>
+    <div class="content"> 
+      <div class="item" v-for="item in list" @click="goToEditForkliftTasks(item)">
+        <div>
+          <div class="item_header">
+            <div class="flex">
+              <div class="tag" v-if="item.applyStateType === 11 || item.applyStateType === 13" style="background:#005BAC">计</div>
+              <div class="tag" v-if="item.applyStateType === 12 || item.applyStateType === 13" style="background:#EFA600">自</div>
+                {{ item.jobContent }} {{item.goodsTypeName}}
+            </div>
+            <div class="" @tap.stop="conName(item.contactsPhone)" :class="{'disabled' : disabled}">{{item.contactsName}}</div>
+          </div>
+          <!-- <div class="contName" @click="conName(item.contactsPhone)" :class="{'disabled' : disabled}">联系人：{{item.contactsName}}</div> -->
+          <div class="remark">备注：{{item.memo==null ? '': item.memo}}</div>
+          <div class="item_header_c">
+            {{ item.applyDeptName }}/{{ item.goodsWeight }}吨123/{{ item.startTime }}至{{ item.endTime }}
+          </div> 
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
+                <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
+              </div>
+            </div>
+            <div style="margin-top:20rpx;">
+              {{item.cartDataStr}}
+            </div>
+            <div>铲次:{{item.jobQuantity}}</div>
+          </div>
+          <!-- v-if="item.tranState === 2" -->
+          <div class="item_content_right">
+            <div v-if="item.tranState === 2" class="font-color-red">待编制 ></div>
+            <div v-else>
+              <text>编制       ></text>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { BaseDataKey } from '@/constant';
+import wepy from '@wepy/core';
+import formatTimeTwo from '@/utils/moment.js';
+import CommonMixin from '@/mixins/commonMixin.js';
+import store from '@/store';
+import { mapMutations } from '@wepy/x';
+import { applyStateEnum } from '@/enums';
+wepy.page({
+  store,
+  mixins: [CommonMixin],
+  data: {
+    list: [],
+    show: false,
+    realTime:null,
+    currDeptName:'所有部门',
+    deptList:undefined
+  },
+  onShow() {
+    this.getTaskList();
+    let that = this
+      this.realTime= setInterval(function(){
+        that.getTaskList()
+        wx.showToast({
+          title: '数据已更新！'
+        })
+      },30000)
+  },
+  onUnload() {
+    this.setDetailApplyDo();
+    clearInterval(this.realTime)
+  },
+  onHide(){
+    clearInterval(this.realTime)
+  },
+  onPullDownRefresh(){
+    this.getTaskList()
+      wx.showToast({
+      title:'数据已更新',
+    })
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    goToEditForkliftTasks(item) {
+      this.setDetailApplyDo(item);
+      wx.navigateTo({
+        url: `/pages/forkerLeft/editForkliftTasks?applyId=${item.prsId}`
+      });
+    },
+    getTaskList() {
+      wx.showLoading()
+      wepy.$api('app/forkDriverTask/queryByApplyStateForkTasks', {
+        applyStateList: [2, 11, 12, 13, 21],
+        deptId: this.deptId || undefined
+      }).then((res) => {
+        this.list = [];
+        if (res && res.length) {
+          this.list = res.map((item) => {
+            item._applyStateName = applyStateEnum(item.applyState);
+            let cartDataStrList = [];
+            if (item.carTypeCount && item.carTypeCount.length) {
+              let flag = item.carTypeCount.forEach((subItem) => {
+                let {
+                  carCount,
+                  carTypeName
+                } = subItem;
+                if (carCount) cartDataStrList.push(`${carTypeName}*${carCount}`);
+              });
+            }
+            item.cartDataStr = cartDataStrList.join('; ');
+            item._carTypeCountList = cartDataStrList;
+            return item;
+          });
+          wx.hideLoading();
+          wx.stopPullDownRefresh()
+        } else {
+          wepy.$showToast('未查询到数据');
+        }
+        console.log()
+      });
+    },
+    // 获取到筛选条件列表
+      getDeptList() {
+      wepy.$api('/app/forkPullDown/listDeptDownList', {
+        applyType: 1,
+        type:1
+      }).then(res => {
+        this.deptList = res
+      })
+    },
+    onClickDept(item) {
+      this.deptId = item ? item.deptId : undefined;
+      this.currDeptName = item ? item.deptName : '所有部门';
+      this.$wx.selectComponent('#dept').toggle(false)
+      this.getTaskList();
+    },
+    conName(val){
+      wx.makePhoneCall({
+        phoneNumber:val
+      })
+    }
+  }
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'叉车-任务编制列表',
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark" ,
+  usingComponents:{
+    "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
+    "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
+     "van-button": "module:@vant/weapp/dist/button/index",
+  }
+}
+</config>
+
+<style lang="less" scoped>
+view.van-dropdown-menu{
+  height:80rpx;
+}
+.dropdown_item_cell {
+  display: flex;
+  align-items: center;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  border-bottom: 2rpx solid #ececec;
+  padding: 20rpx;
+}
+.header {
+  display: flex;
+  position: fixed;
+  width: 100%;
+  height: 100rpx;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 32rpx;
+  background: #fff;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+  &_left {
+    display: flex;
+    align-items: center;
+  }
+  &_left {
+    width: 25%;
+  }
+  &_center {
+    width: 50%;
+  }
+}
+.flex {
+  display: flex;
+}
+.taskList_page {
+  background: #f3f4f6;
+  .content {
+    padding-top: 120rpx;
+  }
+}
+.item {
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 28rpx 26rpx;
+  box-sizing: border-box;
+  &_header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8rpx;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+      margin-right: 10rpx;
+    }
+  }
+  &_header_c {
+    font-size: 26rpx;
+    color: #000;
+    line-height: 1.2rem;
+  }
+  &_content {
+    display: flex;
+    justify-content: space-between;
+    font-size: 24rpx;
+    &_left {
+      width: 65%;
+      flex: auto;
+    }
+    &_right {
+      display: flex;
+      align-items: flex-end;
+      text-align: right;
+      align-self: stretch;
+      font-size: 24rpx;
+      padding-bottom: 7rpx;
+      word-break: normal;
+      margin-left: 30rpx;
+      text {
+        flex: auto;
+        color: #005bac;
+      }
+    }
+  }
+}
+.wrapper {
+  width: 702rpx;
+  padding: 24rpx;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10rpx;
+  background: #fff;
+  text-align: center;
+  box-sizing: border-box;
+  .title {
+    margin-bottom: 25rpx;
+    font-size: 36rpx;
+    color: #2b2b2b;
+    line-height: 50rpx;
+  }
+  .btn-box {
+    display: flex;
+    justify-content: space-between;
+    .btn {
+      width: 320rpx;
+      height: 64rpx;
+      border-radius: 8rpx;
+    }
+  }
+}
+.contName{
+  font-size: 28rpx;
+  // padding: 10rpx 0;
+  display: inline-block;
+  // border: 1rpx solid #000;
+  width: 100%;
+}
+.remark{
+   font-size: 28rpx;
+}
+</style>

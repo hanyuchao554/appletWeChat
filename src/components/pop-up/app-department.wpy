@@ -1,0 +1,64 @@
+<template>
+  <div class="pop_up_wrap">
+    <div class="prop_up_title">{{title || '选择驳运部门'}}</div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item"
+           @click="onSelect(item)"
+           v-for="item in dataList">
+        {{ item.deptName }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import {
+  mapState,
+  mapMutations
+} from '@wepy/x';
+import store from '@/store';
+wepy.component({
+  store,
+  props: ['api', 'deptType', 'title', 'params'],
+  data: {
+    dataList: []
+  },
+  attached() {
+    this.getAppDepartment();
+  },
+  computed: {
+    ...mapState(['detailApplyDo']),
+    userId() {
+      return wepy.$auth.getUserId();
+    }
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    onSelect(data) {
+      this.detailApplyDo.tranDeptId = data.id;
+      this.detailApplyDo.transDeptName = data.deptName;
+      this.setDetailApplyDo(this.detailApplyDo);
+      this.$emit('onSelect', data);
+    },
+    getAppDepartment() {
+      let _api = this.api || 'app/dept/getAppDepartment';
+      let req = {};
+      if (this.params) {
+        req = this.params
+      } else if (this.deptType !==null && this.deptType >= 0) {
+        req.deptType = this.deptType;
+      } else {
+        req.userId = this.userId;
+      }
+      wepy.$api(_api, req).then((res) => {
+        this.dataList = res;
+      });
+    }
+  }
+});
+</script>
+
+<style lang="less" scoped>
+@import './index.less';
+</style>

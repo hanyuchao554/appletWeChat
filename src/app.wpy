@@ -1,0 +1,174 @@
+<style lang="less">
+@import './styles/index.less';
+page {
+    height: 100vh;
+    background: #f3f4f6;
+    color: #2b2b2b;
+    font-family: PingFangSC-Medium, PingFang SC;
+    -webkit-overflow-scrolling: touch;
+    image {
+        border: none;
+    }
+}
+</style>
+
+<script>
+import wepy from '@wepy/core';
+import eventHub from './common/eventHub';
+import vuex from '@wepy/x';
+import request from '@/utils/request';
+import valid from '@/utils/valid';
+import auth from '@/utils/auth';
+import { JSEncrypt } from '@/utils/jsencrypt.js';
+import promisify from '@wepy/use-promisify';
+import './libs/polyfill.js';
+global.Promise && (Promise = global.Promise);
+const encryptor = new JSEncrypt();
+wepy.$api = request;
+wepy.$encryptor = encryptor;
+wepy.$valid = valid;
+wepy.$auth = auth;
+wepy.$loading = () => {
+    wx.showToast({
+        icon: 'loading',
+        duration: 30000
+    });
+};
+wepy.$showToast = (title) => {
+    wx.showToast({
+        icon: 'none',
+        title
+    });
+};
+wepy.use(vuex);
+wepy.use(promisify);
+wepy.app({});
+</script>
+
+<config>
+{
+    pages: [
+        'pages/home',
+        'pages/platformTaskQuery/platformTaskQuery',
+        'pages/platformTaskQuery/platformTaskQueryList',
+        'pages/platformGoodsQuery/platformGoodsQuery',
+        'pages/platformGoodsQuery/platformGoodsQueryList',
+        'pages/platformGoodsQuery/platformGoodsQueryDetail',
+        'pages/edition',
+        'pages/setting',
+        'pages/reviewEditTask',
+        'pages/driverTask/driverTaskList',
+        'pages/driverTask/driverAddressMassage',
+        'pages/driverTask/driverStartPlatformOtherTask',
+        'pages/driverTask/driverTaskState',
+        'pages/taskList/organizationTaskList',
+        'pages/taskList/platformApplyDriverTaskList',
+        'pages/manualOrganizationTime/manualOrganizationTime',
+        'pages/distributionCars/distributionCars',
+        'pages/taskList/distributionTaskList',
+        'pages/taskList/allTaskList',
+        'pages/cancelTask/cancelTask',
+        'pages/cancelTask/cancelTaskSuccess',
+        'pages/cancelTask/cancelTaskDetail',
+        'pages/reviewList/reviewList',
+        'pages/taskList/applyTaskList',
+        'pages/taskList/approvalTaskList',
+        'pages/addTask',
+        'pages/draftsTaskList/draftsTaskList',
+        'pages/taskList/completeTaskList',
+        'pages/platformApply/confirm',
+        'pages/lighterage/lighterage',
+        'pages/taskSuccess/taskSuccess',
+        'pages/taskDetail/taskDetail',
+        'pages/position/position',
+        'pages/fencing/fencingList',
+        'pages/fencing/managementFence',
+        'pages/fencing/addres',
+        'pages/login/login'
+    ],
+    subpackages: [
+        {
+            root: 'pages/forkerLeft',
+            pages: [
+                'editApplyHistory',
+                'reviewList',
+                'queryByApplyStateForkTasks',
+                'confirm',
+                'taskSuccess',
+                'addTask',
+                'lighterage',
+                'taskList',
+                'taskDetail',
+                'cancelTask',
+                'editForkliftTasks',
+                'selByCarStateUserAndDept',
+                'driverPerformTask',
+                'forkliftTaskPlan',
+                'driverTaskIngList',
+                'driverTaskState',
+                'driverAddressMassage',
+                'manageCarList',
+            ]
+        },
+        {
+            root: 'pages/craneApply',
+            pages: [
+                'editApplyHistory',
+                'reviewList',
+                'queryByApplyStateForkTasks',
+                'confirm',
+                'taskSuccess',
+                'addTask',
+                'lighterage',
+                'taskList',
+                'taskDetail',
+                'cancelTask',
+                'editForkliftTasks',
+                'selByCarStateUserAndDept',
+                'driverPerformTask',
+                'forkliftTaskPlan',
+                'driverTaskIngList',
+                'driverTaskState',
+                'driverAddressMassage',
+                'combinedCrane',
+                'driverReceiveForkliftTask',
+            ]
+        },
+        {
+            root: 'pages/towerCrane',
+            pages: [
+                'editApplyHistory',
+                'reviewList',
+                'queryByApplyStateForkTasks',
+                'confirm',
+                'taskSuccess',
+                'addTask',
+                'lighterage',
+                'taskList',
+                'taskDetail',
+                'cancelTask',
+                'editForkliftTasks',
+                'selByCarStateUserAndDept',
+                'driverPerformTask',
+                'forkliftTaskPlan',
+                'driverTaskIngList',
+                'driverTaskState',
+                'driverAddressMassage',
+                'combinedCrane',
+                'driverReceiveForkliftTask',
+            ]
+        }
+    ],
+      "permission": {
+    "scope.userLocation": {
+      "desc": "您的位置信息将用于小程序应用"
+    }
+  },
+    window: {
+        backgroundTextStyle: 'light',
+        navigationBarBackgroundColor: '#fff',
+        navigationBarTitleText: '江南造船',
+        navigationBarTextStyle: 'black'
+    }
+}
+</config>

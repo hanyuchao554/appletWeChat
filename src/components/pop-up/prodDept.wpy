@@ -1,0 +1,42 @@
+<template>
+    <div class="pop_up_wrap">
+        <div class="prop_up_title">选择审批部门</div>
+        <div class="prop_up_item_group">
+            <div class="prop_up_item"
+                 @click="onSelect(item)"
+                 v-for="item in dataList">
+                {{ item.deptName }}
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+wepy.component({
+    data: {
+        dataList: []
+    },
+    created() {
+        this.getList();
+    },
+    methods: {
+        onSelect(data) {
+            this.$emit('onSelect', data);
+        },
+        getList() {
+            wepy
+                .$api('app/craneDown/queryListDeptProd', {
+                    applyType: 2,
+                })
+                .then((res) => {
+                    this.dataList = res;
+                });
+        },
+    },
+});
+</script>
+
+<style lang="less" scoped>
+@import './index.less';
+</style>

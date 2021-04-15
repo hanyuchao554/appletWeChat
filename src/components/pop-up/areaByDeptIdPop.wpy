@@ -1,0 +1,178 @@
+<template>
+    <div class="pop_up_wrap">
+        <div class="prop_up_title">
+            <div>车辆分配围栏</div>
+            <div class="font-32 prop_up_title_r"
+                 @click="onSubmit">
+                确定</div>
+        </div>
+        <div class="prop_up_item_group">
+            <div v-for="(item,index) in list"
+                 class="prop_up_item">
+                <van-checkbox @change="onChange($event,item,index)"
+                              :value="item.isSelect">
+                    <div style="min-width:400rpx;">{{ item.areaName }}</div>
+                </van-checkbox>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+
+wepy.component({
+    props: {
+        row: {
+            type: Object,
+            required: true,
+        },
+    },
+    data: {
+        isDisabled: false,
+        crow: {},
+        list: []
+    },
+
+    attached() {
+        this.crow = this.row
+        this.getList()
+    },
+    methods: {
+        getList() {
+            wepy
+                .$api('app/forkPullDown/areaByDeptIdList', { applyType: 1 }).then(res => {
+                    this.list = [
+                        {
+                            id: 0,
+                            areaName: '无围栏',
+                            isSelect: this.crow.carAreaId ? false : true
+                        }
+                    ]
+                    if (res && res.length) {
+                        let _res = res.map(item => {
+                            let flag
+                            if (this.crow.carAreaId !== null) {
+                                flag = this.crow.carAreaId.find(sub => sub === item.id)
+                            }
+                            item.isSelect = !!flag
+                            return item
+                        })
+                        this.list = this.list.concat(_res)
+                    }
+                })
+        },
+        onChange(e, item, index) {
+            let status = e.$wx.detail
+            if (index === 0 && status) {
+                this.list.forEach(item => {
+                    this.$set(item, 'isSelect', false)
+                })
+            } else if (index !== 0 && status) {
+                this.$set(this.list[0], 'isSelect', false)
+            }
+            this.$set(this.list[index], 'isSelect', status)
+        },
+        close() {
+            this.$emit('close');
+        },
+        onSubmit() {
+            let status = this.list.some(item => item.isSelect)
+
+            if (!status) {
+                wx.showToast({
+                    icon: 'none',
+                    title: '请选择围栏',
+                });
+            } else {
+                this.sendApi();
+            }
+        },
+        sendApi() {
+            if (this.isDisabled) return;
+            this.isDisabled = true;
+            wepy.$loading();
+            let upData = {
+                carId: this.crow.carId
+            }
+            if (!this.list[0].isSelect) {
+                upData.areaId = this.list.filter(item => item.isSelect).map(item => item.id)
+            }
+            wepy
+                .$api('app/car/upDateCarArea', upData)
+                .then((res) => {
+                    this.$emit('onSuccess');
+                    this.close()
+                })
+                .finally(() => {
+                    wx.hideLoading();
+                    this.isDisabled = false;
+                });
+        },
+    },
+});
+</script>
+
+<config>
+{
+  usingComponents:{
+    "van-button": "module:@vant/weapp/dist/button/index",
+    "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
+    "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index",
+    "m-textarea": "~@/components/control/m-textarea"
+
+  }
+}
+</config>
+
+<style lang="less" scoped>
+@import './index.less';
+.prop_up_title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  &_r {
+    font-size: 26rpx;
+    background: #005bac;
+    color: #fff;
+    padding: 15rpx 20rpx;
+    text-align: center;
+  }
+}
+
+.margin-b-25 {
+  margin-bottom: 25rpx;
+}
+
+.label {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #2b2b2b;
+  line-height: 44rpx;
+}
+
+.radio_wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 44rpx;
+}
+
+.content {
+  width: 702rpx;
+  margin: 0 auto;
+  padding: 20rpx 0;
+}
+
+.radio_group {
+  display: flex;
+  .radio {
+    font-size: 32rpx;
+    padding-left: 80rpx;
+  }
+}
+
+.btn {
+  width: 100%;
+  margin: 25rpx 0;
+}
+</style>

@@ -1,0 +1,120 @@
+<template>
+  <div class="pop_up_wrap">
+      <div class="prop_up_title">选择联系人</div>
+        <div class="search">
+            <div class="icon">
+            <van-icon name="search" />
+            </div>
+            <input type="text" value="{{searchData}}" placeholder="请输入工程编号" placeholder-class="placeholder" bindinput="onChage" />
+      </div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item"
+           @click="onSelect(item)"
+           v-for="item in searchData ? searchList : dataList">
+        <div class="prop_up_item_t">
+          <text class="font-32 text">{{ item.contName }}</text>
+          <text class="font-28 text">{{ item.contNumber }}</text>
+        </div>
+        <div class="prop_up_item_b">
+          <text class="text">{{ item.contDeptName }}</text>
+          <text> | </text>
+          <text class="text">{{ item.contPhone }}</text>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import { mapState, mapMutations } from '@wepy/x';
+import store from '@/store';
+wepy.component({
+    store,
+    data: {
+        searchData: '',
+        dataList: [],
+        searchList: [],
+        dataKey: 'contactsId'
+    },
+    created() {
+        this.getAppDepartment();
+    },
+    computed: {
+        ...mapState(['detailApplyDo']),
+        userId() {
+            return wepy.$auth.getUserId();
+        }
+    },
+    methods: {
+        ...mapMutations(['setDetailApplyDo']),
+        onSelect(data) {
+            this.detailApplyDo.contactsId = data.contId;
+            this.detailApplyDo.contPhone = data.contPhone;
+            this.detailApplyDo.contastsName = data.contName;
+            this.setDetailApplyDo(this.detailApplyDo);
+            this.$emit('onSelect', data);
+        },
+        onChage(e) {
+            this.searchData = e.$wx.detail.value;
+            let reg = new RegExp(this.searchData);
+            this.searchList = this.dataList.filter((item) => reg.test(item.contName));
+        },
+        // 获取联系人
+        getAppDepartment() {
+            wepy.$api('app/platform/contasts/getApplyContasts', {}).then((res) => {
+                this.dataList = res;
+            });
+        }
+    }
+});
+</script>
+
+<config>
+{
+    usingComponents: {
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+    }
+}
+</config>
+
+<style lang="less" scoped>
+@import './index.less';
+.prop_up_item {
+    &_group {
+        height: 1100rpx;
+    }
+    &_t {
+        .text {
+            padding-right: 32rpx;
+        }
+    }
+    &_b {
+        .text {
+            font-size: 24rpx;
+            color: #8e9298;
+        }
+    }
+}
+.search{
+  background:#fff;
+  display:flex;
+  align-items: center;
+  position: relative;
+  padding: 20rpx;
+  .icon{
+    position:absolute;
+    font-size: 32rpx;
+    left:35rpx;
+    top:35rpx;
+  }
+  input{
+    background: #f7f8fa;
+    width: 100%;
+    padding: 12rpx 0 12rpx 60rpx;
+  }
+  .placeholder{
+    font-size: 28rpx;
+  }
+}
+</style>

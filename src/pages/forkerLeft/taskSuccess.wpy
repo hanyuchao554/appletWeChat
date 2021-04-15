@@ -1,0 +1,198 @@
+<template>
+  <div class="taskSuccess_page">
+    <div class="header">
+      <van-image custom-class="header_bg"
+                 width="100%"
+                 height="620rpx"
+                 src="/static/images/success_bg.png" />
+      <div class="header_content">
+        <van-image width="150rpx"
+                   height="150rpx"
+                   src="/static/images/icon_success.png" />
+        <div class="header_content_t">申请用车提交成功</div>
+        <div class="header_content_b">您的申请已经提交，请耐心等待审核</div>
+      </div>
+      <div class="header_footer">
+        <div class="header_footer_t">
+          <div class="tag">
+            计划任务
+          </div>
+          <div>
+            {{ detailApplyDo.jobContentStr }} {{ detailApplyDo.goodsTypeName }}-{{ detailApplyDo.goodsCode }}
+          </div>
+        </div>
+        <div v-if="jobNum!==null"
+             class="header_footer_b">工单号：{{ jobNum }}</div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="footer_t">您还可以同时做如下操作</div>
+      <van-button custom-class="btn_t"
+                  @click="again">继续申请</van-button>
+      <van-button custom-class="btn_b"
+                  @click="close">关闭页面</van-button>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import store from '@/store';
+import {
+  mapState,
+  mapMutations
+} from '@wepy/x';
+wepy.page({
+  store,
+  data: {
+    jobNum: '',
+  },
+  onLoad({
+    jobNum
+  }) {
+    this.jobNum = jobNum;
+  },
+  computed: mapState(['detailApplyDo']),
+  methods: {
+    ...mapMutations(['setDetailApplyDoInit', 'setDetailApplyDo']),
+    setTilte(requestType) {
+      wx.setNavigationBarTitle({
+        title: `平板车-${requestType}确认申请成功`,
+      });
+    },
+    again() {
+      let _detailApplyDo = {
+        departmentOrArea: this.detailApplyDo.departmentOrArea,
+      }
+      if (this.detailApplyDo.departmentOrArea === 2) {
+        _detailApplyDo.tranDeptId = null
+        _detailApplyDo.tranDeptName = ''
+        _detailApplyDo.craneAddress = this.detailApplyDo.craneAddress
+        _detailApplyDo.craneAddressName = this.detailApplyDo.craneAddressName
+      } else if (this.detailApplyDo.departmentOrArea === 1) {
+        _detailApplyDo.tranDeptId = this.detailApplyDo.tranDeptId
+        _detailApplyDo.tranDeptName = this.detailApplyDo.tranDeptName
+        _detailApplyDo.craneAddress = null
+        _detailApplyDo.craneAddressName = ''
+      }
+      this.setDetailApplyDo(_detailApplyDo);
+      wx.navigateBack({
+        delta: getCurrentPages().length - 3
+      });
+    },
+    close() {
+      this.setDetailApplyDoInit();
+      wx.navigateBack({
+        delta: getCurrentPages().length
+      });
+    },
+  },
+});
+</script>
+
+<config>
+{
+      navigationBarTitleText:'叉车-计划任务申请成功',
+      usingComponents: {
+          "van-image": "module:@vant/weapp/dist/image/index",
+          "van-button": "module:@vant/weapp/dist/button/index"
+
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.taskSuccess_page {
+  background: #f3f4f6;
+  height: 100vh;
+}
+.header {
+  width: 100%;
+  position: relative;
+  text-align: center;
+  &_bg {
+    position: relative;
+    top: 0;
+  }
+  &_content {
+    position: absolute;
+    width: 100%;
+    top: 66rpx;
+    &_t {
+      margin-top: 42rpx;
+      font-size: 40rpx;
+      font-weight: 500;
+      color: #2b2b2b;
+      line-height: 56rpx;
+    }
+    &_b {
+      margin-top: 20rpx;
+      font-size: 28rpx;
+      font-weight: 400;
+      color: #989ca1;
+      line-height: 40rpx;
+    }
+  }
+  &_footer {
+    position: absolute;
+    top: 480rpx;
+    left: 70rpx;
+    width: 100%;
+    text-align: left;
+    &_t {
+      display: flex;
+      align-items: center;
+      text {
+        font-size: 28rpx;
+        font-weight: bold;
+        color: #2b2b2b;
+        line-height: 40rpx;
+      }
+      .tag {
+        margin-right: 10rpx;
+        font-size: 22rpx;
+        color: #fff;
+        padding: 10rpx;
+        border-radius: 4rpx;
+        background: #005bac;
+      }
+    }
+    &_b {
+      margin-top: 12rpx;
+      font-size: 28rpx;
+      font-weight: 400;
+      color: #2b2b2b;
+      line-height: 40rpx;
+    }
+  }
+}
+.footer {
+  padding: 0 24rpx;
+  &_t {
+    margin: 32rpx 0;
+    font-size: 36rpx;
+    font-weight: 400;
+    color: #2b2b2b;
+    line-height: 50rpx;
+  }
+  button {
+    display: block;
+    width: 702rpx;
+    height: 88rpx;
+    line-height: 88rpx;
+    margin: 0 auto;
+    font-size: 32rpx;
+    border-radius: 8px;
+  }
+  .btn_t {
+    background: #005bac;
+    color: #fff;
+  }
+  .btn_b {
+    margin-top: 20rpx;
+    background: transparent;
+    border: 2px solid #005bac;
+    color: #005bac;
+  }
+}
+</style>

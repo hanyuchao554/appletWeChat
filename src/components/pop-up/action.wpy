@@ -1,0 +1,222 @@
+<template>
+  <div class="pop_up_wrap">
+    <div class="prop_up_title">
+      <div @click="">编制操作</div>
+      <div class="font-32 prop_up_title_r" @click="close">x</div>
+    </div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item" @click="onSelect(item)" v-for="item in actionList">
+        <van-icon :name="item.icon" size="48rpx"></van-icon>
+        <div class="text">{{ item.text }}</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  wepy.component({
+    props: {
+      tagTask: {
+        type: Array,
+        default: [],
+      },
+      currApplyId: {
+        required: true,
+      },
+    },
+    data: {
+      actionList: [{
+          id: 1,
+          icon: '/static/images/icon_upperApex.png',
+          text: '上移动到第一个任务',
+        },
+        {
+          id: 2,
+          icon: '/static/images/icon_top.png',
+          text: '上移一位',
+        },
+        {
+          id: 3,
+          icon: '/static/images/icon_buttom.png',
+          text: '下移一位',
+        },
+        {
+          id: 4,
+          icon: '/static/images/icon_lower_vertex.png',
+          text: '下移到最后一个任务',
+        },
+        {
+          id: 5,
+          icon: '/static/images/icon_cart.png',
+          text: '分配给其他车辆',
+        },
+        {
+          id: 6,
+          icon: '/static/images/icon_cart.png',
+          text: '修改驳运时间',
+        },
+        {
+          id: 7,
+          icon: '/static/images/icon_ends.png',
+          text: '添加衍生任务',
+        },
+      ],
+    },
+    methods: {
+      changeAllocatedTaskSort(targetApplyId) {
+        wx.hideToast();
+        wepy
+          .$api('platform/distribution/changeAllocatedTaskSort', {
+            targetApplyId,
+            sourceApplyId: this.currApplyId,
+          })
+          .then(() => {
+            wx.showToast({
+              icon: 'none',
+              title: '已经是第一位，无法上移',
+              duration: 2000,
+            });
+            this.$emit('onSelect');
+          });
+      },
+      onSelect(item) {
+        this.action(item.id);
+      },
+      close() {
+        this.$emit('close');
+      },
+      checkSeat(actionId) {
+        let firstId, lastId, beforeId, afterId;
+        let status = true;
+        let index = this.tagTask.findIndex(
+          (item) => item.applyId === this.currApplyId
+        );
+        let leng = this.tagTask.length;
+        wx.hideToast();
+        if (!leng) return;
+        switch (actionId) {
+          case 1:
+            if (leng === 1 || index === 0) {
+              wx.showToast({
+                icon: 'none',
+                title: '已经是第一位，无法上移',
+              });
+              status = false;
+            } else {
+              firstId = this.tagTask[0].applyId;
+            }
+            break;
+          case 2:
+            if (leng === 1 || index === 0) {
+              wx.showToast({
+                icon: 'none',
+                title: '已经是第一位，无法上移',
+              });
+              status = false;
+            } else {
+              beforeId = this.tagTask[index - 1].applyId;
+            }
+            break;
+          case 3:
+            if (leng === 1 || leng - 1 === index) {
+              wx.showToast({
+                icon: 'none',
+                title: '已经是最后一位，无法下移',
+              });
+              status = false;
+            } else {
+              afterId = this.tagTask[index + 1].applyId;
+            }
+            break;
+          case 4:
+            if (leng === 1 || leng - 1 === index) {
+              wx.showToast({
+                icon: 'none',
+                title: '已经是最后一位，无法下移',
+              });
+              status = false;
+            } else {
+              lastId = this.tagTask[leng - 1].applyId;
+            }
+            break;
+          default:
+            break;
+        }
+        if (status) {
+          return {
+            firstId,
+            lastId,
+            beforeId,
+            afterId,
+          };
+        }
+      },
+      action(actionId) {
+        let seatData = this.checkSeat(actionId);
+        if (seatData) {
+          switch (actionId) {
+            case 1:
+              this.changeAllocatedTaskSort(seatData.firstId);
+              break;
+            case 2:
+              this.changeAllocatedTaskSort(seatData.beforeId);
+              break;
+            case 3:
+              this.changeAllocatedTaskSort(seatData.afterId);
+              break;
+            case 4:
+              this.changeAllocatedTaskSort(seatData.lastId);
+              break;
+            case 5:
+              wx.navigateTo({
+                url: '/pages/distributionCars/distributionCars',
+              });
+              break;
+            case 6:
+              wx.navigateTo({
+                url: '/pages/manualOrganizationTime/manualOrganizationTime',
+              });
+              break;
+            case 7:
+              wx.navigateTo({
+                url: '/pages/addTask?requestType=衍生任务',
+              });
+              break;
+            default:
+              break;
+          }
+        }
+      },
+    },
+  });
+</script>
+
+<config>
+{
+  usingComponents:{
+    "van-icon": "module:@vant/weapp/dist/icon/index"
+  }
+}
+</config>
+
+<style lang="less" scoped>
+  @import './index.less';
+  .prop_up_title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    &_r {
+      width: 50rpx;
+      height: 50rpx;
+      text-align: center;
+    }
+  }
+  .prop_up_item {
+    display: flex;
+    align-items: center;
+    .text {
+      margin-left: 10rpx;
+    }
+  }
+</style>

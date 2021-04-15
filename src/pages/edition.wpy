@@ -1,0 +1,66 @@
+<template>
+  <div class="edition_page">
+    <van-image width="268rpx" height="268rpx" src="/static/images/logo.png" />
+    <div class="text" v-if="showhidde">{{versions.miniProgram.version}}</div>
+    <div class="conter" v-else>
+      <div class="text">{{versionstxt}}</div>
+    </div>
+  </div>
+</template>
+<script>
+import wepy from '@wepy/core';
+import { BaseDataKey } from '@/constant'; //wx.getAccountInfoSync
+wepy.page({
+  data:{
+    versions:'',
+    versionstxt:'',
+    showhidde:false,
+  },
+  onLoad(){
+
+  },
+  onShow(){
+   this.versions = wx.getAccountInfoSync()
+   this.estimate()
+  },
+  methods:{
+    estimate(){
+      let versions = this.versions.miniProgram.envVersion
+      switch(versions) {
+          case 'develop':
+              this.versionstxt = '开发版'
+              break;
+          case 'trial':
+              this.versionstxt = '体验版'
+              break;
+          case 'release':
+              this.showhidde = true
+              break;    
+          default:
+              默认代码块
+      } 
+    }
+  }
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'版本号',
+  usingComponents: {
+    "van-image": "module:@vant/weapp/dist/image/index",
+  }
+}
+</config>
+
+<style lang="less" scoped>
+.edition_page {
+  height: 100vh;
+  padding: 24rpx;
+  background: #fff;
+  text-align: center;
+}
+.text {
+  font-size: 36rpx;
+}
+</style>

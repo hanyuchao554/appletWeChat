@@ -1,0 +1,79 @@
+<template>
+  <div class="pop_up_wrap">
+    <div>
+      <div class="prop_up_title">{{title}}</div>
+      <van-search v-if="hasSearch" background="#fff" @change="onChage" placeholder="{{placeholder}}" />
+    </div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item" @click="onSelect(item)" v-for="item in searchData ? searchList : dataList" >
+          {{ item.paramValue }}
+          <!-- <div class="prop_up_item" @click="onSelect(item)" v-for="item in searchData ? searchList : dataList" >
+            {{ item.paramValue }}
+      </div> -->
+      </div>
+    </div>
+  </div>
+</template>
+
+<config>
+{
+    usingComponents: {
+          "van-search": "module:@vant/weapp/dist/search/index"
+    }
+}
+</config>
+
+<script>
+  import wepy from '@wepy/core';
+  wepy.component({
+    props: {
+      hasSearch: {
+        type: Boolean,
+        default: false
+      },
+      placeholder: {
+        type: String,
+        default: '查找'
+      },
+      title: {
+        type: String
+      },
+      requestData: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      }
+    },
+    data: {
+      searchData: '',
+      dataList: [],
+      searchList: [],
+    },
+    attached() {
+      this.getTaskCancelReason();
+    },
+    methods: {
+      onSelect(data) {
+        this.$emit('onSelect', data);
+      },
+      onChage(e) {
+        this.searchData = e.$wx.detail;
+        let reg = new RegExp(this.searchData);
+        this.searchList = this.dataList.filter((item) => reg.test(item.paramValue));
+      },
+      getTaskCancelReason() {
+        wepy.$api('app/forkPullDown/selByParamKeyOperatorType', this.requestData).then((res) => {
+          this.dataList = res;
+        });
+      }
+    }
+  });
+</script>
+
+<style lang="less" scoped>
+  @import './index.less';
+  .prop_up_item_group {
+    min-height: 400rpx;
+  }
+</style>

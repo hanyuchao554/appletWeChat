@@ -1,0 +1,293 @@
+<template>
+  <div class="taskList_page">
+    <div class="content">
+      <div class="item"
+           v-for="item in list">
+        <div>
+          <div class="item_header">
+            <div> {{ item.jobContent }} {{item.goodsTypeName}}-{{ item.goodsCode }}
+            </div>
+          </div>
+
+        </div>
+        <div class="item_content">
+          <div v-if="!item.hasForkliftTaskList"
+               @click="goToDetail(item)"
+               class="item_content_left">
+            <div class="item_header_c">
+              {{ item.applyDeptName }}/{{ item.goodsWeight }}吨/{{ item.startTime }}至{{ item.endTime }}
+            </div>
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
+                <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
+              </div>
+            </div>
+            <div style="margin-top:20rpx;">
+              {{item.cartDataStr}}
+            </div>
+            <div>铲次:{{item.jobQuantity}}</div>
+          </div>
+          <div v-if="item.hasForkliftTaskList"
+               @click="goToDetail(item)"
+               class="item_content_left">
+            <div class="item_header_c"
+                 style="border-bottom: 4rpx solid #ececec; padding-bottom:20rpx;">
+              {{ item.applyDeptName }}/{{ item.goodsWeight || 0 }}吨
+            </div>
+            <div class="sub_item"
+                 v-for="sub in item.forkliftTaskList">
+              <div class="flex_between">
+                <div class="flex">
+                  <div v-if="sub.carNumber"
+                       class="tag_drop">
+                    <div class="drop"></div>
+                    {{ sub.carNumber }}
+                  </div>
+                  <div class="font-24">{{ sub.carTypeName }}</div>
+                  <div class="font-24"
+                       style="margin-left:10rpx">铲次:{{sub.realJobQuantity || 0}}</div>
+                </div>
+                <div class="font-color-blue font-24">{{sub.taskState}}</div>
+              </div>
+              <div class="item_content_right_t"
+                   style="margin-top:10rpx;">开始时间: {{sub.tranState === 50? sub.driverStartTimes : item.startTime}}-完成时间: {{sub.tranState === 50? sub.driverToSubmitTaskTimes : item.endTime}}</div>
+              <div class="common_step">
+                <div class="common_step_left">
+                  <div class="common_step_left_t"></div>
+                  <div class="common_step_left_c"></div>
+                  <div class="common_step_left_b"></div>
+                </div>
+                <div class="common_step_center">
+                  <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
+                  <div class="ellipsis">目的地：{{ sub.tranState === 50? sub.destinationGpsName : item.endPositionName }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import {
+  BaseDataKey
+} from '@/constant';
+import wepy from '@wepy/core';
+import formatTimeTwo from '@/utils/moment.js';
+import CommonMixin from '@/mixins/commonMixin.js';
+import store from '@/store';
+import {
+  mapMutations
+} from '@wepy/x';
+wepy.page({
+  store,
+  mixins: [CommonMixin],
+  data: {
+    list: [],
+    show: false
+  },
+  onShow() {
+    this.getTaskList();
+  },
+  onUnload() {
+    this.setDetailApplyDo();
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    getTaskList() {
+      wepy.$loading();
+      wepy.$api('app/forkliftApply/editApplyHistory', {}).then((res) => {
+        this.list = [];
+        if (res && res.length) {
+          this.list = res.map((item) => {
+            let cartDataStrList = [];
+            if (item.carTypeCount && item.carTypeCount.length) {
+              let flag = item.carTypeCount.forEach((subItem) => {
+                let {
+                  carCount,
+                  carTypeName
+                } = subItem;
+                if (carCount) cartDataStrList.push(`${carTypeName}*${carCount}`);
+              });
+            }
+            item.cartDataStr = cartDataStrList.join('; ');
+            item._carTypeCountList = cartDataStrList;
+            item.hasForkliftTaskList = false
+            if (item.forkliftTaskList && item.forkliftTaskList.length) {
+              item.hasForkliftTaskList = item.forkliftTaskList.some(sub => sub.tranState === 50)
+            };
+            return item;
+          });
+          wx.hideToast();
+        } else {
+          wepy.$showToast('未查询到数据');
+        }
+      });
+    },
+    getTime(time) {
+      return time ? formatTimeTwo(time * 1000, 'Y-M-D h:m') : '';
+    },
+    goToDetail(item) {
+      let data = this.initForkerLeftData(item);
+      let _data = this.setDetailApplyDoAddTaskData(data);
+      this.setDetailApplyDo(_data);
+      wx.navigateTo({
+        url: `/pages/forkerLeft/taskDetail?applyState=1`
+      });
+    },
+    setDetailApplyDoAddTaskData(item) {
+      let _data = JSON.parse(JSON.stringify(item));
+      _data.jobContent = item.jobContentId;
+      _data.jobContentStr = item.jobContent;
+      _data.importance = item.importanceId;
+      _data.importanceStr = item.importance;
+      _data.startTime = item.startDateTime;
+      _data.endTime = item.endDateTime;
+      _data._startTime = item.startTime;
+      _data._endTime = item.endTime;
+      _data.goodsWeightStr = item.goodsWeight;
+      if (item.carTypeCount && item.carTypeCount.length) {
+        let str = [];
+        let data = [];
+        item.carTypeCount.forEach((item) => {
+          str.push(`${item.carTypeName}*${item.carCount}`);
+          data.push(`${item.carTypeId}*${item.carCount}`);
+        });
+        _data.carTypeCount = data.join(',');
+        _data._carTypeCount = item.carTypeCount;
+      }
+      if (item.goodsId) {
+        _data.lighterageStr = `${item.goodsTypeName}-${item.goodsCode}${
+          item.goodsWeight ? item.goodsWeight + '吨' : ''
+          }`;
+        _data.goodsWeightStr = item.goodsWeight || '';
+      }
+      return _data;
+    },
+    initForkerLeftData(item) {
+      let _item = JSON.parse(JSON.stringify(item));
+      let {
+        forkliftTaskList
+      } = _item;
+      // 执行信息
+      if (forkliftTaskList && forkliftTaskList.length) {
+        _item.forkliftTaskList = forkliftTaskList.map((item) => {
+          this.$set(item, 'showDrop', false);
+          return item;
+        });
+      }
+      return _item;
+    }
+  }
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'叉车-历史编制'
+}
+</config>
+
+<style lang="less" scoped>
+.taskList_page {
+  background: #f3f4f6;
+  .content {
+    padding-top: 24rpx;
+  }
+}
+.item {
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 28rpx 26rpx;
+  box-sizing: border-box;
+  &_header {
+    display: flex;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+      margin-right: 10rpx;
+    }
+  }
+  &_header_c {
+    font-size: 22rpx;
+    color: #8e9298;
+    line-height: 32rpx;
+  }
+  &_content {
+    display: flex;
+    justify-content: space-between;
+    font-size: 24rpx;
+    &_left {
+      width: 65%;
+      flex: auto;
+    }
+    &_right {
+      display: flex;
+      align-items: flex-end;
+      text-align: right;
+      align-self: stretch;
+      font-size: 24rpx;
+      padding-bottom: 7rpx;
+      word-break: normal;
+      margin-left: 30rpx;
+      text {
+        flex: auto;
+        color: #005bac;
+      }
+    }
+  }
+}
+.wrapper {
+  width: 702rpx;
+  padding: 24rpx;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10rpx;
+  background: #fff;
+  text-align: center;
+  box-sizing: border-box;
+  .title {
+    margin-bottom: 25rpx;
+    font-size: 36rpx;
+    color: #2b2b2b;
+    line-height: 50rpx;
+  }
+  .btn-box {
+    display: flex;
+    justify-content: space-between;
+    .btn {
+      width: 320rpx;
+      height: 64rpx;
+      border-radius: 8rpx;
+    }
+  }
+}
+
+.sub_item {
+  margin: 20rpx 0;
+}
+.sub_item:not(:last-of-type) {
+  border-bottom: 4rpx solid #ececec;
+
+  padding-bottom: 20rpx;
+}
+</style>

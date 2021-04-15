@@ -1,0 +1,214 @@
+<template>
+  <div class="driverTaskState_page">
+    <div class="wrap">
+      <van-image
+        width="100%"
+        height="400rpx"
+        src="/static/images/home_bg_img3.png"
+      />
+      <div class="title">正在执行衍生任务</div>
+      <div class="steps">
+        <div class="steps_item">
+          <van-image
+            width="40rpx"
+            height="40rpx"
+            src="/static/images/icon_step_solid.png"
+          />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData._realStartTime }}</text>
+              <text>开始</text>
+            </div>
+            <div
+              v-if="state === 1"
+              class="steps_item_content_right font-color-deep-red"
+            >
+              {{ countdownStr }}
+            </div>
+          </div>
+        </div>
+        <div class="line"></div>
+        <div class="steps_item">
+          <van-image
+            width="40rpx"
+            height="40rpx"
+            src="{{state ===2 ? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}"
+          />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData._realLoadTime }}</text>
+              <text>结束任务</text>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <movable-area
+      v-if="state === 1"
+      class="slider"
+      style="width:{{area_width}}%"
+    >
+      <div class="text">右滑结束任务</div>
+      <div class="side" :style="{ width: sideWeight + 120 + 'rpx' }"></div>
+      <movable-view
+        class="box"
+        inertia
+        :friction="1"
+        style="width:{{box_width}}rpx"
+        direction="horizontal"
+        :x="x"
+        bindchange="drag"
+        bindtouchend="dragOver"
+      >
+        <van-image
+          width="44rpx"
+          height="38rpx"
+          src="/static/images/icon_slider.png"
+        />
+      </movable-view>
+    </movable-area>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import formatTimeTwo from '@/utils/moment.js';
+var coord = 0;
+wepy.page({
+  data: {
+    state: 1,
+    timer: null,
+    countdownStr: '',
+    isOvertime: false,
+    birpx: 0,
+    applyId: undefined,
+    driverData: {},
+    sideWeight: 0,
+    x: 0,
+    area_width: 96, //可滑动区域的宽，单位是百分比，设置好后自动居中
+    box_width: 140, //滑块的宽,单位是 rpx
+    maxNum: 0, //验证成功时的坐标，不需要设置，代码自动计算；
+  },
+  onLoad({ params }) {
+    if (params) {
+      this.paramsData = JSON.parse(params);
+    }
+    var that = this;
+    this.setIsOvertimeAndCountdownStr();
+    wx.getSystemInfo({
+      success: function (res) {
+        // 像素比
+        that.birpx = res.windowWidth / 375;
+        var n = Math.floor(
+          (res.windowWidth * that.area_width) / 100 -
+            (that.box_width / 2) * that.birpx
+        );
+        that.maxNum = Math.floor(n * that.birpx);
+      },
+    });
+  },
+  methods: {
+    init() {
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+      this.$wx.setData({
+        x: 0,
+        maxNum: 0,
+      });
+    },
+    setIsOvertimeAndCountdownStr() {
+      let currT = new Date().getTime();
+      this.timer = setInterval(() => {
+        this.intervalTime(currT);
+      }, 1000);
+    },
+
+    intervalTime(date1) {
+      var date3 = new Date().getTime() - date1; //时间差的毫秒数
+
+      //------------------------------
+
+      //计算出相差天数
+      var days = Math.floor(date3 / (24 * 3600 * 1000));
+
+      //计算出小时数
+
+      var leave1 = date3 % (24 * 3600 * 1000); //计算天数后剩余的毫秒数
+      var hours = Math.floor(leave1 / (3600 * 1000));
+      //计算相差分钟数
+      var leave2 = leave1 % (3600 * 1000); //计算小时数后剩余的毫秒数
+      var minutes = Math.floor(leave2 / (60 * 1000));
+      //计算相差秒数
+      var leave3 = leave2 % (60 * 1000); //计算分钟数后剩余的毫秒数
+      var seconds = Math.round(leave3 / 1000);
+      let str = '';
+      if (days) {
+        str = `${days}天${hours}小时${minutes}分钟${seconds}秒`;
+      } else if (hours) {
+        str = `${hours}小时${minutes}分钟${seconds}秒`;
+      } else if (minutes) {
+        str = `${minutes}分钟${seconds}秒`;
+      } else if (seconds) {
+        str = `${seconds}秒`;
+      }
+      this.countdownStr = `已执行: ${str}`;
+    },
+    drag(e) {
+      coord = Math.floor(e.x * this.birpx);
+      this.$wx.setData({
+        sideWeight: (e.x * 2) / this.birpx,
+      });
+    },
+    dragOver(e) {
+      if (coord >= this.maxNum) {
+        this.driverStartPlatformOtherTask();
+      } else {
+        this.$wx.setData({
+          x: 0,
+        });
+      }
+    },
+    driverStartPlatformOtherTask() {
+      let req = {
+        mainApplyId: 73,
+        applyId: this.paramsData.applyId,
+        endTimeStamp: Math.floor(new Date().getTime() / 1000),
+        userId: wepy.$auth.getUserId(),
+      };
+      wepy
+        .$api('app/platformApply/driverStartPlatformOtherTask', req)
+        .then((res) => {
+          this.state = 2;
+          this.init();
+          wx.navigateBack();
+        });
+    },
+    getTime2(time) {
+      return time ? formatTimeTwo(time * 1000, 'h:m') : '';
+    },
+    getTime(time) {
+      return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'衍生任务',
+      usingComponents: {
+        "van-image": "module:@vant/weapp/dist/image/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+@import './index.less';
+.title {
+  padding: 24rpx 24rpx 40rpx;
+  font-size: 38rpx;
+  font-weight: bold;
+}
+</style>

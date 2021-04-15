@@ -1,0 +1,345 @@
+<template>
+  <div class="header">
+    <van-dropdown-menu style="margin-left: 40rpx; " :z-index="9999">
+      <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList">
+        <div class="dropdown_item_cell" @click="onClickDept(undefined)">所有部门</div>
+        <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
+      </van-dropdown-item>
+    </van-dropdown-menu>
+  </div>
+  <div class="taskList_page">
+    <van-tabs  color="#005BAC" @change="Onclick">
+      <van-tab title="计划任务" name="1">
+        <div class="content">
+          <div class="item" v-for="item in forkliftTaskPlanList">
+            <div>
+              <div class="item_header">
+                <div>{{ item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+                <div @click="conName(item.contPhone)">{{item.contName}}</div>
+              </div>
+              <div class="item_header_c">
+                {{ item.applyDeptName }}/{{ item.goodWeight }}/{{ item.startTime }}至{{ item.endTime }}
+              </div>
+               <div>备注：{{item.memo}}</div>
+            </div>
+            <div class="item_content">
+              <div class="item_content_left">
+                <div class="common_step">
+                  <div class="common_step_left">
+                    <div class="common_step_left_t"></div>
+                    <div class="common_step_left_c"></div>
+                    <div class="common_step_left_b"></div>
+                  </div>
+                  <div class="common_step_center">
+                    <div class="ellipsis">起始地：{{ item.startAddressName }}</div>
+                    <div class="ellipsis">目的地：{{ item.endAddressName }}</div>
+                  </div>
+                </div>
+                <div class="flex">
+                  <div>{{item.carTypeName}}</div>
+                  <div class="text-r" @click="driverRobForkliftTask(item,'queryForkliftTaskPlan')">
+                    <text style="color:#037D3D;">立即开始 </text>
+                    <text>></text>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </van-tab>
+      <van-tab title="自由任务" name="2">
+        <div class="content">
+          <div class="item" v-for="item in driverLocationTaskList">
+            <div>
+              <div class="item_header">
+                <div>{{ item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+                <div @click="conName(item.contPhone)">{{item.contName}}</div>
+              </div>
+              <div class="item_header_c">
+                {{ item.applyDeptName }}/{{ item.goodWeight }}/{{ item.startTime }}至{{ item.endTime }}
+              </div>
+              <div>备注：{{item.memo}}</div>
+            </div>
+            <div class="item_content">
+              <div class="item_content_left">
+                <div class="common_step">
+                  <div class="common_step_left">
+                    <div class="common_step_left_t"></div>
+                    <div class="common_step_left_c"></div>
+                    <div class="common_step_left_b"></div>
+                  </div>
+                  <div class="common_step_center">
+                    <div class="ellipsis">起始地：{{ item.startAddressName }}</div>
+                    <div class="ellipsis">目的地：{{ item.endAddressName }}</div>
+                  </div>
+                </div>
+                <div class="flex">
+                  <div>{{item.carTypeName}}</div>
+                  <div class="text-r" @click="driverRobForkliftTask(item,'driverLocationTask')">
+                    <text style="color:#037D3D;">立即开始 </text>
+                    <text>></text>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </van-tab>
+    </van-tabs>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  wepy.page({
+    data: {
+      location: '', 
+      disable: false,
+      forkliftTaskPlanList: [],
+      driverLocationTaskList: [],
+      realTime:null,
+      currDeptName:'所有部门',
+      deptId:'',
+      deptList:[],
+      type:0,
+    },
+    onShow() {
+      wx.getLocation({
+        type: 'wgs84',
+        success: (res) => {
+          let {
+            longitude,
+            latitude
+          } = res
+          this.location = `${longitude},${latitude}`
+          // this.getTaskList()
+          if(this.type == 0){
+            this.queryForkliftTaskPlan()
+          }
+          this.Timerefresh()
+        },
+        fail(err) {
+          wepy.$showToast('获取当前地理位置失败')
+          // wx.navigateBack()
+        }
+      })
+    },
+    onPullDownRefresh(){
+      wx.showToast({
+        title:'数据已更新'
+      })
+    },
+    onHide(){
+      clearInterval(this.realTime)
+    },
+    onUnload(){
+       clearInterval(this.realTime)
+    },
+    methods: {
+      Onclick(e){
+          let index = e.$wx.detail.index
+          this.type = index
+          if(index == 0){
+            this.queryForkliftTaskPlan()
+          }
+          if(index == 1 && this.location){
+            this.driverLocationTask()
+          }else{
+            wx.showToast({
+              title:'获取地理位置失败'
+            })
+          }
+      },
+      onClickDept(item) {
+        this.deptId = item ? item.deptId : undefined; 
+        this.currDeptName = item ? item.deptName : '所有部门';
+        this.$wx.selectComponent('#dept').toggle(false)
+          console.log(item)
+          if(this.type == 0){
+            this.queryForkliftTaskPlan()
+          }
+          if(this.type == 1 && this.location){
+            this.driverLocationTask()
+          }else{
+            wx.showToast({
+              title:'获取地理位置失败'
+            })
+          }
+        },
+      getDeptList(){
+        if(this.type == 0){
+           wepy.$api('app/forkPullDown/listDeptDownList',{
+            applyType:1,
+            type:6
+          }).then((res)=>{
+            console.log(res)
+            this.deptList = res
+          })
+        }
+      },
+      conName(tel){
+         wx.makePhoneCall({
+            phoneNumber:tel,
+        })
+      },
+      driverRobForkliftTask(item, api) {
+        if (this.disable) return
+        wepy.$loading();
+        this.disable = true
+        wepy.$api('app/forkliftDriver/driverRobForkliftTask', {
+          taskId: item.taskId
+        }).then(() => {
+          wepy.$showToast('接单成功');
+          this[api]()
+        }).finally(() => {
+          this.disable = false
+        }) 
+      },
+      queryForkliftTaskPlan() {
+        wepy.$api('app/forkliftDriver/queryForkliftTaskPlan', {
+          deptId: this.deptId || undefined
+        }).then(res => {
+          if(res.length){
+             this.forkliftTaskPlanList = res || []
+          }else{
+            wx.showToast({
+              title:'未查询到任务数据',
+              icon:'none'
+            })
+          }
+          wx.hideToast();
+          wx.hideNavigationBarLoading() //完成停止加载
+          wx.stopPullDownRefresh() //停止下拉刷新
+        })
+      },
+      driverLocationTask() {
+        wepy.$api('app/forkliftDriver/driverLocationTask', {
+          location: this.location,
+          deptId: this.deptId || undefined
+        }).then(res => {
+          if(res.length!= []){
+            this.driverLocationTaskList = res || []
+           this.deptList = res[0].cancelDeptVoList
+          }else{
+            wx.showToast({
+              title:'未查询到任务数据',
+              icon:'none'
+            })
+          }
+          wx.hideNavigationBarLoading() //完成停止加载
+          wx.stopPullDownRefresh() //停止下拉刷新
+        })
+      },
+      Timerefresh(){
+        let that = this
+        this.realTime = setInterval(function(){
+          if(this.type == 0){
+            this.queryForkliftTaskPlan()
+          }
+          if(this.type == 1 && this.location){
+            this.driverLocationTask()
+          }else{
+            wx.showToast({
+              title:'获取地理位置失败'
+            })
+        }
+        wx.showToast({
+          title:'数据已更新'
+        })
+      },15000)
+      }
+    }
+  });
+</script>
+
+<config>
+{
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark" ,
+  navigationBarTitleText:'叉车-任务列表',
+  usingComponents: {
+    "van-tab": "module:@vant/weapp/dist/tab/index",
+    "van-tabs": "module:@vant/weapp/dist/tabs/index",
+    "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
+    "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
+  }
+}
+</config>
+
+<style lang="less" scoped>
+  .header{
+    border-bottom: 1rpx solid #f7f8fa;
+    display: flex;
+    justify-content: left;
+    background: #fff;
+    .dropdown_item_cell {
+      display: flex;
+      align-items: center;
+      font-size: 32rpx;
+      line-height: 44rpx;
+      border-top: 2rpx solid #ececec;
+      padding: 20rpx 40rpx;
+    }
+    view.van-dropdown-menu{
+      height:80rpx;
+    }
+  }
+  .taskList_page {
+    background: #f3f4f6;
+    .content {
+      padding-top: 24rpx;
+    }
+  }
+  .item {
+    width: 702rpx;
+    margin: 0 auto 20rpx;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+    &_header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 28rpx;
+      line-height: 40rpx;
+      margin-bottom: 10rpx;
+    }
+    &_header_c {
+      font-size: 28rpx;
+      line-height: 32rpx;
+    }
+    &_content {
+      display: flex;
+      justify-content: space-between;
+      font-size: 24rpx;
+      &_left {
+        width: 65%;
+        flex: auto;
+      }
+      &_right {
+        display: flex;
+        align-items: flex-end;
+        text-align: right;
+        align-self: stretch;
+        font-size: 24rpx;
+        padding-bottom: 7rpx;
+        word-break: normal;
+        margin-left: 30rpx;
+        text {
+          flex: auto;
+          color: #005bac;
+        }
+      }
+    }
+  }
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    &>view {
+      flex: 1;
+    }
+  }
+</style>

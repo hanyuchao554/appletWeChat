@@ -1,0 +1,353 @@
+<template>
+  <div class="distributionCars_page">
+    <div class="header">
+      <div>当前区域: {{ detailApplyDo.craneAddressName }}</div>
+      <van-icon name="/static/images/icon_filter.png" size="48rpx" />
+    </div>
+    <div class="content">
+      <div
+        class="item_wrap"
+        v-for="(item, index) in list"
+        @click="hasPopUp(item)"
+      >
+        <div class="item" :class="{ select_item_wrap: hasCheck }">
+          <div class="item_content">
+            <div class="item_content_left">
+              <van-image
+                width="216rpx"
+                height="144rpx"
+                src="/static/images/home_bg_img3.png"
+              />
+            </div>
+            <div class="item_content_right">
+              <div class="item_content_right_t">
+                <div class="tag_drop">
+                  <div class="drop"></div>
+                  {{ item.carNumber }}
+                </div>
+                <div class="font-color-gray">
+                  {{ item.carTypeName }} {{ item.weight }}吨
+                </div>
+              </div>
+              <div class="item_content_right_b">
+                <div class="car_info_s">
+                  <van-icon color="#8E9298" name="clock-o" size="26rpx" />
+                  <div class="padding-l-8">用时:{{ item.totalTime }}小时</div>
+                </div>
+                <div class="car_info_s">
+                  <van-icon color="#8E9298" name="notes-o" size="26rpx" />
+                  <div class="padding-l-8">任务:{{ item.carTaskNumber }}个</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <van-overlay show="{{ show }}">
+      <div class="wrapper">
+        <div class="block">
+          <div class="title" v-if="isLinkage === 3">
+            <div v-if="showTips" class="top_tips font-color-red font-28">
+              驳运物品重量{{ detailApplyDo.goodsWeight }}吨超出车辆承运载重量{{
+                currCartData.weight
+              }}吨
+            </div>
+            <div class="overlay_header">
+              <div>你是否将任务从</div>
+            </div>
+            <div class="overlay_content">
+              <div class="tag_drop">
+                <div class="drop"></div>
+                {{ detailApplyDo.carNumber }}
+              </div>
+              <div class="overlay_content_center">
+                <div class="tips">调整至</div>
+                <van-image
+                  width="136rpx"
+                  height="32rpx"
+                  src="/static/images/icon_log_arrow.png"
+                />
+              </div>
+              <div class="tag_drop">
+                <div class="drop"></div>
+                {{ currCartData.carNumber }}
+              </div>
+            </div>
+          </div>
+          <div class="title" v-if="isLinkage === 1">
+            是否新增
+            <div class="tag_drop">
+              <div class="drop"></div>
+              {{ currCartData.carNumber }}
+            </div>
+            为联吊任务
+          </div>
+          <div class="btn-box">
+            <van-button custom-class="btn" @click="onClickHide" type="default"
+              >取消</van-button
+            >
+            <van-button
+              custom-class="btn"
+              color="#005BAC"
+              type="default"
+              @click="submit"
+              >确认</van-button
+            >
+          </div>
+        </div>
+      </div>
+    </van-overlay>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import store from '@/store';
+import { mapState, mapMutations } from '@wepy/x';
+wepy.page({
+  store,
+  data: {
+    isDisabled: false,
+    list: [],
+    isLinkage: 0,
+    show: false,
+    currCartData: {},
+  },
+  onLoad({ isLinkage }) {
+    this.isLinkage = Number(isLinkage);
+    this.init();
+  },
+  computed: {
+    ...mapState(['detailApplyDo']),
+    showTips() {
+      return this.detailApplyDo.goodsWeight > this.currCartData.weight;
+    },
+  },
+  methods: {
+    init() {
+      let { tranDeptId, carId, craneAddress } = this.detailApplyDo;
+      let title = '';
+      let req = {};
+      if (this.isLinkage === 1) {
+        title = '塔吊-新增联吊任务';
+        req = {
+          addressId: craneAddress,
+          applyType: 3,
+          carId,
+          deptId: tranDeptId,
+        };
+      } else if (this.isLinkage === 3) {
+        title = '塔吊-更换车辆';
+        req = {
+          addressId: craneAddress,
+          applyType: 3,
+          carId,
+          deptId: tranDeptId,
+        };
+      }
+      this.selByCarStateUserAndDept(req);
+      wx.setNavigationBarTitle({
+        title,
+      });
+    },
+    hasPopUp(item) {
+      this.show = true;
+      this.currCartData = item;
+    },
+    onClickHide() {
+      this.show = false;
+    },
+    submit() {
+      if (this.isLinkage === 1) {
+        this.sendAddTask();
+      } else if (this.isLinkage === 3) {
+        this.updateTaskCarId();
+      }
+    },
+    updateTaskCarId() {
+      if (this.isDisabled) return;
+      let { prsId } = this.detailApplyDo;
+      let data = {
+        carId: this.currCartData.carId,
+        applyId: prsId,
+      };
+      wepy
+        .$api('app/craneEdit/updateTaskCarId', data)
+        .then(() => {
+          wx.setStorageSync('isSuccessCallBack', true);
+          this.$back();
+        })
+        .finally(() => {
+          this.isDisabled = false;
+        });
+    },
+    sendAddTask() {
+      if (this.isDisabled) return;
+      let { craneAddress, prsId } = this.detailApplyDo;
+      let data = {
+        addressId: craneAddress,
+        carId: this.currCartData.carId,
+        applyId: prsId,
+        isLinkage: this.isLinkage,
+      };
+      wepy
+        .$api('app/craneEdit/editCraneUpdateTimeCar', data)
+        .then(() => {
+          wx.setStorageSync('isSuccessCallBack', true);
+          this.$back();
+        })
+        .finally(() => {
+          this.isDisabled = false;
+        });
+    },
+    selByCarStateUserAndDept(req) {
+      wepy.$loading();
+      wepy.$api('app/craneDown/craneApplyCarDetail', req).then((res) => {
+        this.list = res.map((item) => {
+          item.totalTime = Math.floor(item.time / 60);
+          item.weight = Math.floor(item.fullWeight / 1000);
+          return item;
+        });
+        wx.hideToast();
+        if (!this.list || !this.list.length) {
+          wx.showToast({
+            icon: 'none',
+            title: '暂无可用车辆',
+          });
+        }
+      });
+    },
+  },
+});
+</script>
+
+<config>
+{
+  usingComponents:{
+    "van-image": "module:@vant/weapp/dist/image/index",
+    "van-overlay": "module:@vant/weapp/dist/overlay/index",
+    "van-button": "module:@vant/weapp/dist/button/index",
+    "van-icon": "module:@vant/weapp/dist/icon/index"
+  }
+}
+</config>
+
+<style lang="less" scoped>
+.distributionCars_page {
+  position: relative;
+  height: 100vh;
+}
+.wrapper {
+  width: 702rpx;
+  padding: 24rpx;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10rpx;
+  background: #fff;
+  text-align: center;
+  box-sizing: border-box;
+  .title {
+    margin-bottom: 25rpx;
+    font-size: 36rpx;
+    color: #2b2b2b;
+    line-height: 50rpx;
+  }
+  .btn-box {
+    display: flex;
+    justify-content: space-between;
+    .btn {
+      width: 320rpx;
+      height: 64rpx;
+      border-radius: 8rpx;
+    }
+  }
+}
+.overlay_footer {
+  position: static;
+  .btn {
+    font-size: 28rpx !important;
+    height: 64rpx !important;
+    line-height: 64rpx !important;
+  }
+}
+.overlay_header {
+  font-size: 36rpx;
+  font-weight: bold;
+}
+.overlay_content {
+  display: flex;
+  margin-top: 60rpx;
+  justify-content: center;
+  align-items: center;
+  &_center {
+    position: relative;
+    .tips {
+      width: 100%;
+      position: absolute;
+      top: -32rpx;
+      left: -6rpx;
+      font-size: 24rpx;
+    }
+  }
+}
+.header {
+  position: fixed;
+  display: flex;
+  justify-content: space-between;
+  width: 702rpx;
+  align-items: center;
+  height: 98rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  background: #fff;
+}
+.content {
+  position: absolute;
+  width: 100%;
+  overflow-y: scroll;
+  top: 98rpx;
+  bottom: 20rpx;
+}
+.padding-l-8 {
+  padding-left: 8rpx;
+}
+.item_wrap {
+  width: 702rpx;
+  margin: 20rpx auto 0;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 28rpx 26rpx;
+  box-sizing: border-box;
+  background: #fff;
+}
+.item_content {
+  display: flex;
+  align-items: stretch;
+  .item_content_right {
+    position: relative;
+    flex: auto;
+    height: 144rpx;
+    margin-left: 25rpx;
+    &_t,
+    &_b {
+      display: flex;
+      align-items: center;
+      font-size: 24rpx;
+    }
+    &_b {
+      position: absolute;
+      bottom: 0;
+    }
+    .car_info_s {
+      display: flex;
+      align-items: center;
+      font-size: 22rpx;
+      margin-right: 20rpx;
+    }
+  }
+}
+</style>

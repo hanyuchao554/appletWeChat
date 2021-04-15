@@ -1,0 +1,493 @@
+<template>
+  <div class="taskDetail_page">
+    <van-image width="100%"
+               height="400rpx"
+               src="/static/images/home_bg_img3.png" />
+    <div class="other_detail_title"
+         style="margin-top: 20rpx">
+      申请信息:
+    </div>
+    <div class="wrap not-top-padding">
+      <div class="cell"
+           @click="triggerDrop('showAppalyDetailDrop')">
+        <div>
+          <div class="title margin_bottom_8">
+            <div class="title_content">
+              {{detailApplyDo.jobContentName}} {{detailApplyDo.proCode}} {{ detailApplyDo.goodsTypeName }}-{{ detailApplyDo.goodsCode }}
+            </div>
+          </div>
+          <div class="font-color-gray font-24 margin_bottom_8">
+            申请部门: {{ detailApplyDo.applyDeptName }} / 驳运部门: {{ detailApplyDo.tranDeptName }}
+          </div>
+          <div class="font-24">
+            选择分段: {{detailApplyDo.proCode}}-{{ detailApplyDo.goodsCode }} {{ detailApplyDo.goodsTypeName }}; {{ detailApplyDo.goodsWeight ? '重量: ' + detailApplyDo.goodsWeight + '吨' : ''}}; 尺寸: ({{ detailApplyDo.wide }}*{{ detailApplyDo.high }}*{{ detailApplyDo.length
+            }}) (米)
+          </div>
+        </div>
+        <van-icon v-if="!showAppalyDetailDrop"
+                  name="arrow" />
+        <van-icon v-if="showAppalyDetailDrop"
+                  name="arrow-down" />
+      </div>
+      <div v-if="showAppalyDetailDrop">
+        <div class="cell">
+          <div>起始时间</div>
+          <div>{{ detailApplyDo.oldStartTime || '' }}</div>
+        </div>
+        <div class="cell">
+          <div>到达时间</div>
+          <div>{{ detailApplyDo.oldEndTime || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="wrap_content">
+            <div class="wrap_content_left">
+              <div class="wrap_content_left_t"></div>
+              <div class="wrap_content_left_c"></div>
+              <div class="wrap_content_left_b"></div>
+            </div>
+            <div class="wrap_content_right">
+              <div class="ellipsis">
+                起始地: {{ detailApplyDo.oldStartPositionName || '' }}
+              </div>
+              <div class="ellipsis">
+                目的地: {{ detailApplyDo.oldEndPositionName || '' }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="label">选择吊车</div>
+          <div class="text-r">
+            {{detailApplyDo.craneAddressName || '' }}
+            <span v-if="detailApplyDo.craneAddressName && detailApplyDo.oldCar">-</span> {{detailApplyDo.oldCar.carNumber || ''}}
+          </div>
+        </div>
+        <div class="cell">
+          <div class="label">联系人</div>
+          <div @click="makePhoneCall(detailApplyDo.contactsPhone)">{{ detailApplyDo.contactsName || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">工作内容</div>
+          <div>{{ detailApplyDo.jobContentName || '' }}</div>
+        </div>
+        <div v-if="detailApplyDo.prodDeptId"
+             class="cell">
+          <div class="label">审批部门</div>
+          <div>{{ detailApplyDo.prodDeptName || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">重要程度</div>
+          <div style="color: #bea365">{{ detailApplyDo.importanceName || '' }}</div>
+        </div>
+        <div class="cell">
+          <div>申请时间</div>
+          <div>{{ detailApplyDo.createDate }}</div>
+        </div>
+        <div class="cell">
+          <div>
+            <div class="label">申请备注</div>
+            <div style="min-height: 150rpx; margin-top: 20rpx">
+              {{ detailApplyDo.memo || ''}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="detailApplyDo.forkliftCancelReasonVo"
+         class="other_detail">
+      <div class="wrap not-top-padding">
+        <div class="cell"
+             @click="triggerDrop('showforkliftCancelReasonVoDrop')">
+          <div>取消信息</div>
+          <van-icon v-if="!showforkliftCancelReasonVoDrop"
+                    name="arrow" />
+          <van-icon v-if="showforkliftCancelReasonVoDrop"
+                    name="arrow-down" />
+        </div>
+        <div v-if="showforkliftCancelReasonVoDrop">
+          <div class="cell">
+            <div>取消时间</div>
+            <div>{{ detailApplyDo.forkliftCancelReasonVo.cancelTime || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>取消部门</div>
+            <div>{{ detailApplyDo.forkliftCancelReasonVo.deptName || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>取消人姓名</div>
+            <div>{{ detailApplyDo.forkliftCancelReasonVo.cancelName || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>取消原因</div>
+            <div>{{ detailApplyDo.forkliftCancelReasonVo.cancelReason || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>取消原因备注</div>
+            <div>{{ detailApplyDo.forkliftCancelReasonVo.cancelRemark || ''}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="!showApplicationBtn && detailApplyDo.forkliftAuditList && detailApplyDo.forkliftAuditList.length"
+         class="other_detail">
+      <div class="other_detail_title">
+        审批信息:
+      </div>
+      <div class="wrap not-top-padding"
+           v-for="(item,index) in detailApplyDo.forkliftAuditList">
+        <div class="cell"
+             @click="triggerDropListItem('forkliftAuditList',index)">
+          <div>{{item.deptName}}-{{ item.auditName }}-{{ item.reason }}</div>
+          <van-icon v-if="!item.showDrop"
+                    name="arrow" />
+          <van-icon v-if="item.showDrop"
+                    name="arrow-down" />
+        </div>
+        <div v-if="item.showDrop">
+          <div class="cell">
+            <div>审核时间</div>
+            <div>{{ item.auditTime || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>修改开始时间</div>
+            <div>{{ item.upDateStartTime || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>修改结束时间</div>
+            <div>{{ item.upDateEndTime || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>修改开始地点</div>
+            <div>{{ item.upDateStartPositionName || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>修改结束地点</div>
+            <div>{{ item.upDateEndPositionName || ''}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="detailApplyDo.editUpDateVoList && detailApplyDo.editUpDateVoList.length"
+         class="other_detail">
+      <div class="other_detail_title">
+        编制信息:
+      </div>
+      <div class="wrap not-top-padding"
+           v-for="(item,index) in detailApplyDo.editUpDateVoList">
+        <div class="cell"
+             @click="triggerDropListItem('editUpDateVoList',index)">
+          <div>{{item.auditName }}</div>
+          <van-icon v-if="!item.showDrop"
+                    name="arrow" />
+          <van-icon v-if="item.showDrop"
+                    name="arrow-down" />
+        </div>
+        <div v-if="item.showDrop">
+          <div class="cell">
+            <div>部门</div>
+            <div>{{ item.deptName || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>编制时间</div>
+            <div>{{ item.updateTime || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>编制车辆</div>
+            <div>
+              {{item.upDateCarNumber}}
+            </div>
+          </div>
+          <div class="cell">
+            <div>编制开始时间</div>
+            <div>{{ item.upDateStartTime || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>编制结束时间</div>
+            <div>{{ item.upDateEndTime || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>编制开始地点</div>
+            <div>{{ item.upDateStartPositionName || ''}}</div>
+          </div>
+          <div class="cell">
+            <div>编制结束地点</div>
+            <div>{{ item.upDateEndPositionName || ''}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="detailApplyDo.forkliftTaskList&&detailApplyDo.forkliftTaskList.length"
+         class="other_detail">
+      <div class="other_detail_title">
+        执行信息:
+      </div>
+      <div class="wrap not-top-padding"
+           v-for="(item,index) in detailApplyDo.forkliftTaskList"
+           :Key="index">
+        <div class="cell"
+             @click="triggerDropListItem('forkliftTaskList',index)">
+          <div v-if="item.taskState !=='已取消'"
+               class="cell_header">
+            <div class="cell_header_top flex_between">
+              <div class="flex_between">
+                <div v-if="item.carNumber"
+                     class="tag_drop">
+                  <div class="drop"></div>
+                  {{ item.carNumber }}
+                </div>
+                <div>{{ item.carTypeName }}</div>
+              </div>
+              <div class="font-color-red ">{{item.taskState}}</div>
+            </div>
+            <div class="cell_header_bottom">
+              <text v-if="item.driverName">司机姓名: {{item.driverName}}</text>
+              <text v-if="item.assistNameList">辅助员姓名: {{item.assistNameList}}</text>
+            </div>
+          </div>
+          <div v-if="item.taskState ==='已取消'"
+               class="flex_between">
+            <div>{{ item.carTypeName }}</div>
+            <div class="font-color-red ">{{item.taskState}}</div>
+          </div>
+          <van-icon v-if="!item.showDrop"
+                    name="arrow" />
+          <van-icon v-if="item.showDrop"
+                    name="arrow-down" />
+        </div>
+        <div v-if="item.showDrop">
+          <div class="cell">
+            <div>接单时间</div>
+            <div>{{ item.driverStartTimes || '' }}</div>
+          </div>
+          <div class="cell">
+            <div>开始执行时间</div>
+            <div>{{ item.driverToStartPositionTimes || '' }}</div>
+          </div>
+          <div class="cell">
+            <div>到达起始地时间</div>
+            <div>{{ item.driverToLoadTimes || '' }}</div>
+          </div>
+          <div class="cell">
+            <div>作业开始时间</div>
+            <div>{{ item.driverToEndPositionTimes || '' }}</div>
+          </div>
+          <div class="cell">
+            <div>作业结束时间</div>
+            <div>{{ item.driverToCompleteTimes || '' }}</div>
+          </div>
+          <div class="cell">
+            <div>结束地点</div>
+            <div>{{ item.destinationGpsName || '' }}</div>
+          </div>
+          <div class="cell">
+            <div>完成时间</div>
+            <div>{{ item.driverToSubmitTaskTimes || '' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showApplicationBtn"
+         class="footer">
+      <van-button custom-class="btn"
+                  color="#005BAC"
+                  @click="goToPage"
+                  type="default">继续申请</van-button>
+    </div>
+  </div>
+</template>
+
+<script>
+import {
+  BaseDataKey
+} from '@/constant';
+import wepy from '@wepy/core';
+import store from '@/store';
+import formatTimeTwo from '@/utils/moment.js';
+import {
+  mapState
+} from '@wepy/x';
+import CommonMixin from '@/mixins/commonMixin.js';
+wepy.page({
+  store,
+  mixins: [CommonMixin],
+  data: {
+    // 申请信息
+    showAppalyDetailDrop: false,
+    // 继续申请
+    showApplicationBtn: false,
+    // 显示取消信息
+    showforkliftCancelReasonVoDrop: false,
+  },
+  onLoad({
+    applyState
+  }) {
+    this.init(applyState);
+  },
+  computed: mapState(['detailApplyDo']),
+  methods: {
+    init(applyState) {
+      let _applyState = Number(applyState);
+      if (_applyState === 0) {
+        this.showApplicationBtn = true;
+      }
+    },
+    makePhoneCall(phone) {
+      phone &&
+        wx.makePhoneCall({
+          phoneNumber: phone
+        });
+    },
+    triggerDrop(key) {
+      this[key] = !this[key];
+    },
+    triggerDropListItem(tagList, index) {
+      let data = this.detailApplyDo[tagList][index].showDrop;
+      this.detailApplyDo[tagList][index].showDrop = !data;
+    },
+    getTime(time, hasYear) {
+      let str = hasYear ? 'Y-M-D h:m' : 'M-D h:m';
+      return time ? formatTimeTwo(time * 1000, str) : '';
+    },
+    goToPage() {
+      wx.redirectTo({
+        url: '/pages/craneApply/addTask'
+      });
+    }
+  }
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'任务详情',
+      usingComponents: {
+          "van-image": "module:@vant/weapp/dist/image/index",
+          "van-button": "module:@vant/weapp/dist/button/index",
+          "van-icon": "module:@vant/weapp/dist/icon/index"
+
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.taskDetail_page {
+  padding-bottom: 40rpx;
+  background: #f3f4f6;
+}
+.footer {
+  width: 702rpx;
+  margin: 0 auto;
+  .btn {
+    width: 100% !important;
+    margin-bottom: 30rpx;
+  }
+}
+.margin_bottom_8 {
+  margin-bottom: 8rpx;
+}
+.not-top-padding {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.title {
+  display: flex;
+  align-items: center;
+  .tag {
+    color: #fff;
+    font-size: 22rpx;
+    padding: 5rpx 10rpx;
+    line-height: 32rpx;
+    border-radius: 5rpx;
+    font-weight: 500;
+  }
+  &_content {
+    font-size: 28rpx;
+    font-weight: 500;
+    color: #2b2b2b;
+    line-height: 40rpx;
+  }
+}
+.wrap_not_border {
+  .cell {
+    border: transparent !important;
+  }
+}
+.wrap {
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 26rpx;
+  line-height: 34rpx;
+  box-sizing: border-box;
+  .cell {
+    display: flex;
+    justify-content: space-between;
+    padding: 26rpx 0;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    border-bottom: 2rpx solid #ececec;
+    & > view:nth-of-type(1) {
+      flex: auto;
+      padding-right: 40rpx;
+    }
+    & > view:nth-of-type(2) {
+      flex: none;
+    }
+  }
+  .cell:last-child {
+    border: transparent;
+  }
+  &_content {
+    display: flex;
+    align-items: center;
+    font-size: 24rpx;
+    &_left {
+      flex: none;
+      &_t {
+        width: 4rpx;
+        height: 4rpx;
+        border: 2rpx solid #005bac;
+        border-radius: 2rpx;
+      }
+      &_c {
+        width: 4rpx;
+        height: 28rpx;
+        background: #005bac;
+        margin: 4rpx 0 4rpx 2rpx;
+      }
+      &_b {
+        width: 4rpx;
+        height: 4rpx;
+        background: #005bac;
+        border: 2rpx solid #005bac;
+        border-radius: 2rpx;
+      }
+    }
+    &_right {
+      width: 75%;
+      padding-left: 20rpx;
+      font-size: 24rpx;
+      line-height: 34rpx;
+      & > view {
+        padding: 5rpx 0;
+      }
+    }
+  }
+}
+.cell_header {
+  &_bottom {
+    text {
+      display: inline-block;
+      padding-top: 20rpx;
+      padding-right: 35rpx;
+    }
+  }
+}
+.other_detail_title {
+  padding-left: 24rpx;
+  font-size: 34rpx;
+  padding-bottom: 20rpx;
+}
+</style>

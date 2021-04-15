@@ -1,0 +1,89 @@
+<template>
+  <div class="taskList_page">
+    <div class="content">
+      <div class="item" v-for="item in list" @click="goToPage(item.applyId)">
+        <div class="item_header">
+          <div class="tag" style="background:{{item.requestTypeBg}}">
+            {{ item.reqStr }}
+          </div>
+          <div>{{ item.listName }}</div>
+        </div>
+        <div class="item_header_c">
+          {{ item.deptName }}/{{ item.goodsWeight }}吨/{{ item.startTimeStamp }}至{{ item.endTimeStamp }}
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
+                <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="item_content_right">
+            <text>{{ item.applyState }}</text>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import {
+    BaseDataKey
+  } from '@/constant';
+  import wepy from '@wepy/core';
+  import formatTimeTwo from '@/utils/moment.js';
+  import CommonMixin from '@/mixins/commonMixin.js'
+  wepy.page({
+    mixins: [CommonMixin],
+    data: {
+      list: [],
+    },
+    onShow() {
+      this.getPlatformApplyCompleteTaskList();
+    },
+    methods: {
+      getPlatformApplyCompleteTaskList() {
+        wepy.$loading();
+        wepy
+          .$api('app/massage/getPlatformApplyApplyTaskList', {
+            userId: wepy.$auth.getUserId(),
+          })
+          .then((res) => {
+            this.list = []
+            if (res && res.length) {
+              this.list = this.setPlatFormTaskList(res)
+              wx.hideToast()
+            } else {
+              wepy.$showToast('未查询到数据')
+            }
+          });
+      },
+      goToPage(businessKey) {
+        wx.navigateTo({
+          url: `/pages/taskDetail/taskDetail?businessKey=${businessKey}&fromType=已完成`,
+        });
+      },
+      getTime(time) {
+        return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+      },
+    },
+  });
+</script>
+
+<config>
+{
+  navigationBarTitleText:'任务列表'
+}
+</config>
+
+<style lang="less" scoped>
+  @import './index.less';
+</style>

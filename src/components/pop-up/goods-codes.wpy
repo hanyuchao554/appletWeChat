@@ -1,0 +1,93 @@
+<template>
+  <div class="pop_up_wrap">
+    <div>
+      <div class="prop_up_title">选择分段编号</div>
+      <div class="search">
+        <div class="icon">
+          <van-icon name="search" />
+        </div>
+        <input type="text" value="{{searchData}}" placeholder="请输入工程编号" placeholder-class="placeholder" bindinput="onChage" />
+      </div>
+    </div>
+    <div class="prop_up_item_group">
+      <div
+        class="prop_up_item"
+        @click="onSelect(item)"
+        v-for="item in searchData ? searchList : list"
+      >
+        {{ item }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+wepy.component({
+  props: {
+    list: {
+      type: Array,
+    },
+    goodsCode: {
+      type: String,
+    },
+  },
+  data: {
+    searchData: '',
+    searchList: [],
+  },
+  methods: {
+    onSelect(goodsCode) {
+      this.$emit('onSelectGoodsCode', goodsCode);
+    },
+    onChage(e) {
+      this.searchData = e.$wx.detail.value;
+      let reg = new RegExp(this.searchData);
+      this.searchList = this.list.filter((item) => {eg.test(item)});
+    },
+  },
+});
+</script>
+
+<config>
+{
+    usingComponents: {
+          "van-search": "module:@vant/weapp/dist/search/index",
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+    }
+}
+</config>
+
+<style lang="less" scoped>
+@import './index.less';
+.prop_up_item_group {
+  height: 700rpx;
+  .prop_up_item{
+    // border: 1rpx solid #000;
+    font-size: 28rpx;
+    padding: 25rpx 24rpx;
+    border-bottom:1rpx solid #ccc ;
+  }
+}
+.search{
+  background:#fff;
+  display:flex;
+  align-items: center;
+  position: relative;
+  padding: 20rpx;
+  .icon{
+    position:absolute;
+    font-size: 32rpx;
+    left:35rpx;
+    top:35rpx;
+  }
+  input{
+    background: #f7f8fa;
+    width: 100%;
+    padding: 12rpx 0 12rpx 60rpx;
+  }
+  .placeholder{
+    font-size: 28rpx;
+  }
+}
+</style>

@@ -1,0 +1,558 @@
+<template>
+  <div class="taskList_page">
+    <div v-if="applyState === 150" class="header">
+      <div class="header_left">
+        <van-checkbox v-if="hasCheck" custom-class="v_checkBox" checked-color="#005bac" value="{{ allCheck }}" @change="onChangeAllCheck"></van-checkbox>
+      </div>
+      <div class="header_center text-c">取消任务列表</div>
+      <div class="header_right text-r">
+        <div class="btn_d" @click="hasSelect">选择</div>
+      </div>
+    </div>
+    <div style="{{applyState !== 150 ?' top:20rpx;' : ''}}" class="content" :class="{'select_wrap':hasCheck}">
+      <div class="item_wrap" v-for="(item,index) in list">
+        <div v-if="hasCheck" class="checkBox">
+          <van-checkbox custom-class="v_checkBox" checked-color="#005bac" value="{{ item.checked }}" @change="onChange(index)"></van-checkbox>
+        </div>
+        <div class="item" :class="{'select_item_wrap':hasCheck}">
+          <div class="item_header">
+            <div>{{ item.jobContent }} {{item.goodsTypeName}}-{{ item.goodsCode }}</div>
+            <van-icon v-if="applyState === 0" @click="onDelect(item.prsId)" name="/static/images/icon_delete.png" size="40rpx"></van-icon>
+          </div>
+          <div class="item_content">
+            <div v-if="!item.hasForkliftTaskList" @click="goToDetail(item)" class="item_content_right">
+              <div class="item_content_right_t">
+                {{ item.applyDeptName }}/{{ item.goodsWeight || 0 }}吨/{{ item.startTime }}至{{ item.endTime }}
+              </div>
+              <div class="common_step">
+                <div class="common_step_left">
+                  <div class="common_step_left_t"></div>
+                  <div class="common_step_left_c"></div>
+                  <div class="common_step_left_b"></div>
+                </div>
+                <div class="common_step_center">
+                  <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
+                  <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
+                </div>
+              </div>
+            </div>
+            <div v-if="item.hasForkliftTaskList" @click="goToDetail(item)" class="item_content_right">
+              <div class="item_content_right_t" style="border-bottom: 4rpx solid #ececec; padding-bottom:20rpx;">
+                {{ item.applyDeptName }}/{{ item.goodsWeight || 0 }}吨
+              </div>
+              <div class="sub_item" v-for="sub in item.forkliftTaskList">
+                <div class="flex_between">
+                  <div class="flex">
+                    <div v-if="sub.carNumber" class="tag_drop">
+                      <div class="drop"></div>
+                      {{ sub.carNumber }}
+                    </div>
+                    <div class="font-24">{{ sub.carTypeName }}</div>
+                    <div class="font-24" style="margin-left:10rpx">铲次:{{sub.realJobQuantity || 0}}</div>
+                  </div>
+                  <div class="font-color-blue font-24">{{sub.taskState}}</div>
+                </div>
+                <div class="item_content_right_t" style="margin-top:10rpx;">开始时间: {{sub.tranState === 50? sub.driverStartTimes : item.startTime}}-完成时间: {{sub.tranState === 50? sub.driverToSubmitTaskTimes : item.endTime}}</div>
+                <div class="common_step">
+                  <div class="common_step_left">
+                    <div class="common_step_left_t"></div>
+                    <div class="common_step_left_c"></div>
+                    <div class="common_step_left_b"></div>
+                  </div>
+                  <div class="common_step_center">
+                    <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
+                    <div class="ellipsis">目的地：{{ sub.tranState === 50? sub.destinationGpsName : item.endPositionName }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="!item.hasForkliftTaskList" class="item_content_foot">
+            <div @click="goToDetail(item)" style="margin-top:20rpx;flex:1;">
+              {{item.cartDataStr}}
+              <div>铲次:{{item.jobQuantity}}</div>
+            </div>
+            <div style="margin-top:20rpx;flex:1;" v-if="applyState !== 0 && applyState !== 200" @click="handleGoToPage(item)" class="text-r">
+              <text class="font-color-blue">{{item.applyStateName}}</text>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-show="hasCheck" class="footer">
+      <van-button custom-class="btn" type="default" @click="close">取消</van-button>
+      <van-button custom-class="btn" color="#005BAC" type="default" @click="goToCancelTask">确认</van-button>
+    </div>
+    <van-overlay show="{{ show }}" @click="onClickHide">
+      <view class="wrapper">
+        <div class="title">确认是否删除任务？</div>
+        <div class="btn-box">
+          <van-button custom-class="btn" @click="onClickHide" type="default">取消</van-button>
+          <van-button custom-class="btn" color="#005BAC" type="default" @click="submitConfirm">确认</van-button>
+        </div>
+      </view>
+    </van-overlay>
+  </div>
+</template>
+
+<script>
+  import {
+    BaseDataKey
+  } from '@/constant';
+  import wepy from '@wepy/core';
+  import formatTimeTwo from '@/utils/moment.js';
+  import CommonMixin from '@/mixins/commonMixin.js';
+  import store from '@/store';
+  import {
+    mapMutations
+  } from '@wepy/x';
+  wepy.page({
+    store,
+    mixins: [CommonMixin],
+    data: {
+      hasCheck: false,
+      isDisable: false,
+      currApplyId: 0,
+      applyState: null,
+      apiUrl: 'app/forkliftApply/forkApplyDetailByApplyUserId',
+      upData: {
+        applyState: null
+      },
+      list: [],
+      show: false
+    },
+    onLoad({
+      applyState
+    }) {
+      this.applyState = Number(applyState);
+      this.upData.applyState = this.applyState;
+      this.setTilte(this.applyState);
+    },
+    onShow() {
+      this.getTaskList();
+    },
+    onUnload() {
+      this.setDetailApplyDo();
+    },
+    computed: {
+      allCheck() {
+        return this.list.every(item => item.checked)
+      },
+      applyIds() {
+        let _applyIds = [];
+        this.list.forEach((item) => {
+          if (item.checked) _applyIds.push(item.prsId);
+        });
+        return _applyIds;
+      }
+    },
+    methods: {
+      ...mapMutations(['setDetailApplyDo']),
+      onChange(index) {
+        let item = this.list[index];
+        item.checked = !item.checked;
+      },
+      onChangeAllCheck(e) {
+        this.list.forEach((item) => {
+          item.checked = e.$wx.detail;
+        });
+      },
+      hasSelect() {
+        if (this.list.length) {
+          this.hasCheck = true;
+        }
+      },
+      close() {
+        this.hasCheck = false;
+        this.list.forEach(item => item.checked = false)
+      },
+      onDelect(id) {
+        this.currApplyId = id;
+        this.show = true;
+      },
+      submitConfirm() {
+        if (this.isDisable) return;
+        this.isDisable = true;
+        wepy.$loading();
+        wepy.$api('app/forkliftApply/forkliftBatchDel', [{
+            applyId: this.currApplyId
+          }])
+          .then(() => {
+            this.onClickHide();
+            wx.hideToast();
+            this.getTaskList();
+            this.isDisable = false;
+          })
+          .catch(() => {
+            this.isDisable = false;
+          });
+      },
+      onClickHide() {
+        this.show = false;
+      },
+      setTilte(applyState) {
+        let title = '';
+        switch (applyState) {
+          case 0:
+            title = '草稿箱列表';
+            break;
+          case 50:
+            title = '已完成任务列表';
+            break;
+          case 100:
+            title = '未完成任务列表';
+            break;
+          case 150:
+            title = '任务取消列表';
+            this.apiUrl = 'app/forkliftApply/applyUserCancelList';
+            this.upData = {};
+            break;
+          case 200:
+            title = '历史审批';
+            this.apiUrl = 'app/forkliftApply/auditApplyHistory';
+            this.upData = {};
+            break;
+          default:
+            break;
+        }
+        wx.setNavigationBarTitle({
+          title: `叉车-${title}`
+        });
+      },
+      getTaskList() {
+        wepy.$loading();
+        wepy.$api(this.apiUrl, this.upData).then((res) => {
+          let deList = JSON.parse(JSON.stringify(this.list))
+          this.list = [];
+          if (res && res.length) {
+            this.list = res.map((item) => {
+              if (item.carTypeCount && item.carTypeCount.length) {
+                let flag = item.carTypeCount.map((subItem) => {
+                  let {
+                    carCount,
+                    carTypeName
+                  } = subItem;
+                  return `${carTypeName}:${carCount}辆`;
+                });
+                item.cartDataStr = flag.join('; ');
+              }
+              if (this.applyState === 150) {
+                let flag = deList.find(sub => sub.prsId === item.prsId)
+                if (flag && flag.checked) {
+                  item.checked = true
+                } else {
+                  item.checked = false
+                }
+              }
+              item.hasForkliftTaskList = false
+              if (item.forkliftTaskList && item.forkliftTaskList.length) {
+                item.hasForkliftTaskList = item.forkliftTaskList.some(sub => sub.tranState === 50)
+              };
+              return item;
+            });
+            wx.hideToast();
+          } else {
+            wepy.$showToast('未查询到数据');
+          }
+        });
+      },
+      getTime(time) {
+        return time ? formatTimeTwo(time * 1000, 'Y-M-D h:m') : '';
+      },
+      handleGoToPage(item) {
+        this.goToDetail(item);
+      },
+      goToCancelTask(item) {
+        if (this.applyIds.length) {
+          let ids = JSON.stringify(this.applyIds)
+          wx.navigateTo({
+            url: `/pages/forkerLeft/cancelTask?applyIdList=${ids}`
+          });
+        }
+      },
+      goToDetail(item) {
+        let data = this.initForkerLeftData(item);
+        let _data = this.setDetailApplyDoAddTaskData(data);
+        this.setDetailApplyDo(_data);
+        wx.navigateTo({
+          url: `/pages/forkerLeft/taskDetail?applyState=${this.applyState}`
+        });
+      },
+      setDetailApplyDoAddTaskData(item) {
+        let _data = JSON.parse(JSON.stringify(item));
+        _data.jobContent = item.jobContentId;
+        _data.jobContentStr = item.jobContent;
+        _data.importance = item.importanceId;
+        _data.importanceStr = item.importance;
+        _data.startTime = item.startDateTime;
+        _data.endTime = item.endDateTime;
+        _data._startTime = item.startTime;
+        _data._endTime = item.endTime;
+        _data.goodsWeightStr = item.goodsWeight;
+        _data.goodsWeight = item.goodsWeight * 1000;
+        _data.totalCartWeigh = 0
+        if (_data.tranDeptId) {
+          _data.departmentOrArea = 1
+          _data.departmentOrAreaName = '驳运部门'
+          _data.departmentOrAreaDetailStr = '驳运部门: ' + _data.tranDeptName || ''
+        } else if (_data.craneAddress) {
+          _data.departmentOrArea = 2
+          _data.departmentOrAreaName = '驳运区域'
+          _data.departmentOrAreaDetailStr = '驳运区域: ' + _data.craneAddressName || ''
+        } else {
+          _data.departmentOrArea = ''
+          _data.departmentOrAreaName = ''
+          _data.departmentOrAreaDetailStr = '-'
+        }
+        if (item.oldCarTypeCount && item.oldCarTypeCount.length) {
+          let str = [];
+          let data = [];
+          item.oldCarTypeCount.forEach((item) => {
+            _data.totalCartWeigh += parseInt(item.carTypeName) * item.carCount
+            str.push(`${item.carTypeName}*${item.carCount}`);
+            data.push(`${item.carTypeId}*${item.carCount}`);
+          });
+          _data.carTypeCount = data.join(',');
+          _data._carTypeCountList = str;
+        }
+        if (item.goodsId) {
+          _data.lighterageStr = `${item.goodsTypeName}-${item.goodsCode}${
+                        item.goodsWeight ? item.goodsWeight + '吨' : ''
+                        }`;
+          _data.goodsWeightStr = item.goodsWeight || '';
+        }
+        return _data;
+      },
+      onClickHide() {
+        this.show = false;
+      },
+      initForkerLeftData(data) {
+        let _item = JSON.parse(JSON.stringify(data));
+        let {
+          forkliftTaskList,
+          forkliftAuditList,
+          editUpDateVoList
+        } = _item;
+        // 执行信息
+        if (forkliftTaskList && forkliftTaskList.length) {
+          _item.forkliftTaskList = forkliftTaskList.map((item) => {
+            this.$set(item, 'showDrop', false);
+            return item;
+          });
+        }
+        if (forkliftAuditList && forkliftAuditList.length) {
+          _item.forkliftAuditList = forkliftAuditList.map((item) => {
+            this.$set(item, 'showDrop', false);
+            return item;
+          });
+        }
+        if (editUpDateVoList && editUpDateVoList.length) {
+          _item.editUpDateVoList = editUpDateVoList.map((item) => {
+            if (item.upDateCarTypeCount && item.upDateCarTypeCount.length) {
+              let str = [];
+              item.upDateCarTypeCount.forEach((item) => {
+                str.push(`${item.carTypeName}*${item.carCount}`);
+              });
+              item._carTypeCountList = str;
+            }
+            this.$set(item, 'showDrop', false);
+            return item;
+          });
+        }
+        return _item;
+      }
+    }
+  });
+</script>
+
+<config>
+{
+  usingComponents: {
+    "van-icon": "module:@vant/weapp/dist/icon/index",
+    "van-overlay": "module:@vant/weapp/dist/overlay/index",
+    "van-button": "module:@vant/weapp/dist/button/index",
+     "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
+     "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index",    
+  }
+}
+</config>
+
+<style lang="less" scoped>
+  .taskList_page {
+    position: relative;
+    height: 100vh;
+    background: #f3f4f6;
+    .header {
+      display: flex;
+      position: fixed;
+      width: 100%;
+      height: 88rpx;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 32rpx;
+      background: #fff;
+      padding: 0 24rpx;
+      box-sizing: border-box;
+      &_left,
+      &_right {
+        width: 25%;
+      }
+      &_center {
+        width: 50%;
+      }
+      .btn_d {
+        display: inline-block;
+        width: 110rpx;
+        height: 48rpx;
+        line-height: 48rpx;
+        border-radius: 4rpx;
+        font-size: 30rpx;
+        background: #005bac;
+        text-align: center;
+        font-size: 32rpx;
+        color: #ffff;
+      }
+    }
+    .content {
+      position: absolute;
+      width: 100%;
+      top: 108rpx;
+      bottom: 20rpx;
+      overflow-y: scroll; // padding-top: 34rpx;
+    }
+  }
+  .memo {
+    font-size: 28rpx;
+    margin: 10rpx 0;
+  }
+  .item_wrap:first-child {
+    margin-top: 0;
+  }
+  .item_wrap {
+    display: flex;
+    align-items: center;
+    width: 702rpx;
+    margin: 20rpx auto 0;
+    .checkBox {
+      width: 10%;
+      flex: none;
+    }
+  }
+  .select_item_wrap {
+    width: 640rpx !important;
+  }
+  .item {
+    width: 100%;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+    flex: none;
+    &_header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      &_left {
+        display: flex;
+        align-items: center;
+        font-size: 28rpx;
+        font-weight: 500;
+        color: #2b2b2b;
+        line-height: 40rpx;
+        .tag {
+          color: #fff;
+          font-size: 22rpx;
+          padding: 5rpx 10rpx;
+          line-height: 32rpx;
+          border-radius: 5rpx;
+          font-weight: 500;
+          margin-right: 10rpx;
+        }
+      }
+      &_right {
+        font-size: 24rpx;
+        font-weight: 500;
+        color: #efa600;
+        line-height: 34rpx;
+      }
+    }
+    &_content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 12rpx;
+      &_left {
+        margin-right: 14rpx;
+      }
+      &_right {
+        width: 100%;
+        position: relative;
+        &_t {
+          font-size: 26rpx;
+          font-weight: 400;
+          color:#000;
+          line-height:1.2rem;
+        }
+      }
+    }
+  }
+  .item_content_foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 24rpx;
+  }
+  .footer {
+    display: flex;
+    position: fixed;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    height: 130rpx;
+    padding: 15rpx 24rpx;
+    bottom: 0;
+    box-sizing: border-box;
+    .btn {
+      width: 320rpx;
+      height: 64rpx;
+    }
+  }
+  .select_wrap {
+    bottom: 130rpx !important;
+  }
+  .wrapper {
+    width: 702rpx;
+    padding: 24rpx;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 10rpx;
+    background: #fff;
+    text-align: center;
+    box-sizing: border-box;
+    .title {
+      margin-bottom: 25rpx;
+      font-size: 36rpx;
+      color: #2b2b2b;
+      line-height: 50rpx;
+    }
+    .btn-box {
+      display: flex;
+      justify-content: space-between;
+      .btn {
+        width: 320rpx;
+        height: 64rpx;
+        border-radius: 8rpx;
+      }
+    }
+  }
+  .sub_item {
+    margin: 20rpx 0;
+  }
+  .sub_item:not(:last-of-type) {
+    border-bottom: 4rpx solid #ececec;
+    padding-bottom: 20rpx;
+  }
+</style>

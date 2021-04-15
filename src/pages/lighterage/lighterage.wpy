@@ -1,0 +1,459 @@
+<template>
+  <div class="lighterage_page">
+    <div class="content">
+      <div class="item"
+           @click="hasPop('hasProCodePop')">
+        <div class="item_value">{{ goodData.proCode || '请选择工程编号' }}</div>
+        <div class="item_right">
+          <van-icon color="#8E9298"
+                    name="arrow-down" />
+        </div>
+      </div>
+        <!-- <van-search value="{{ value }}" input-align="center" placeholder="请输入搜索关键词"></van-search>     -->
+
+      <div class="item"
+           @click="hasPop('hasGoodTypePop')">
+        <div class="item_value">{{ goodData.goodsType || '请选择类别' }}</div>
+        <div class="item_right">
+          <van-icon color="#8E9298"
+                    name="arrow-down" />
+        </div>
+      </div>
+      <!-- 选择分段 -->
+      <div class="item"
+           @click="hasPop('hasGoodsCodesPop')"
+           v-if="goodData.operatorType === 1">
+        <div class="item_value">{{ goodData.goodsCode || '选择分段' }}</div>
+        <div class="item_right">
+          <van-icon color="#8E9298"
+                    name="arrow-down" />
+        </div>
+      </div>
+      <div v-if="isInputWeight === 1 || goodData.operatorType === 2"
+           class="item">
+        <div class="item_value">重量：</div>
+        <div class="item_right">
+          <input type="digit"
+                 input-align="right"
+                 v-model="goodData.goodsWeight"
+                 placeholder="请输入重量" />
+          <text>吨</text>
+        </div>
+      </div>
+      <div v-if="goodData.operatorType === 2">
+        <!-- <m-textarea height="150rpx"
+                    placeholder="请输入物品"
+                    :data="goodData.goodsCode"
+                    :isReplaceTextarea="isReplaceTextarea"
+                    @onChageData="onChageGoodsCode"></m-textarea> -->
+        <div class="remarks">
+          <textarea v-model="detailApplyDo.memo"  placeholder="请输入备注" bindinput="onChageGoodsCode"  />
+        </div>
+      </div>
+      <!-- goodsCodesDetail -->
+      <div v-if="goodsCodesDetail && goodData.operatorType === 1"
+           class="goodsCodesDetail">
+        <div class="flex section">
+          <div class="text_l">类别：{{ goodsCodesDetail.goodsType }}</div>
+          <div class="text_r">
+            吨位：{{ goodsCodesDetail.goodsWeight / 1000 }}吨
+          </div>
+        </div>
+        <div class="section">
+          尺寸：{{ goodsCodesDetail.goodsWidth }}*{{ goodsCodesDetail.goodsHigh }}*{{ goodsCodesDetail.goodsLength }}（米）
+        </div>
+        <div class="section">
+          是否大型分段：{{ goodsCodesDetail.isBigGoods === 0 ? '否' : '是' }}
+        </div>
+        <div class="section">是否超宽高：{{ goodsCodesDetail.isOverSize }}</div>
+      </div>
+    </div>
+    <div class="footer">
+      <van-button custom-class="btn"
+                  @click="submit">确定</van-button>
+    </div>
+    <!-- 工程编号                :close-on-click-overlay="false"
+               closeable-->
+    <van-popup round position="bottom" :show="hasProCodePop"  @close="colsePopUp('hasProCodePop')">
+      <pro-code :proCode="goodData.proCode" :list="proCodes" @onSelectProCode="onSelectProCode"></pro-code>
+    </van-popup>
+    <!-- 工程类别 -->
+    <van-popup round position="bottom" :show="hasGoodTypePop" @close="colsePopUp('hasGoodTypePop')">
+        <goods-type :goodsType="goodData.goodsType" :list="goodsTypes" @onSelectGoodsType="onSelectGoodsType"> </goods-type> 
+    </van-popup>
+    <!-- 分段编号 -->
+    <van-popup round position="bottom" :show="hasGoodsCodesPop" @close="colsePopUp('hasGoodsCodesPop')" :close-on-click-overlay="false" closeable>
+      <goods-codes :goodsCode="goodData.goodsCode" :list="goodsCodes"  @onSelectGoodsCode="onSelectGoodsCode"></goods-codes>
+    </van-popup>
+
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import eventHub from '@/common/eventHub';
+import {
+  mapState,
+  mapMutations
+} from '@wepy/x';
+import store from '@/store';
+wepy.page({
+  store,
+  data: {
+    isInputWeight: 0,
+    type: '',
+    goodData: {
+      proCode: '',
+      goodsType: '',
+      operatorType: null,
+      goodsCode: '',
+      goodsWeight: null
+    },
+    goodsCodes: null,
+    proCodes: [],
+    goodsTypes: [],
+    hasProCodePop: false,
+    hasGoodTypePop: false,
+    hasGoodsCodesPop: false,
+    goodsCodesDetail: null,
+    updateGoodsMessageData: {
+      createId: 0,
+      goodsCode: '',
+      goodsHigh: 0,
+      goodsId: 0,
+      goodsLength: 0,
+      goodsPositionId: 0,
+      goodsType: '',
+      goodsWeight: 0,
+      goodsWidth: 0,
+      isBigGoods: 0,
+      isBinder: 1,
+      isOverSize: '',
+      lastTranTime: 0,
+      proCode: '',
+      state: 0
+    },
+    rules: {
+      proCode: {
+        message: '请选择工程编号'
+      },
+      goodsType: {
+        message: '请选择类别'
+      },
+      goodsCode: {
+        message: '请输入物品'
+      }
+    }
+  },
+  async onLoad({
+    type
+  }) {
+    this.type = type
+    if (this.type === 'query') {
+      this.goodData.proCode = this.detailApplyDo.proCode;
+      this.goodData.goodsCode = this.detailApplyDo.goodsCode;
+      this.goodData.goodsType = this.detailApplyDo.goodsType;
+      this.goodData.goodsWeight = this.detailApplyDo.goodsWeight;
+      this.goodData.proCode && this.getGoodsTypes();
+      this.goodData.goodsType && await this.getGoodsCodesAndOperatorType();
+    } else if (this.detailApplyDo.goodsId) {
+      for (let key in this.goodData) {
+        this.goodData[key] = this.detailApplyDo[key];
+      }
+      this.goodData.proCode = this.detailApplyDo.goodsProCode;
+      this.goodData.goodsCode = this.detailApplyDo.goodsGoodsCode;
+      this.goodData.goodsWeight = Math.floor(Number(this.goodData.goodsWeight) / 1000);
+      this.getGoodsTypes();
+      await this.getGoodsCodesAndOperatorType();
+      if (this.goodData.operatorType === 1) {
+        this.getGoodsListByProCodeAndGoodsCode();
+      }
+    }
+    this.getProCodes();
+  },
+  computed: {
+    ...mapState(['detailApplyDo']),
+    isReplaceTextarea() {
+      let list = [this.hasProCodePop, this.hasGoodTypePop, this.hasGoodsCodesPop];
+      return list.some((item) => item);
+    }
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    onChageGoodsCode(goodsCode) {
+      this.goodData.goodsCode = goodsCode.$wx.detail.value;
+    },
+    getProCodes() {
+      return wepy.$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {}).then((res) => {
+        this.proCodes = res.proCode;
+      });
+    },
+    getGoodsTypes() {
+      return wepy
+        .$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {
+          proCode: this.goodData.proCode,
+          applyType:2
+        })
+        .then((res) => {
+          this.goodsTypes = res.goodsType;
+        });
+    },
+    getGoodsCodesAndOperatorType() {
+      return wepy
+        .$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {
+          proCode: this.goodData.proCode,
+          goodsType: this.goodData.goodsType,
+          applyType:2
+        })
+        .then((res) => {
+          this.goodData.operatorType = res.operatorType;
+          this.goodsCodes = res.goodsCodes;
+        });
+    },
+    getGoodsListByProCodeAndGoodsCode() {
+      let data = this.getSubmitData();
+      return wepy.$api('appPlatform/goods/getGoodsListByProCodeAndGoodsCode', data).then((res) => {
+        this.goodsCodesDetail = res.goods;
+        if (res.isInputWeight === 1 || res.goods.goodsWeight === 0) {
+          this.isInputWeight = 1;
+        }
+        if (this.goodData.operatorType === 1) {
+          this.goodData.goodsWeight = Math.floor(res.goods.goodsWeight / 1000)
+        }
+      });
+    },
+    colsePopUp(key) {
+      this[key] = false;
+    },
+    hasPop(key) {
+      if (key === 'hasGoodTypePop') {
+        if (this.goodData.proCode) this[key] = true;
+      } else {
+        this[key] = true;
+      }
+    },
+    valid(updata) {
+      let isValid;
+      let goodsWeight = {
+        type: 'number',
+        message: '请输入重量'
+      };
+      if (this.goodData.operatorType === 1) {
+        // 片段
+        this.rules.goodsCode.message = '请选择分段';
+        isValid = wepy.$valid.handleValid({ ...this.rules, goodsWeight }, { ...updata, goodsWeight: this.goodData.goodsWeight });
+      } else if (this.goodData.operatorType === 2) {
+        updata.goodsWeight = this.goodData.goodsWeight;
+        this.rules.goodsCode.message = '请输入物品';
+        isValid = wepy.$valid.handleValid({
+          ...this.rules,
+          goodsWeight
+        }, { ...updata, goodsWeight: this.goodData.goodsWeight });
+      }
+      return isValid;
+    },
+    getSubmitData() {
+      return {
+        goodsCode: this.goodData.goodsCode,
+        goodsType: this.goodData.goodsType,
+        operatorType: this.goodData.operatorType,
+        proCode: this.goodData.proCode
+      };
+    },
+    async submit() {
+      let valid = true
+      let data = this.getSubmitData();
+      if (this.type !== 'query') valid = this.valid(data);
+      if (valid) {
+        if (this.type === 'query') {
+          let {
+            proCode,
+            goodsCode,
+            goodsType,
+            goodsWeight
+          } = this.goodData
+          this.detailApplyDo.proCode = proCode
+          this.detailApplyDo.goodsCode = goodsCode
+          this.detailApplyDo.goodsType = goodsType
+          this.detailApplyDo.goodsWeight = goodsWeight || this.goodsCodesDetail.goodsWeight
+          this.setDetailApplyDo(this.detailApplyDo)
+          wx.navigateBack()
+        } else {
+          if (this.goodData.operatorType === 2) {
+            await this.getGoodsListByProCodeAndGoodsCode();
+            await this.sendUpdateGoodsMessage();
+            this.submitSuccess();
+          } else if (this.goodData.operatorType === 1) {
+            if (this.isInputWeight === 1) await this.sendUpdateGoodsMessage();
+            this.submitSuccess();
+          }
+        }
+      }
+    },
+    sendUpdateGoodsMessage() {
+      let upData = JSON.parse(JSON.stringify(this.updateGoodsMessageData));
+      for (let key in this.updateGoodsMessageData) {
+        upData[key] = this.goodsCodesDetail[key] || upData[key];
+      }
+      upData.goodsWeight = Math.floor(this.goodData.goodsWeight * 1000);
+      this.goodsCodesDetail.goodsWeight = Math.floor(this.goodData.goodsWeight * 1000);
+      this.goodsCodesDetail.operatorType = this.goodData.operatorType;
+      return wepy.$api('appPlatform/goods/updateGoodsMessage', upData);
+    },
+    onSelectProCode(proCode) {
+      this.goodData.proCode = proCode;
+      this.goodData.goodsType = '';
+      this.hasProCodePop = false;
+      this.goodData.operatorType = null;
+      this.goodData.goodsWeight = null;
+      this.goodsCodes = null;
+      this.goodData.goodsCode = '';
+      this.goodsCodesDetail = null;
+      this.isInputWeight = 0
+      this.getGoodsTypes();
+    },
+    onSelectGoodsType(goodsType) {
+      this.goodData.goodsType = goodsType;
+      this.hasGoodTypePop = false;
+      this.goodData.operatorType = null;
+      this.goodData.goodsCode = '';
+      this.goodData.goodsWeight = null;
+      this.goodsCodes = null;
+      this.goodsCodesDetail = null;
+      this.isInputWeight = 0
+      this.getGoodsCodesAndOperatorType();
+    },
+    onSelectGoodsCode(goodsCode) {
+      this.goodData.goodsCode = goodsCode;
+      this.hasGoodsCodesPop = false;
+      let data = this.getSubmitData();
+      this.getGoodsListByProCodeAndGoodsCode(data);
+    },
+    getGoodsPositionGps(goodsId) {
+      return wepy.$api('appPlatform/goods/getGoodsPositionGps', {
+        goodsId
+      }).then((res) => {
+        this.detailApplyDo.startPositionName = res.addressName;
+        this.detailApplyDo.startPositionId = res.id;
+        this.detailApplyDo.startPositionGps = res.positionGps;
+      });
+    },
+    async submitSuccess() {
+      let {
+        proCode,
+        goodsCode,
+        goodsType,
+        goodsId,
+        goodsWeight
+      } = this.goodsCodesDetail;
+      await this.getGoodsPositionGps(goodsId);
+      this.detailApplyDo.goodsId = goodsId;
+      this.detailApplyDo.goodsProCode = proCode;
+      this.detailApplyDo.goodsType = goodsType;
+      this.detailApplyDo.goodsGoodsCode = goodsCode;
+      this.detailApplyDo.goodsWeight = goodsWeight;
+      this.setDetailApplyDo(this.detailApplyDo);
+      wx.navigateBack();
+    }
+  }
+});
+</script>
+
+<config>
+{
+    navigationBarTitleText:'选择驳运对象',
+    usingComponents: {
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+          "van-popup": "module:@vant/weapp/dist/popup/index",
+          "pro-code": "~@/components/pop-up/pro-code",
+          "goods-type": "~@/components/pop-up/goods-type",
+          "goods-codes": "~@/components/pop-up/goods-codes",
+          "m-textarea": "~@/components/control/m-textarea",
+          "van-button": "module:@vant/weapp/dist/button/index",
+          "van-popup": "module:@vant/weapp/dist/popup/index",
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.remarks{
+  height: 150rpx;
+  background: #fff;
+  padding: 15rpx 25rpx;
+  border-radius: 5rpx;
+  textarea{
+    height: 150rpx;
+  }
+}
+.lighterage_page {
+  position: relative;
+  height: 100vh;
+}
+.content {
+  position: absolute;
+  width: 100%;
+  top: 40rpx;
+  bottom: 150rpx;
+  padding: 0 24rpx;
+  overflow-y: scroll;
+  box-sizing: border-box;
+}
+.footer {
+  width: 100%;
+  position: fixed;
+  bottom: 20rpx;
+  text-align: center;
+  .btn {
+    width: 702rpx;
+    height: 88rpx;
+    background: #005bac;
+    color: #fff;
+    font-size: 32rpx;
+    border-radius: 8rpx;
+  }
+}
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 96rpx;
+  margin-bottom: 30rpx;
+  background: #edf1f4;
+  border-radius: 8rpx;
+  border: 2rpx solid #e4e5e5;
+  padding: 0 40rpx;
+  box-sizing: border-box;
+  &_value {
+    font-size: 32rpx;
+    font-weight: 400;
+    color: #2b2b2b;
+    line-height: 44rpx;
+  }
+  &_right {
+    input {
+      display: inline-block;
+      width: 160rpx;
+      margin-right: 20rpx;
+      vertical-align: middle;
+      text-align: right;
+    }
+    text {
+      vertical-align: middle;
+    }
+  }
+}
+.goodsCodesDetail {
+  font-size: 32rpx;
+  .section {
+    margin-bottom: 20rpx;
+    line-height: 44rpx;
+  }
+  .flex {
+    display: flex;
+    .text_l {
+      padding-right: 170rpx;
+    }
+  }
+}
+</style>

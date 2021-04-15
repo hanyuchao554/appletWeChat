@@ -1,0 +1,318 @@
+<template>
+  <div class="taskList_page">
+    <div class="header">
+      <div class="item">
+        <div>
+          <div class="item_header">
+            <div>
+              <!-- <text class="font-color-red"
+                    style="padding-right:20rpx;">{{detailApplyDoData.applyStateName}}</text> -->
+              {{ detailApplyDoData.jobContentName
+              }}{{ detailApplyDoData.goodsCode }}
+            </div>
+          </div>
+          <div class="item_header_c">
+            申请部门: {{ detailApplyDoData.applyDeptName }} / 驳运部门:
+            {{ detailApplyDoData.tranDeptName }}
+          </div>
+          <div class="font-24">
+            选择分段: {{ detailApplyDoData.proCode }}-{{
+              detailApplyDoData.goodsCode
+            }}
+            {{ detailApplyDoData.goodsTypeName }};
+            {{
+              detailApplyDoData.goodsWeight
+                ? '重量: ' + detailApplyDoData.goodsWeight + '吨'
+                : ''
+            }}; 尺寸: ({{ detailApplyDoData.wide }}*{{
+              detailApplyDoData.high
+            }}*{{ detailApplyDoData.length }}) (米)
+          </div>
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">
+                  起始地：{{ detailApplyDo.startPositionName }}
+                </div>
+                <div class="ellipsis">
+                  目的地：{{ detailApplyDo.endPositionName }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="font-24" style="margin-top: 20rpx">
+          区域: {{ detailApplyDo.craneAddressName }}
+        </div>
+        <div class="font-24">
+          {{ detailApplyDo.carTypeName }}: {{ detailApplyDo.carNumber || '' }}
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div v-if="cartList.length" class="other_detail_title">联吊车辆信息:</div>
+      <div v-for="item in cartList" class="item cart_list">
+        <div class="cell flex">
+          <div class="flex">
+            <div class="tranState_name flex">
+              <div style="margin-right: 10rpx">
+                <!-- <div style="color:#EFA600;">{{item.tranStateName}}</div> -->
+                <div :style="{ color: item.tranState !== 4 ? '#EFA600' : '' }">
+                  {{ item.tranStateName }}
+                </div>
+              </div>
+              <div class="tag_drop">
+                <div class="drop"></div>
+                {{ item.carNumber }}
+              </div>
+            </div>
+            <div class="font-28 font-bold">{{ item.carTypeName }}</div>
+          </div>
+          <div class="cell_right" @click="onDelete(item)">x</div>
+        </div>
+      </div>
+    </div>
+    <van-overlay show="{{ show }}">
+      <view class="wrapper">
+        <div v-if="tranState !== 4" class="title">{{ title }}</div>
+        <div v-if="tranState == 4" class="title" style="color: #e0291e">
+          {{ title }}
+        </div>
+        <div class="btn-box">
+          <van-button custom-class="btn" @click="show = false" type="default"
+            >取消</van-button
+          >
+          <van-button
+            custom-class="btn"
+            color="#005BAC"
+            type="default"
+            @click="submitDelete"
+            >确认</van-button
+          >
+        </div>
+      </view>
+    </van-overlay>
+  </div>
+</template>
+
+<script>
+import { BaseDataKey } from '@/constant';
+import wepy from '@wepy/core';
+import formatTimeTwo from '@/utils/moment.js';
+import CommonMixin from '@/mixins/commonMixin.js';
+import store from '@/store';
+import { tranStateEnum } from '@/enums';
+import { mapState, mapMutations } from '@wepy/x';
+wepy.page({
+  store,
+  mixins: [CommonMixin],
+  data: {
+    isDisable: false,
+    detailApplyDoData: {},
+    cartList: [],
+    list: [],
+    title: '',
+    taskId: 0,
+    show: false,
+    tranState: 0,
+  },
+  onLoad({ applyId, carId }) {
+    this.applyId = applyId;
+    this.carId = carId;
+    this.detailApplyDoData = JSON.parse(JSON.stringify(this.detailApplyDo));
+    this.queryEditForkliftTasks();
+  },
+  computed: {
+    ...mapState(['detailApplyDo']),
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    goToCombinedCrane() {
+      wx.navigateTo({
+        url: '/pages/towerCrane/combinedCrane',
+      });
+    },
+    submitDelete() {
+      if (this.isDisable) return;
+      this.isDisable = true;
+      wepy.$loading();
+      wepy
+        .$api('app/craneEdit/editDelForkTask', { taskId: this.taskId })
+        .then(() => {
+          wepy.$showToast('删除成功');
+          this.queryEditForkliftTasks();
+          this.show = false;
+        })
+        .finally(() => {
+          this.isDisable = false;
+        });
+    },
+    onDelete(item) {
+      this.title =
+        item.tranState == 4
+          ? '该联吊正在执行中,请确认是否将其删除?'
+          : '确认删除此联吊任务?';
+      this.taskId = item.taskId;
+      this.tranState = item.tranState;
+      this.show = true;
+    },
+    queryEditForkliftTasks() {
+      wepy.$loading();
+      this.cartList = [];
+      wepy
+        .$api('app/craneEdit/queryEditForkliftTasks', {
+          applyId: this.applyId,
+          carIdList: [],
+          tranStateList: [0, 1, 2, 3, 4, 5, 50, 99],
+        })
+        .then((res) => {
+          this.cartList = [];
+          if (res && res.length) {
+            res.forEach((item) => {
+              if (item.orderId !== 1) {
+                item.tranStateName = tranStateEnum(item.tranState);
+                this.cartList.push(item);
+              }
+            });
+          }
+          wx.hideToast();
+        });
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'塔吊-任务编制详情',
+  usingComponents: {
+      "van-button": "module:@vant/weapp/dist/button/index",
+      "van-overlay": "module:@vant/weapp/dist/overlay/index",
+  }
+}
+</config>
+
+<style lang="less" scoped>
+.taskList_page {
+  background: #f3f4f6;
+  padding-top: 20rpx;
+}
+
+.other_detail_title {
+  padding-left: 24rpx;
+  font-size: 30rpx;
+  padding-bottom: 20rpx;
+}
+
+.flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cart_list {
+  padding: 0 !important;
+  padding-left: 26rpx !important;
+}
+.cell {
+  padding: 14rpx 0;
+  font-size: 24rpx;
+  &_right {
+    color: #d8d8d8;
+    font-size: 32rpx;
+    text-align: right;
+    width: 50rpx;
+    height: 40rpx;
+    line-height: 40rpx;
+    padding-right: 26rpx;
+  }
+}
+.tranState_name {
+  margin-right: 15rpx;
+  color: #e0291e;
+}
+.item {
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 28rpx 26rpx;
+  box-sizing: border-box;
+  &_header {
+    display: flex;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+      margin-right: 10rpx;
+    }
+  }
+  &_header_c {
+    font-size: 22rpx;
+    color: #8e9298;
+    line-height: 32rpx;
+  }
+  &_content {
+    display: flex;
+    justify-content: space-between;
+    font-size: 24rpx;
+    &_left {
+      width: 65%;
+      flex: auto;
+    }
+    &_right {
+      display: flex;
+      align-items: flex-end;
+      text-align: right;
+      align-self: stretch;
+      font-size: 24rpx;
+      padding-bottom: 7rpx;
+      word-break: normal;
+      margin-left: 30rpx;
+      text {
+        flex: auto;
+        color: #005bac;
+      }
+    }
+  }
+}
+
+.wrapper {
+  width: 702rpx;
+  padding: 24rpx;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10rpx;
+  background: #fff;
+  text-align: center;
+  box-sizing: border-box;
+  .title {
+    margin-bottom: 25rpx;
+    font-size: 36rpx;
+    line-height: 50rpx;
+  }
+  .btn-box {
+    display: flex;
+    justify-content: space-between;
+    .btn {
+      width: 320rpx;
+      height: 64rpx;
+      border-radius: 8rpx;
+    }
+  }
+}
+</style>

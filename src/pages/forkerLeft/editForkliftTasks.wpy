@@ -1,0 +1,355 @@
+<template>
+  <div class="taskList_page">
+    <div class="header">
+      <div class="cart_info">
+        <div class="cart_info_item" v-for="item in cartCounts">
+          <text>{{item.carTypeName}}</text>
+          <text style="color:#0A8143;"> x{{item.count}}</text>
+        </div>
+      </div>
+      <div class="item">
+        <div>
+          <div class="item_header">
+            <div>
+              <text class="font-color-red" style="padding-right:20rpx;">{{detailApplyDo._applyStateName}}</text> {{ detailApplyDo.jobContent }}{{ detailApplyDo.goodsCode }}
+            </div>
+          </div>
+          <div class="item_header_c">
+            {{ detailApplyDo.applyDeptName }}/{{ detailApplyDo.goodsWeight }}吨/{{ detailApplyDo.startTime }}至{{ detailApplyDo.endTime }}
+          </div>
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ detailApplyDo.startPositionName }}</div>
+                <div class="ellipsis">目的地：{{ detailApplyDo.endPositionName }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div v-for="item in cartList" class="item cart_list">
+        <div class="cell flex">
+          <div class="flex">
+            <div class="tranState_name">
+              <div v-if="item.tranState===1" class="tag_drop">
+                <div class="drop"></div>
+                {{ item.carNumber }}
+              </div>
+              <div v-if="item.tranState!==1">
+                <div style="color:#EFA600;" v-if="item.tranState">{{item.tranStateName}}</div>
+                <div v-if="item.tranState===0">{{item.tranStateName}}</div>
+              </div>
+            </div>
+            <div class="font-28 font-bold">{{item.carTypeName}}</div>
+          </div>
+          <div class="cell_right" @click="onEdit(item)">
+            <div class="drop"></div>
+            <div class="drop"></div>
+            <div class="drop"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer_btn_d">
+      <van-button custom-class="btn" color="#005BAC" @click="showisCarTypeCount" type="default">添加车辆</van-button>
+    </div>
+    <van-popup v-if="hasAction" round position="bottom" :show="hasAction" @close="hiddhasAction" :close-on-click-overlay="false" closeable>
+      <action :applyId="currApplyId" :areaId="currAddressId" :taskId="currTaskId" :cartData="currCartData" :tranState="currTranState" @onSelect="onSelect" @onSuccess="onSuccess" @close="hasAction=false"></action>
+    </van-popup>
+    <van-popup v-if="isCarTypeCount" round position="bottom" :show="isCarTypeCount" @close="hiddisCarTypeCount" :close-on-click-overlay="false" closeable>
+      <carTypeCount @onConfirm="onConfirm" :isAdd="false"></carTypeCount>
+    </van-popup>
+  </div>
+</template>
+
+<script>
+  import {
+    BaseDataKey
+  } from '@/constant';
+  import wepy from '@wepy/core';
+  import formatTimeTwo from '@/utils/moment.js';
+  import CommonMixin from '@/mixins/commonMixin.js';
+  import store from '@/store';
+  import {
+    tranStateEnum
+  } from '@/enums';
+  import {
+    mapState,
+    mapMutations
+  } from '@wepy/x';
+  wepy.page({
+    store,
+    mixins: [CommonMixin],
+    data: {
+      isCarTypeCount: false,
+      currCartData: {
+        carType: 0,
+        carTypeName: ''
+      },
+      currAddressId: 0,
+      currApplyId: 0,
+      currTaskId: 0,
+      currTranState: 0,
+      cartList: [],
+      list: [],
+      applyId: 0,
+      hasAction: false,
+      disable: false
+    },
+    onLoad({
+      applyId
+    }) {
+      this.applyId = applyId;
+    },
+    onShow() {
+      let isSuccessCallBack = wx.getStorageSync('isSuccessCallBack');
+      if (isSuccessCallBack) {
+        this.onSuccess();
+        wx.removeStorage({
+          key: 'isSuccessCallBack'
+        });
+      } else {
+        this.queryEditForkliftTasks();
+      }
+    },
+    computed: {
+      ...mapState(['detailApplyDo']),
+      cartCounts() {
+        let list = [];
+        this.cartList.forEach((item) => {
+          let {
+            carType,
+            carTypeName
+          } = item;
+          let flag = list.find((child) => child.carType === carType);
+          if (flag) {
+            flag.count += 1;
+          } else {
+            list.push({
+              carType,
+              carTypeName,
+              count: 1
+            });
+          }
+        });
+        return list;
+      }
+    },
+    methods: {
+      ...mapMutations(['setDetailApplyDo']),
+      showhasAction(){
+        this.hasAction = true
+      },
+      hiddhasAction(){
+        this.hasAction = false
+      },
+      showisCarTypeCount(){
+        this.isCarTypeCount = true
+      },
+      hiddisCarTypeCount(){
+        this.isCarTypeCount = false
+      },
+      onSuccess() {
+        let num = 0;
+        let timer = setInterval(() => {
+          if (num >= 5) {
+            clearInterval(timer);
+          } else {
+            num++;
+            this.queryEditForkliftTasks();
+          }
+        });
+        this.hasAction = false;
+        this.disable = false;
+        this.isCarTypeCount = false;
+      },
+      onConfirm(carTypeCount, list) {
+        let listData = [];
+        let carTypeCountItem = this.cartList[0];
+        if (carTypeCountItem && carTypeCountItem.carTypeCount && carTypeCountItem.carTypeCount.length) {
+          list.forEach((item) => {
+            let flag = carTypeCountItem.carTypeCount.find((sub) => sub.carTypeId === item.confId);
+            if (flag) {
+              item.count = flag.carCount + item.count;
+            }
+            listData.push(`${item.confId}*${item.count}`);
+          });
+          let data = listData.join(',');
+          this.updateForkliftTaskTypeAndCount(data);
+        } else {
+          this.updateForkliftTaskTypeAndCount(carTypeCount);
+        }
+      },
+      updateForkliftTaskTypeAndCount(carTypeCount) {
+        if (this.disable) return;
+        wepy.$loading();
+        this.disable = true;
+        let req = {
+          applyId: this.applyId,
+          carTypeCount
+        };
+        wepy.$api('app/forkDriverTask/updateForkliftTaskTypeAndCount', req).then(() => {
+          wx.hideToast();
+          this.onSuccess();
+        });
+      },
+      onEdit(item) {
+        let {
+          applyId,
+          taskId,
+          carType,
+          carTypeName,
+          tranState,
+          addressId
+        } = item;
+        this.currApplyId = applyId;
+        this.currTaskId = taskId;
+        this.currAddressId = addressId !== null ? addressId : undefined;
+        this.currTranState = tranState;
+        this.currCartData = {
+          carType,
+          carTypeName
+        };
+        this.showhasAction()
+      },
+      queryEditForkliftTasks() {
+        wepy.$loading();
+        this.cartList = [];
+        wepy.$api('app/forkDriverTask/queryEditForkliftTasks', {
+          applyId: this.applyId,
+          tranStateList: [0, 1, 2, 3, 4, 5, 50, 99]
+        }).then((res) => {
+          this.cartList = res.map((item) => {
+            item.tranStateName = tranStateEnum(item.tranState);
+            return item;
+          });
+          wx.hideToast();
+        });
+      }
+    }
+  });
+</script>
+
+<config>
+{
+  navigationBarTitleText:'叉车-任务编制详情',
+  usingComponents: {
+      "van-popup": "module:@vant/weapp/dist/popup/index",
+      "action": "~@/pages/forkerLeft/action",
+      "van-button": "module:@vant/weapp/dist/button/index",
+      "carTypeCount": "~@/components/pop-up/carTypeCount",
+  }
+}
+</config>
+
+<style lang="less" scoped>
+  .taskList_page {
+    background: #f3f4f6;
+  }
+  .cart_info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 80rpx;
+    font-size: 28rpx;
+    margin-bottom: 20rpx;
+    background: #fff;
+    .cart_info_item {
+      text-align: center;
+      flex: 1;
+    }
+  }
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cart_list {
+    padding: 0 !important;
+    padding-left: 26rpx !important;
+  }
+  .cell {
+    padding: 14rpx 0;
+    font-size: 24rpx;
+    &_right {
+      display: flex;
+      align-items: flex-end;
+      width: 50rpx;
+      height: 40rpx;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-right: 26rpx;
+      .drop {
+        width: 8rpx;
+        height: 8rpx;
+        border-radius: 8rpx;
+        background: #d8d8d8;
+        text-align: right;
+      }
+    }
+  }
+  .tranState_name {
+    margin-right: 15rpx;
+    color: #e0291e;
+  }
+  .item {
+    width: 702rpx;
+    margin: 0 auto 20rpx;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+    &_header {
+      display: flex;
+      font-size: 28rpx;
+      line-height: 40rpx;
+      .tag {
+        color: #fff;
+        font-size: 22rpx;
+        padding: 5rpx 10rpx;
+        line-height: 32rpx;
+        border-radius: 5rpx;
+        font-weight: 500;
+        margin-right: 10rpx;
+      }
+    }
+    &_header_c {
+      font-size: 22rpx;
+      color: #8e9298;
+      line-height: 32rpx;
+    }
+    &_content {
+      display: flex;
+      justify-content: space-between;
+      font-size: 24rpx;
+      &_left {
+        width: 65%;
+        flex: auto;
+      }
+      &_right {
+        display: flex;
+        align-items: flex-end;
+        text-align: right;
+        align-self: stretch;
+        font-size: 24rpx;
+        padding-bottom: 7rpx;
+        word-break: normal;
+        margin-left: 30rpx;
+        text {
+          flex: auto;
+          color: #005bac;
+        }
+      }
+    }
+  }
+</style>

@@ -1,0 +1,173 @@
+<template>
+  <div class="manualOrganizationTime_page">
+    <div class="content">
+      <van-cell-group :border="false" custom-class="item">
+        <van-cell
+          :border="false"
+          is-link
+          @click="hasPopUp('startTime')"
+          required
+          title="起始时间"
+          :value="detailApplyDo._startTimeStamp || '请选择'"
+        />
+        <van-cell
+          :border="false"
+          is-link
+          @click="hasPopUp('endTime')"
+          required
+          title="到达时间"
+          :value="detailApplyDo._endTimeStamp || '请选择'"
+        />
+      </van-cell-group>
+    </div>
+    <div class="footer_btn_o">
+      <van-button custom-class="btn" @click="goBack" type="default"
+        >取消</van-button
+      >
+      <van-button
+        :disabled="isDisabled"
+        custom-class="btn"
+        color="#005BAC"
+        type="default"
+        @click="submitConfirm"
+        >确定</van-button
+      >
+    </div>
+
+    <van-popup
+      v-if="showPopUp"
+      round
+      position="bottom"
+      :show="showPopUp"
+      @close="close"
+    >
+      <time-picker
+        startKey="startTime"
+        startStrKey="_startTimeStamp"
+        endKey="endTime"
+        endStrKey="_endTimeStamp"
+        :dataKey="currKey"
+        :time="detailApplyDo[currKey]"
+        @onCancel="close"
+        @onSelect="onSelect"
+      ></time-picker>
+    </van-popup>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import store from '@/store';
+import formatTimeTwo from '@/utils/moment.js';
+import { mapState, mapMutations } from '@wepy/x';
+wepy.page({
+  store,
+  data: {
+    isDisabled: false,
+    currKey: '',
+    showPopUp: false,
+    upData: {
+      applyId: '',
+      endTime: '',
+      startTime: '',
+    },
+  },
+  created() {
+    this.init();
+  },
+  computed: {
+    ...mapState(['currOrganizationData', 'detailApplyDo']),
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    init() {
+      let currTag = this.currOrganizationData.currTag;
+      if (currTag) {
+        let {
+          applyId,
+          startTimeStamp,
+          endTimeStamp,
+          _startTimeStamp,
+          _endTimeStamp,
+        } = currTag;
+
+        this.setDetailApplyDo({
+          endTime: endTimeStamp,
+          startTime: startTimeStamp,
+          _startTimeStamp: _startTimeStamp,
+          _endTimeStamp: _endTimeStamp,
+        });
+
+        // this.upData = {
+        //   applyId,
+        //   endTime: endTimeStamp,
+        //   startTime: startTimeStamp,
+        // };
+      }
+    },
+    close() {
+      this.showPopUp = false;
+    },
+    goBack() {
+      this.$back();
+    },
+    hasPopUp(key) {
+      this.currKey = key;
+      this.showPopUp = true;
+    },
+    onSelect() {
+      // this.upData[this.currKey] = dataTime;
+      // this.strData[this.currKey] = str;
+      this.close();
+    },
+    submitConfirm() {
+      if (this.isDisabled) return;
+      this.isDisabled = true;
+      wepy.$loading();
+      this.upData = {
+        applyId: this.currOrganizationData.currTag.applyId,
+        endTime: this.detailApplyDo.endTime,
+        startTime: this.detailApplyDo.startTime,
+      };
+      wepy
+        .$api('platform/distribution/appManualOrganizationTime', this.upData)
+        .then(() => {
+          wx.showToast({
+            icon: 'none',
+            title: '操作成功',
+            success: () => {
+              wx.setStorageSync('isSuccessCallBack', true);
+              this.$back();
+            },
+          });
+        })
+        .finally(() => {
+          wx.hideLoading();
+          this.isDisabled = false;
+        });
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'任务编制-修改驳运时间',
+      usingComponents: {
+          "van-cell": "module:@vant/weapp/dist/cell/index",
+          "van-cell-group": "module:@vant/weapp/dist/cell-group/index",
+          "van-popup": "module:@vant/weapp/dist/popup/index",
+          "van-button": "module:@vant/weapp/dist/button/index",
+          "time-picker": "~@/components/pop-up/time-picker"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.manualOrganizationTime_page {
+  background: #fff;
+}
+.footer_btn_o {
+  position: static;
+}
+</style>

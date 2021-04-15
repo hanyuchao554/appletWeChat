@@ -1,0 +1,359 @@
+<template>
+    <div class="header">
+      <div class="header_left">
+        <van-dropdown-menu style="margin-left: 20rpx;" :z-index="9999">
+          <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList">
+            <div class="dropdown_item_cell" @click="onClickDept(undefined)"> 所有部门</div>
+            <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{item.areaName}}</div>
+          </van-dropdown-item>
+        </van-dropdown-menu>
+      </div>
+      <div class="header_right" @click="navgetTo">
+          <text>围栏管理</text>
+      </div>
+    </div>
+    <div class="content">
+        <div class="item" v-for="item in list" :key="index">
+            <div class="item_left">
+                <div class="serial">
+                    <div class="dot"></div>
+                    <div class="serial_number">{{item.carNumber}}</div>
+                </div>
+                <text>{{item.typeName}}</text>
+            </div>
+            <div class="item_right">
+                <div class="text">
+                    <div class="text_item" v-for="k in item.areaList">{{k.areaName || ''}}</div>
+                    <!-- v-for="k in item.addressList -->
+                </div>
+                <div class="more" @click="showhidde(item.carId)">
+                    <div class="dots"></div>
+                    <div class="dots"></div>
+                    <div class="dots"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <van-popup show="{{ show }}"  position="bottom">
+        <div class="popup_cotnter">
+            <div class="cont_hed">
+                <text>车辆分配围栏</text>
+                <div class="hed_btn" @click="confirm">
+                    <text>确定</text>
+                </div>
+            </div>
+            <div class="cont_item" v-for="item in deptList">
+                <van-checkbox value="{{ item.checked }}" bind:change="onChange" :id="index">{{item.areaName}}</van-checkbox>
+            </div>
+        </div>
+    </van-popup>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+wepy.page({
+    // mixins: [CommonMixin],
+    data:{
+        currDeptName:'选择围栏',
+        deptList:[],
+        list:[],
+        deptId:undefined,
+        show:false,
+        carId:'',//车辆id
+        areaIdList:[]//围栏id
+    },
+    onShow(){
+        this.saveUpdateAreaVo()
+    },
+    methods:{
+        /**
+         * 获取车辆围栏信息列表
+         */
+        saveUpdateAreaVo(){
+            wx.showLoading({
+                title: '加载中',
+            })
+            wepy.$api('/app/address/getForkliftAreaListVo',{
+                applyType:1,
+                areaId:this.deptId ||  undefined
+            }).then((res)=>{
+                if(res.length){
+                    this.list = res
+                }else{
+                    wx.showToast({
+                        title:'暂无列表内容'
+                    })
+                }
+                setTimeout(function () {
+                    wx.hideLoading()
+                }, 1000)
+            })
+        },
+        /**
+         * 获取部门筛选列表
+         */
+        getDeptList(){
+             wx.showLoading({
+                title: '加载中',
+            })
+            this.deptList = []
+            wepy.$api('/app/forkPullDown/areaPullDownList',{
+                applyType:1 ,
+                deptId:this.deptId || undefined
+            }).then((res)=>{
+                if(res.length){
+                    this.forkliftAreaUpdateAndAddEcho()
+                    let arr = []
+                    arr = res
+                    arr.forEach((val,index) => {
+                        let obj = {}
+                        obj.id = val.id;
+                        obj.areaName = val.areaName
+                        obj.checked = false
+                        this.deptList.push(obj)
+                    });
+                }else{
+                    // wx.showToast({
+                    //     title:'暂无列表内容'
+                    // })
+                }
+                setTimeout(function () {
+                    wx.hideLoading()
+                }, 1000)
+            })
+        },
+        /**
+         * 叉车围栏管理新增和修改回显
+         */
+        forkliftAreaUpdateAndAddEcho(){
+            wx.showLoading({
+                title: '加载中',
+            })
+            wepy.$api('app/address/forkliftAreaUpdateAndAddEcho',{
+                carId:this.carId
+            }).then((res)=>{
+                if(res.length){
+                    let list = res.areaIdList
+                    if(list.length){
+                        for(let i = 0; i < this.deptList.length; i++){
+                            for(let j = 0; j < list.length; j++){
+                                if(this.deptList[i].id == list[j]){
+                                    this.deptList[i].checked = true
+                                }
+                            }
+                        }
+                    }
+                }else{
+                }
+                setTimeout(function () {
+                    wx.hideLoading()
+                }, 1000)
+            })
+        },
+        /**
+         * 修改叉车围栏列表
+         */
+        forkliftAreaUpdateAndAdd(){
+            wepy.$api('/app/address/forkliftAreaUpdateAndAdd',{
+                carId: this.carId,
+                areaIdList:this.areaIdList || [],
+            }).then((res)=>{
+                if(res){
+                    this.saveUpdateAreaVo()
+                     wx.showToast({
+                        title:'修改成功'
+                    })
+                }else{
+                    wx.showToast({
+                        title:'修改失败'
+                    })
+                }
+                
+            })
+        },
+
+        /**
+         * 用户选择部门
+         */
+        onClickDept(item) {
+            this.deptId = item ? item.id : undefined;
+            this.currDeptName = item ? item.areaName : '所有部门';
+            this.$wx.selectComponent('#dept').toggle(true);
+            this.saveUpdateAreaVo();
+        },
+        /**
+         * 页面跳转(到围栏管理页面)
+         */
+        navgetTo(){
+            wx.navigateTo({
+             url: `/pages/fencing/managementFence`,
+            });
+        },
+        /**
+         * 显示弹出层
+         */
+        showhidde(id){
+            this.carId = id
+            this.show = true
+            this.areaIdList = []
+            this.getDeptList()
+        },
+        /**
+         * 关闭弹出层
+         */
+        onClose(){
+            this.show = false;
+        },
+        /**
+         *用户点击复选框  
+        */
+        onChange(e){
+            let index = e.currentTarget.id
+            this.deptList[index].checked = e.$wx.detail
+        },
+        confirm(){
+            this.deptList.forEach(item =>{
+                if(item.checked){
+                    this.areaIdList.push(item.id)
+                }
+            })
+            this.forkliftAreaUpdateAndAdd()
+            this.onClose()
+        } 
+    }
+})
+</script>
+
+<style lang="less" scoped>
+view .van-popup{
+    border-radius:25rpx 25rpx 0 0; 
+}
+.header{
+    display: flex;
+    position: fixed;
+    width: 100%;
+    height: 100rpx;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 32rpx;
+    background: #fff;
+    padding: 0 24rpx;
+    box-sizing: border-box;
+    border-bottom:1rpx solid #ccc; 
+    z-index: 99;
+    &_left {
+        display: flex;
+        align-items: center;
+        view .van-popup{
+            // border-radius:25rpx 25rpx 0 0; 
+            border-radius:0;
+        }
+    }
+    &_right{
+        font-size: 28rpx;
+        color: #fff;
+        background: #005bac;
+        padding: 10rpx 20rpx;
+        border-radius:15rpx; 
+    }
+}
+.content{
+    padding:100rpx 20rpx 0;
+    .item{
+        display: flex;
+        justify-content:space-between;
+        align-items: center;
+        margin-top: 20rpx;
+        background: #ffffff;
+        padding: 23rpx;
+        border-radius:25rpx;
+        box-shadow: 3rpx 3rpx 3rpx #a8a9aa;
+        .item_left{
+            display: flex;
+            align-items: center;
+            font-size: 28rpx;
+            .serial{
+                display:flex;
+                align-items: center;
+               .dot{
+                   width: 15rpx;
+                   height: 15rpx;
+                   background: #fff;
+                   border-radius:100rpx;
+                   border: 1rpx solid #797979;
+                   margin-right: 10rpx; 
+               }
+                background: #047a3d; 
+                padding: 12rpx 10rpx;
+                border-radius:15rpx; 
+                border: 1rpx solid #797979;
+                color: #fff;
+            }
+            text{
+                margin-left: 22rpx;
+            }
+        }
+       .item_right{
+            display: flex;
+            align-items: center;
+            .text{
+                width: 220rpx;
+            } 
+            .more{
+                margin-left:15rpx;
+                .dots{
+                    width: 15rpx;
+                    height: 15rpx;
+                    border-radius:25rpx ;
+                    background: #aaa;
+                    margin: 3rpx;
+                } 
+            }  
+       } 
+    }    
+}
+.popup_cotnter{
+    .cont_hed{
+        padding: 20rpx 30rpx 20rpx 20rpx;
+        display: flex;
+        justify-content:space-between;
+        align-items: center;
+        .hed_btn{
+            background: #005bac;
+            padding: 10rpx 20rpx;
+            border-radius:15rpx;
+            color: #fff;
+            font-size: 26rpx; 
+        }
+    }
+    .cont_item{
+        padding: 20rpx 0 15rpx 20rpx;
+        border: 1rpx solid #f3f3f3;
+        font-size: 28rpx;
+    }
+}
+.dropdown_item_cell {
+  display: flex;
+  align-items: center;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  border-top: 2rpx solid #ececec;
+  padding: 20rpx 40rpx;
+}
+</style>
+
+<config>
+    {
+        navigationBarTitleText:'叉车围栏管理',
+        usingComponents:{
+            "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
+            "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
+            "van-popup": "module:@vant/weapp/dist/popup/index",
+            "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
+            "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index"
+
+        }
+    }
+</config>
+
+    

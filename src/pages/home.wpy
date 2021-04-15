@@ -1,0 +1,1021 @@
+<template>
+  <div class="home_page">
+    <div class="home_top">
+      <div class="home_top_header">
+        <div class="home_top_header_left">
+          <van-icon name="/static/images/icon_sky.png"
+                    size="60rpx"></van-icon>
+          <div style="margin-left: 10rpx">
+            <div>当前温度</div>
+            <div>10°C</div>
+          </div>
+        </div>
+        <div class="home_top_header_center">首页</div>
+        <div class="home_top_header_right">
+          <van-icon @click="goToPage('/pages/setting')"
+                    custom-class="home_top_header_right_icon"
+                    name="/static/images/icon_setting.png"
+                    size="60rpx"></van-icon>
+          <van-icon name="/static/images/icon_msg.png"
+                    size="60rpx"></van-icon>
+        </div>
+      </div>
+      <div class="home_top_center">
+        <van-image width="702rpx"
+                   height="188rpx"
+                   src="/static/images/home_bg_img3.png" />
+        <div class="home_top_center_content">
+          <van-image width="120rpx"
+                     height="120rpx"
+                     src="/static/images/default_avatar.png" />
+          <div class="home_top_center_content_text">
+            <div class="font-36">欢迎，{{ baseData.user.realName }}</div>
+            <div class="font-24">工号：{{ baseData.user.username }}</div>
+          </div>
+        </div>
+      </div>
+      <!-- <div class="home_top_footer">
+                                  <div class="home_top_footer_title">常用操作</div>
+                                  <div class="home_top_footer_content">
+                                    <div class="home_top_footer_content_item">
+                                      <van-icon
+                                        name="/static/images/icon_plus.png"
+                                        size="100rpx"
+                                      ></van-icon>
+                                      <div>新建计划任务</div>
+                                    </div>
+                                    <div class="home_top_footer_content_item">
+                                      <van-icon
+                                        name="/static/images/icon_r_time.png"
+                                        size="100rpx"
+                                      ></van-icon>
+                                      <div>新建临时任务</div>
+                                    </div>
+                                    <div class="home_top_footer_content_item">
+                                      <van-icon
+                                        name="/static/images/icon_r_right.png"
+                                        size="100rpx"
+                                      ></van-icon>
+                                      <div>新建衍生任务</div>
+                                    </div>
+                                    <div class="home_top_footer_content_item">
+                                      <van-icon
+                                        name="/static/images/icon_r_write.png"
+                                        size="100rpx"
+                                      ></van-icon>
+                                      <div>任务调整</div>
+                                    </div>
+                                  </div>
+                                </div> -->
+      <div class="text-c">
+        <van-image custom-class="home_bg"
+                   width="702rpx"
+                   height="222rpx"
+                   src="/static/images/home_bg_img1.jpg"></van-image>
+      </div>
+    </div>
+    <div class="home_do_sth">
+      <div style="margin-top: 20rpx"
+           v-for="item in stayManageTaskList"
+           @click="goToPage(item.url)">
+        <div class="home_do_sth_title">{{ item.title }}</div>
+        <div class="home_do_sth_content">
+          <div>
+            您有 <text>{{ item.number }}</text> 条待办任务
+          </div>
+          <van-icon name="/static/images/icon-arrow-right.png"
+                    ize="23rpx"></van-icon>
+        </div>
+      </div>
+    </div>
+    <div style="{{stayManageTaskList.length ? '' : 'margin-top:40rpx;' }}"
+         class="home_root_list">
+      <div v-for="item in powerList"
+           class="home_root_list_item">
+        <div class="home_root_list_item_title">
+          <van-image width="750rpx"
+                     height="82rpx"
+                     src="/static/images/home_bg.png"></van-image>
+          <div class="home_root_list_item_title_content">
+            <van-icon size="50rpx"
+                      name="/static/images/icon_work.png"></van-icon>
+            <text>{{ item.title }}</text>
+          </div>
+        </div>
+        <div class="home_root_list_item_content">
+          <div class="home_root_list_item_content_item"
+               v-for="subitem in item.list"
+               @click="goToPage(subitem.gotoUrl)">
+            <van-icon :custom-style="subitem.background"
+                      :name="subitem.icon"
+                      size="100rpx"></van-icon>
+            <div>{{ subitem.text }}</div>
+          </div>
+          <div v-if="item.hasScanCode"
+               class="home_root_list_item_content_item"
+               @click="scanCode(item)">
+            <van-icon custom-style="background:#BEA365;"
+                      name="/static/images/icon_r_time.png"
+                      size="100rpx"></van-icon>
+            <div>绑定车辆</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import {
+  BaseDataKey
+} from '@/constant';
+import store from '@/store';
+import {
+  mapMutations
+} from '@wepy/x';
+wepy.page({
+  store,
+  data: {
+    userRoleId: '',
+    userRoleName: '',
+    stayManageTaskList: [],
+    isFlat: false,
+    isPlat: false,
+    userRoleName: '',
+    scanCodeState: 0,
+    // 绑定车辆
+    hasScanCode: false,
+    taskMassageTitle: '',
+    // 平板车待办
+    flatcarHandleUrl: '',
+    hasTaskMassageCount: false,
+    taskMassageCount: 0,
+    baseData: {},
+    // 平板
+    platFormList: [],
+    platFormPowers: [
+      21,
+      22,
+      23,
+      24,
+      26,
+      27,
+      28,
+      30,
+      33,
+      34,
+      35,
+      36,
+      37,
+      39,
+      40,
+    ],
+    // 叉车
+    forkerList: [],
+    forkerPowers: [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 92],
+    // 龙门吊
+    craneList: [],
+    cranePowers: [53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64],
+    // 塔吊
+    towerCraneList: [],
+    towerCranePowers: [67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78],
+    authorisations: [],
+    defaultPowerList: [{
+      powerId: 21,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_plus.png',
+      gotoUrl: '/pages/addTask?requestType=计划任务',
+      text: '新建计划任务',
+    },
+    {
+      powerId: 22,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/addTask?requestType=临时任务',
+      text: '新建临时任务',
+    },
+    {
+      powerId: 23,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_plus.png',
+      gotoUrl: '/pages/addTask?requestType=快速任务',
+      text: '新建快速',
+    },
+    {
+      powerId: 26,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/draftsTaskList/draftsTaskList',
+      text: '草稿箱',
+    },
+    {
+      powerId: 27,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_check.png',
+      gotoUrl: '/pages/reviewList/reviewList',
+      text: '任务审批',
+    },
+    {
+      powerId: 28,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_people.png',
+      gotoUrl: '/pages/taskList/organizationTaskList?taskName=平板车',
+      text: '任务编制',
+    },
+    {
+      powerId: 30,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_r_error.png',
+      gotoUrl: '/pages/taskList/allTaskList',
+      text: '任务取消',
+    },
+    {
+      powerId: 32,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/taskList/driverTaskList',
+      text: '任务列表',
+    },
+    {
+      powerId: 33,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/taskList/applyTaskList',
+      text: '未完成',
+    },
+    {
+      powerId: 34,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/taskList/completeTaskList',
+      text: '已完成',
+    },
+    {
+      powerId: 35,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/taskList/approvalTaskList',
+      text: '历史审核',
+    },
+    {
+      powerId: 36,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/taskList/platformApplyDriverTaskList',
+      text: '任务列表',
+    },
+    {
+      powerId: 37,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/taskList/distributionTaskList',
+      text: '历史编制',
+    },
+    {
+      powerId: 39,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_zoom_2.png',
+      gotoUrl: '/pages/platformTaskQuery/platformTaskQueryList',
+      text: '任务查询',
+    },
+    {
+      powerId: 40,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/platformGoodsQuery/platformGoodsQueryList',
+      text: '对象查询',
+    },
+    {
+      powerId: 41,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_plus.png',
+      gotoUrl: '/pages/forkerLeft/addTask',
+      text: '叉车申请',
+    },
+    {
+      powerId: 42,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_check.png',
+      gotoUrl: '/pages/forkerLeft/reviewList',
+      text: '叉车审批',
+    },
+    {
+      powerId: 43,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_people.png',
+      gotoUrl: '/pages/forkerLeft/queryByApplyStateForkTasks',
+      text: '叉车编制',
+    },
+    {
+      powerId: 44,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_r_error.png',
+      gotoUrl: '/pages/forkerLeft/taskList?applyState=150',
+      text: '叉车取消',
+    },
+    {
+      powerId: 45,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/forkerLeft/forkliftTaskPlan',
+      text: '司机任务列表',
+    },
+    {
+      powerId: 46,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_r_toway.png',
+      gotoUrl: '/pages/forkerLeft/driverTaskIngList',
+      text: '司机执行任务列表',
+    },
+    {
+      powerId: 47,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/forkerLeft/taskList?applyState=0',
+      text: '叉车草稿箱',
+    },
+    {
+      powerId: 48,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/forkerLeft/taskList?applyState=50',
+      text: '叉车已完成',
+    },
+    {
+      powerId: 49,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/forkerLeft/taskList?applyState=100',
+      text: '叉车未完成',
+    },
+    {
+      powerId: 50,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/forkerLeft/editApplyHistory',
+      text: '叉车历史编制',
+    },
+    {
+      powerId: 51,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/forkerLeft/taskList?applyState=200',
+      text: '叉车历史审核',
+    },
+    {
+      powerId: 52,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/forkerLeft/driverPerformTask?applyState=250',
+      text: '叉车司机已完成',
+    },
+    {
+      powerId: 92,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_people.png',
+      gotoUrl: '/pages/forkerLeft/manageCarList',
+      text: '叉车区域管理',
+    },
+    {
+      powerId: 53,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_plus.png',
+      gotoUrl: '/pages/craneApply/addTask',
+      text: '龙门吊申请',
+    },
+    {
+      powerId: 54,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_check.png',
+      gotoUrl: '/pages/craneApply/reviewList',
+      text: '审批龙门吊申请',
+    },
+    {
+      powerId: 55,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_people.png',
+      gotoUrl: '/pages/craneApply/queryByApplyStateForkTasks',
+      text: '编制龙门吊申请',
+    },
+    {
+      powerId: 56,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_r_error.png',
+      gotoUrl: '/pages/craneApply/taskList?applyState=150',
+      text: '取消龙门吊申请',
+    },
+    {
+      powerId: 57,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/craneApply/forkliftTaskPlan',
+      text: '司机任务列表',
+    },
+    {
+      powerId: 58,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_r_toway.png',
+      gotoUrl: '/pages/craneApply/driverTaskIngList',
+      text: '司机执行任务列表',
+    },
+    {
+      powerId: 59,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/craneApply/taskList?applyState=0',
+      text: '龙门吊草稿箱',
+    },
+    {
+      powerId: 60,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/craneApply/taskList?applyState=50',
+      text: '龙门吊已完成',
+    },
+    {
+      powerId: 61,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/craneApply/taskList?applyState=100',
+      text: '龙门吊未完成',
+    },
+    {
+      powerId: 62,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/craneApply/editApplyHistory',
+      text: '龙门吊历史编制',
+    },
+    {
+      powerId: 63,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/craneApply/taskList?applyState=200',
+      text: '龙门吊历史审核',
+    },
+    {
+      powerId: 64,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/craneApply/driverPerformTask?applyState=250',
+      text: '龙门吊司机已完成',
+    },
+    {
+      powerId: 67,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_plus.png',
+      gotoUrl: '/pages/towerCrane/addTask',
+      text: '塔吊申请',
+    },
+    {
+      powerId: 68,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_check.png',
+      gotoUrl: '/pages/towerCrane/reviewList',
+      text: '审批塔吊申请',
+    },
+    {
+      powerId: 69,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_people.png',
+      gotoUrl: '/pages/towerCrane/queryByApplyStateForkTasks',
+      text: '编制塔吊申请',
+    },
+    {
+      powerId: 70,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_r_error.png',
+      gotoUrl: '/pages/towerCrane/taskList?applyState=150',
+      text: '取消塔吊申请',
+    },
+    {
+      powerId: 71,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/towerCrane/forkliftTaskPlan',
+      text: '司机任务列表',
+    },
+    {
+      powerId: 72,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_r_toway.png',
+      gotoUrl: '/pages/towerCrane/driverTaskIngList',
+      text: '司机执行任务列表',
+    },
+    {
+      powerId: 73,
+      background: 'background:#EFA600;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/towerCrane/taskList?applyState=0',
+      text: '塔吊草稿箱',
+    },
+    {
+      powerId: 74,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/towerCrane/taskList?applyState=50',
+      text: '塔吊已完成',
+    },
+    {
+      powerId: 75,
+      background: 'background:#005BAC;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/towerCrane/taskList?applyState=100',
+      text: '塔吊未完成',
+    },
+    {
+      powerId: 76,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/towerCrane/editApplyHistory',
+      text: '塔吊历史编制',
+    },
+    {
+      powerId: 77,
+      background: 'background:#BEA365;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/towerCrane/taskList?applyState=200',
+      text: '塔吊历史审核',
+    },
+    {
+      powerId: 78,
+      background: 'background:#037D3D;',
+      icon: '/static/images/icon_r_time.png',
+      gotoUrl: '/pages/towerCrane/driverPerformTask?applyState=250',
+      text: '塔吊司机已完成',
+    },
+    ],
+  },
+  onLoad() {
+    wx.hideHomeButton();
+    this.baseData = wx.getStorageSync(BaseDataKey);
+    if (!this.baseData.salt || !this.baseData.token) {
+      wx.redirectTo({
+        url: '/pages/login/login',
+      });
+    } else {
+      this.appGetUserUsualOperateAndLunchImage();
+      this.appGetUserAuthorizationAndMassage();
+    }
+  },
+  onShow() {
+    this.baseData = wx.getStorageSync(BaseDataKey);
+    if (this.baseData && (this.baseData.salt || this.baseData.token)) {
+      this.setFlatcarHandle();
+    }
+    wx.removeStorageSync('platformTaskQueryData');
+    wx.removeStorageSync('platformTaskDetailApplyDo');
+    this.setDetailApplyDoInit();
+  },
+  computed: {
+    powerList() {
+      let taskList = [];
+      if (this.platFormList.length) {
+        let data = {
+          id: 0,
+          title: '平板车工作',
+          list: this.platFormList,
+        };
+        taskList.push(data);
+      }
+      if (this.forkerList.length) {
+        let data = {
+          id: 1,
+          title: '叉车工作',
+          list: this.forkerList,
+        };
+        taskList.push(data);
+      }
+      if (this.craneList.length) {
+        let data = {
+          id: 2,
+          title: '龙门吊工作',
+          list: this.craneList,
+        };
+        taskList.push(data);
+      }
+      if (this.towerCraneList.length) {
+        let data = {
+          id: 3,
+          title: '塔吊工作',
+          list: this.towerCraneList,
+        };
+        taskList.push(data);
+      }
+      return taskList;
+    },
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo', 'setDetailApplyDoInit']),
+    driverScanQrCodeToBindCar(carCode) {
+      let req = {
+        carCode,
+        userId: this.baseData.user.userId,
+        roleId: 1
+      };
+      wepy
+        .$api('platform/organization/driverScanQrCodeToBindCar', req)
+        .then((res) => {
+          wepy.$showToast(`欢迎驾驶${res.carNumber}车,规范驾驶,注意安全.`);
+          this.setFlatcarHandle();
+        });
+    },
+    scanCode(item) {
+      if (item.scanCodeState === 1 || item.scanCodeState === 2) {
+        wx.scanCode({
+          scanType: 'QR_CODE',
+          success: (data) => {
+            let {
+              errMsg,
+              result
+            } = data;
+            if (errMsg === 'scanCode:ok' && result) {
+              let list = result.split('|');
+              let leng = list.length;
+              if (list[0] === '0' && list[leng - 1] === '0') {
+                this.driverScanQrCodeToBindCar(result);
+              } else {
+                wepy.$showToast('二维码数据信息有误,请确认');
+              }
+            } else {
+              wepy.$showToast('二维码数据信息有误,请确认');
+            }
+          },
+          fail: (err) => {
+            // wepy.$showToast('请扫描指定车辆二维码');
+          },
+        });
+      } else {
+        wx.navigateTo({
+          url: `/pages/towerCrane/driverReceiveForkliftTask?scanCodeState=${item.scanCodeState}`,
+        });
+      }
+    },
+    setFlatcarHandle() {
+      let list = [];
+      let title, number, url;
+      let userRoleNames = this.userRoleName.split(',');
+      let userRoleIds = this.userRoleId.split(',');
+      let flag = this.authorisations.some((item) => item.confId === 32);
+      if (flag) {
+        this.isPlat = true;
+        // let isReview = this.authorisations.some((item) => item.confId === 27);
+
+        // if (isReview) {
+        //   // 审批
+        //   url = '/pages/reviewList/reviewList';
+        //    title = '待办事项-平板车审批';
+        // } else {
+        //   // 司机
+        //   url = '/pages/driverTask/driverTaskList';
+        //   title = '待办事项-平板车司机';
+        // }
+        // list.push({
+        //   id: -1,
+        //   title,
+        //   url,
+        //   number: 0,
+        // });
+      }
+      if (
+        userRoleIds.includes('56') ||
+        userRoleIds.includes('57') ||
+        userRoleIds.includes('58') ||
+        userRoleIds.includes('62')
+      ) {
+        this.isFlat = true;
+      } else if (
+        userRoleIds.includes('67') ||
+        userRoleIds.includes('68') ||
+        userRoleIds.includes('70') ||
+        userRoleIds.includes('72')
+      ) {
+        this.isFlat = true;
+      } else if (userRoleIds.includes('77') || userRoleIds.includes('79') || userRoleIds.includes('81') || userRoleIds.includes('84') || userRoleIds.includes('85')) {
+        this.isFlat = true;
+      }
+      this.mergeTaskMassageTask(list);
+    },
+    filterPowerList(includesTags) {
+      let _includesTags = [];
+      this.defaultPowerList.forEach((item) => {
+        let isTag = includesTags.some((subItem) => {
+          return item.powerId === subItem;
+        });
+        let isAuthorisations = this.authorisations.some((subItem) => {
+          return item.powerId === subItem.confId;
+        });
+        if (isTag && isAuthorisations) {
+          _includesTags.push(item);
+        }
+      });
+      return _includesTags;
+    },
+    mergeTaskMassageTask(list) {
+      let promiseList = []
+      if (this.isPlat) {
+        promiseList.push(this.appGetCommonAndTaskMassageCount(list))
+      }
+      if (this.isFlat) {
+        promiseList.push(this.stayManageTask())
+      }
+      Promise.all(promiseList).then(res => {
+        this.stayManageTaskList = []
+        res.forEach(item => {
+          this.stayManageTaskList.push(...item)
+        })
+      })
+    },
+    appGetCommonAndTaskMassageCount(list) {
+      return wepy
+        .$api('appGetCommonAndTaskMassageCount', {
+          userId: this.baseData.user.userId,
+        })
+        .then((res) => {
+          return res.upcomingMessage.map(item => {
+            let title, url;
+            switch (item.upcomingType) {
+              case 1:
+                title = '待办事项-平板车审批';
+                url = '/pages/reviewList/reviewList';
+                break;
+              case 2:
+                title = '待办事项-平板车司机';
+                url = '/pages/driverTask/driverTaskList';
+                break;
+              default:
+                break;
+            }
+            return {
+              title,
+              url,
+              number: item.taskMassageCount || 0,
+            }
+          })
+        }).catch(() => {
+          return []
+        })
+    },
+    stayManageTask() {
+      let list = []
+      return wepy.$api('app/forkliftApply/stayManageTasks', {}).then((res) => {
+        if (res && res.length) {
+          console.log(res)
+          res.forEach((item) => {
+            let {
+              type,
+              number
+            } = item;
+            let title, url;
+            switch (type) {
+              case 42:
+                title = '待办事项-叉车审批';
+                url = '/pages/forkerLeft/reviewList';
+                break;
+              case 46:
+                title = '待办事项-叉车司机';
+                url = '/pages/forkerLeft/driverTaskIngList';
+                break;
+              case 54:
+                title = '待办事项-龙门吊审批';
+                url = '/pages/craneApply/reviewList';
+                break;
+              case 58:
+                title = '待办事项-龙门吊司机';
+                url = '/pages/craneApply/driverTaskIngList';
+                break;
+              case 68:
+                title = '待办事项-塔吊审批';
+                url = '/pages/towerCrane/reviewList';
+                break;
+              case 72:
+                title = '待办事项-塔吊司机';
+                url = '/pages/towerCrane/driverTaskIngList';
+                break;
+              default:
+                break;
+            }
+            list.push({
+              title,
+              url,
+              number,
+            });
+          });
+          return list
+        }
+      }).catch(() => {
+        return list
+      })
+    },
+    appGetUserUsualOperateAndLunchImage() {
+      wepy.$api('appGetUserUsualOperateAndLunchImage', {
+        userId: this.baseData.user.userId,
+      });
+    },
+    appGetUserAuthorizationAndMassage() {
+      wepy
+        .$api('appGetUserAuthorizationAndMassage', {
+          userId: this.baseData.user.userId,
+        })
+        .then((res) => {
+          this.authorisations = res.authorisations;
+          this.userRoleId = res.deptUser.userRoleId;
+          this.userRoleName = res.deptUser.userRoleName;
+          this.setFlatcarHandle();
+
+          this.platFormList = this.filterPowerList(this.platFormPowers);
+          this.forkerList = this.filterPowerList(this.forkerPowers);
+          this.craneList = this.filterPowerList(this.cranePowers);
+          this.towerCraneList = this.filterPowerList(this.towerCranePowers);
+          // 先过滤PowerList 再设置司机
+          this.setsCanCodePower(
+            res.deptUser.userRoleName,
+            res.deptUser.userRoleId
+          );
+        });
+    },
+    setsCanCodePower(userRoleName, userRoleId) {
+      let userRoleNames = userRoleName.split(',');
+      let userRoleIds = userRoleId.split(',');
+      if (userRoleNames.includes('司机') || userRoleNames.includes('跟车员')) {
+        let flag = this.powerList.find(item => item.id === 0)
+        flag.hasScanCode = true
+        flag.scanCodeState = 1;
+      }
+      if (userRoleNames.includes('叉车司机')) {
+        let flag = this.powerList.find(item => item.id === 1)
+        flag.hasScanCode = true
+        flag.scanCodeState = 2;
+      }
+      if (userRoleIds.includes('72') || userRoleIds.includes('73')) {
+        let flag = this.powerList.find(item => item.id === 2)
+        flag.hasScanCode = true
+        flag.scanCodeState = 3;
+      }
+      if (userRoleIds.includes('81')) {
+        let flag = this.powerList.find(item => item.id === 3)
+        flag.hasScanCode = true
+        flag.scanCodeState = 4;
+      }
+    },
+    goToPage(url) {
+      wx.navigateTo({
+        url,
+      });
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'首页',
+      usingComponents: {
+          "van-image": "module:@vant/weapp/dist/image/index",
+          "van-icon": "module:@vant/weapp/dist/icon/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.home_page {
+  height: 100%;
+  background: #fff;
+}
+.home_top {
+  height: 480rpx;
+  background: #005bac;
+  &_header {
+    display: flex;
+    height: 88rpx;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    padding: 20rpx 24rpx;
+    &_left {
+      display: flex;
+      font-size: 26rpx;
+      align-items: center;
+      font-weight: 400;
+    }
+    &_center {
+      font-size: 36rpx;
+    }
+    &_right {
+      &_icon {
+        margin-right: 34rpx;
+      }
+    }
+  }
+  &_center {
+    position: relative;
+    height: 188rpx;
+    text-align: center;
+    &_content {
+      display: flex;
+      align-items: center;
+      text-align: left;
+      position: absolute;
+      top: 50%;
+      left: 60rpx;
+      transform: translateY(-50%);
+      color: #fff;
+      &_text {
+        line-height: 50rpx;
+        margin-left: 26rpx;
+      }
+    }
+  }
+  &_footer {
+    margin-top: 48rpx;
+    padding: 0 24rpx;
+    &_title {
+      margin-bottom: 20rpx;
+      line-height: 50rpx;
+      color: #fff;
+      font-size: 36rpx;
+    }
+    &_content {
+      display: flex;
+      &_item {
+        width: 25%;
+        color: #fff;
+        font-size: 22rpx;
+        text-align: center;
+        & > view {
+          margin-top: 22rpx;
+        }
+      }
+    }
+  }
+}
+.home_bg {
+  position: relative;
+  top: 28rpx;
+  margin: 0 auto;
+}
+.home_do_sth {
+  padding: 100rpx 24rpx 0;
+  &_title {
+    color: #2b2b2b;
+    font-size: 36rpx;
+    line-height: 50rpx;
+    font-weight: 600;
+  }
+  &_content {
+    width: 702rpx;
+    height: 88rpx;
+    display: flex;
+    margin-top: 32rpx;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 28rpx;
+    box-shadow: 0px 0px 20px 0px #e1e5ee;
+    border-radius: 8px;
+    padding: 0 30rpx;
+    box-sizing: border-box;
+    text {
+      font-size: 40rpx;
+      color: #037d3d;
+    }
+  }
+}
+.home_root_list {
+  background: #fff;
+  margin-top: 40rpx;
+  &_item {
+    &_title {
+      position: relative;
+      margin-bottom: 40rpx;
+      height: 82rpx;
+      &_content {
+        display: flex;
+        align-items: center;
+        position: absolute;
+        top: 50%;
+        left: 24rpx;
+        transform: translateY(-50%);
+        text {
+          padding-left: 18rpx;
+          font-size: 36rpx;
+        }
+      }
+    }
+    &_content {
+      display: flex;
+      flex-wrap: wrap;
+      &_item {
+        width: 25%;
+        color: #2b2b2b;
+        font-size: 22rpx;
+        text-align: center;
+        margin: 0 0 40rpx;
+        & > view {
+          margin-top: 20rpx;
+        }
+      }
+    }
+  }
+}
+</style>

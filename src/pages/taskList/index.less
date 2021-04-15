@@ -1,0 +1,60 @@
+.taskList_page {
+  background: #f3f4f6;
+  .content {
+    padding-top: 24rpx;
+  }
+}
+
+.item {
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 28rpx 26rpx;
+  box-sizing: border-box;
+
+  &_header {
+    display: flex;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+      margin-right: 10rpx;
+    }
+  }
+  &_header_c {
+    font-size: 26rpx;
+    color: #000;
+    line-height:1,2rem;
+  }
+  &_content {
+    display: flex;
+    justify-content: space-between;
+    &_left {
+      width: 65%;
+      flex: auto;
+    }
+    &_right {
+      display: flex;
+      align-items: flex-end;
+      text-align: right;
+      align-self: stretch;
+      font-size: 24rpx;
+      padding-bottom: 7rpx;
+      word-break: normal;
+      margin-left: 30rpx;
+
+      text {
+        flex: auto;
+        color: #bea365;
+      }
+    }
+  }
+}

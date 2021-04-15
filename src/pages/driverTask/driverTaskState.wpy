@@ -1,0 +1,453 @@
+<template>
+  <div class="driverTaskState_page">
+    <div class="wrap">
+      <!-- <van-image
+        width="100%"
+        height="400rpx"
+        src="/static/images/home_bg_img3.png"
+      /> -->
+      <div class="car_info">
+        <div class="car_info_left">
+          <div class="tag_drop">
+            <div class="drop"></div>
+            {{ driverData.carNumber }}
+          </div>
+          <div class="font-color-gray">
+            {{ driverData.carFullWeight / 1000 }}吨
+          </div>
+          <div class="car_info_sw">
+            <div class="car_info_s">
+              <van-icon color="#8E9298" name="clock-o" size="26rpx" />
+              <div style="margin-left: 10rpx">
+                耗时:{{ driverData.totalTime }}小时
+              </div>
+            </div>
+            <div class="car_info_s">
+              <van-icon color="#8E9298" name="notes-o" size="26rpx" />
+              <div style="margin-left: 10rpx">
+                任务:{{ driverData.taskCount }}个
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="car_info_right" @click="makePhoneCall">
+          <van-image
+            width="36rpx"
+            height="40rpx"
+            src="/static/images/icon_phone.png"
+          />
+          <text class="car_info_right_t">{{driverData.contactName}}</text>
+        </div>
+      </div>
+      <div class="tast_info">
+        <div class="tast_info_listName">{{ driverData.listName }}</div>
+        <div class="tast_info_deptName">
+          {{ driverData.deptName }}/{{ driverData.goodsWeight / 1000 }}吨/{{
+            driverData.startTimeStamp
+          }}至{{ driverData.endTimeStamp }}
+        </div>
+        <div class="font-24">
+          选择分段: {{ driverData.proCode }}-{{ driverData.goodsCode }}; 重量:
+          {{ driverData.goodsWeight / 1000 }}吨; 尺寸: ({{
+            driverData.goodsWidth
+          }}*{{ driverData.goodsHigh }}*{{ driverData.goodsLength }}) (米)
+        </div>
+        <div class="tast_info_footer">
+          <van-button
+            custom-class="btn"
+            color="#EFA600"
+            @click="goToLighterage"
+            type="default"
+            >添加衍生任务</van-button
+          >
+          <div class="font-color-deep-red">{{ driverData.realTranState }}</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="steps_item">
+          <van-image
+            width="40rpx"
+            height="40rpx"
+            src="{{driverData.timeTranState > 4? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}"
+          />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData._realStartTime }}</text>
+              <text>开始1</text>
+            </div>
+            <div
+              v-if="driverData.timeTranState === 4"
+              :class="{ 'font-color-deep-red': isOvertime }"
+              class="steps_item_content_right"
+            >
+              {{ countdownStr }}
+            </div>
+          </div>
+        </div>
+        <div class="line"></div>
+        <div class="steps_item">
+          <van-image
+            width="40rpx"
+            height="40rpx"
+            src="{{driverData.timeTranState > 5? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}"
+          />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData._realLoadTime }}</text>
+              <text>装载完毕</text>
+            </div>
+            <div
+              v-if="driverData.timeTranState === 5"
+              :class="{ 'font-color-deep-red': isOvertime }"
+              class="steps_item_content_right"
+            >
+              {{ countdownStr }}
+            </div>
+          </div>
+        </div>
+        <div class="line"></div>
+        <div class="steps_item">
+          <van-image
+            width="40rpx"
+            height="40rpx"
+            src="{{driverData.timeTranState > 6? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}"
+          />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData._realArriveTime }}</text>
+              <text>到达目的地</text>
+            </div>
+            <div
+              v-if="driverData.timeTranState === 6"
+              :class="{ 'font-color-deep-red': isOvertime }"
+              class="steps_item_content_right"
+            >
+              {{ countdownStr }}
+            </div>
+          </div>
+        </div>
+        <div class="line"></div>
+        <div class="steps_item">
+          <van-image
+            width="40rpx"
+            height="40rpx"
+            src="{{driverData.timeTranState > 7? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}"
+          />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData._realEndTime }}</text>
+              <text>卸载完毕</text>
+            </div>
+            <div
+              v-if="driverData.timeTranState === 7"
+              :class="{ 'font-color-deep-red': isOvertime }"
+              class="steps_item_content_right"
+            >
+              {{ countdownStr }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- <movable-area class="slider" style="width:{{area_width}}%">
+      <div class="text">{{ textStr }}</div>
+      <div class="side" :style="{ width: sideWeight + 120 + 'rpx' }"></div>
+      <movable-view
+        class="box"
+        inertia
+        :friction="1"
+        style="width:{{box_width}}rpx"
+        direction="horizontal"
+        :x="x"
+        bindchange="drag"
+        bindtouchend="dragOver"
+      >
+        <van-image width="44rpx" height="38rpx" src="/static/images/icon_slider.png"/>
+      </movable-view>
+    </movable-area> -->
+    <div class="slider" @click="dragOver">
+      <div class="text">{{ textStr }}</div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import formatTimeTwo from '@/utils/moment.js';
+import { mapState, mapMutations } from '@wepy/x';
+import store from '@/store';
+var coord = 0;
+wepy.page({
+  store,
+  data: {
+    timer: null,
+    countdownStr: '',
+    isOvertime: false,
+    birpx: 0,
+    applyId: undefined,
+    driverData: {},
+    sideWeight: 0,
+    x: 0,
+    area_width: 96, //可滑动区域的宽，单位是百分比，设置好后自动居中
+    box_width: 140, //滑块的宽,单位是 rpx
+    maxNum: 0, //验证成功时的坐标，不需要设置，代码自动计算；
+  },
+  onShow() {
+    this.init();
+    if (this.detailApplyDo.goodsId) {
+      this.driverStartPlatformOtherTask();
+    }
+  },
+  onUnload() {
+    this.setDetailApplyDoInit();
+  },
+  onLoad({ applyId }) {
+    this.applyId = applyId;
+    var that = this;
+    wx.getSystemInfo({
+      success: function (res) {
+        // 像素比
+        that.birpx = res.windowWidth / 375;
+        var n = Math.floor(
+          (res.windowWidth * that.area_width) / 100 -
+            (that.box_width / 2) * that.birpx
+        );
+        that.maxNum = Math.floor(n * that.birpx);
+      },
+    });
+    this.getDriverTaskState();
+  },
+  computed: {
+    ...mapState(['detailApplyDo']),
+    textStr() {
+      let state = this.driverData.timeTranState;
+      let str = '开始接单';
+      if (state === 3) {
+        str = '开始接单';
+      } else if (state === 4) {
+        str = '开始前往起始地';
+      } else if (state === 5) {
+        str = '装载完成';
+      } else if (state === 6) {
+        str = '到达目的地';
+      } else if (state === 7) {
+        str = '装载完成';
+      } else if (state === 8) {
+        str = '确认完成任务';
+      }
+      return str;
+    },
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDoInit','setDetailApplyDo']),
+    driverStartPlatformOtherTask() {
+      let req = {
+        goodsId: this.detailApplyDo.goodsId,
+        mainApplyId: this.applyId,
+        startTimeStamp: Math.floor(new Date().getTime() / 1000),
+        userId: wepy.$auth.getUserId(),
+      };
+      wepy
+        .$api('app/platformApply/driverStartPlatformOtherTask', req)
+        .then((res) => {
+          let params = {
+            mainApplyId: this.applyId,
+            applyId: res.applyId,
+            ...this.detailApplyDo,
+          };
+          let _params = JSON.stringify(params);
+          wx.navigateTo({
+            url: `/pages/driverTask/driverStartPlatformOtherTask?params=${_params}`,
+            success: () => {
+              this.setDetailApplyDoInit();
+            },
+          });
+        });
+    },
+    init() {
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+      this.$wx.setData({
+        x: 0,
+        maxNum: 0,
+      });
+      this.getDriverTaskState();
+    },
+    goToLighterage() {
+      wx.navigateTo({
+        url: '/pages/lighterage/lighterage',
+      });
+    },
+    makePhoneCall(phone) {
+      this.driverData.contactPhone &&
+        wx.makePhoneCall({
+          phoneNumber: this.driverData.contactPhone,
+        });
+    },
+    setIsOvertimeAndCountdownStr(tagTime, takeUpTime) {
+      let currT = new Date().getTime();
+      let _tagTime = tagTime * 1000;
+      this.timer = setInterval(() => {
+        if (_tagTime + takeUpTime * 1000 - currT > 0) {
+          this.isOvertime = false;
+          this.intervalTime(new Date().getTime(), _tagTime);
+        } else {
+          this.isOvertime = true;
+          this.intervalTime(_tagTime + takeUpTime, new Date().getTime());
+        }
+      }, 1000);
+    },
+    setTimeData() {
+      switch (this.driverData.timeTranState) {
+        case 4:
+          this.setIsOvertimeAndCountdownStr(this.driverData.realStartTime, 0);
+          break;
+        case 5:
+          this.setIsOvertimeAndCountdownStr(
+            this.driverData.realLoadTime,
+            this.driverData.realLoadTime - this.driverData.realStartTime
+          );
+          break;
+        case 6:
+          this.setIsOvertimeAndCountdownStr(
+            this.driverData.realArriveTime,
+            this.driverData.realArriveTime - this.driverData.realLoadTime
+          );
+          break;
+        case 7:
+          this.setIsOvertimeAndCountdownStr(
+            this.driverData.realEndTime,
+            this.driverData.realEndTime - this.driverData.realArriveTime
+          );
+          break;
+        default:
+          break;
+      }
+    },
+    intervalTime(date1, date2) {
+      var date3 = date2 - date1; //时间差的毫秒数
+      //------------------------------
+      //计算出相差天数
+      var days = Math.floor(date3 / (24 * 3600 * 1000));
+      //计算出小时数
+      var leave1 = date3 % (24 * 3600 * 1000); //计算天数后剩余的毫秒数
+      var hours = Math.floor(leave1 / (3600 * 1000));
+      //计算相差分钟数
+      var leave2 = leave1 % (3600 * 1000); //计算小时数后剩余的毫秒数
+      var minutes = Math.floor(leave2 / (60 * 1000));
+      //计算相差秒数
+      var leave3 = leave2 % (60 * 1000); //计算分钟数后剩余的毫秒数
+      var seconds = Math.round(leave3 / 1000);
+      let str = '';
+      if (days) {
+        str = `${days}天${hours}小时${minutes}分钟${seconds}秒`;
+      } else if (hours) {
+        str = `${hours}小时${minutes}分钟${seconds}秒`;
+      } else if (minutes) {
+        str = `${minutes}分钟${seconds}秒`;
+      } else if (seconds) {
+        str = `${seconds}秒`;
+      }
+      this.countdownStr = this.isOvertime ? `已超时: ${str}` : `还有${str}`;
+    },
+    drag(e) {
+      coord = Math.floor(e.x * this.birpx);
+      this.$wx.setData({
+        sideWeight: (e.x * 2) / this.birpx,
+      });
+    },
+    dragOver(e) {
+      // if (coord >= this.maxNum) {
+        if (this.driverData.timeTranState === 8) {
+          this.setDetailApplyDo({
+            addressName: this.driverData.endAddressName,
+            addressId: this.driverData.endAddressId,
+          });
+          wx.navigateTo({
+            url: `/pages/driverTask/driverAddressMassage?applyId=${this.applyId}`,
+          });
+        } else {
+          this.completeDriverTaskState();
+        }
+      // } else {
+      //   this.$wx.setData({
+      //     x: 0,
+      //   });
+      // }
+    },
+    completeDriverTaskState() {
+      wepy.$loading();
+      let upData = {
+        applyId: this.applyId,
+        completeTimeStamp: Math.floor(new Date().getTime() / 1000),
+        completeTimeType: this.driverData.timeTranState + 1,
+      };
+      wepy
+        .$api('platform/driver/task/completeDriverTaskState', upData)
+        .then(() => {
+          this.init();
+        });
+    },
+    getDriverTaskState() {
+      wepy.$loading();
+      wepy
+        .$api('platform/driver/task/getDriverTaskState', {
+          applyId: this.applyId,
+        })
+        .then((res) => {
+          this.driverData = res;
+          this.driverData.startTimeStamp = this.getTime(
+            this.driverData.startTimeStamp
+          );
+          this.driverData.endTimeStamp = this.getTime(
+            this.driverData.endTimeStamp
+          );
+          this.driverData._realStartTime = this.getTime2(
+            this.driverData.realStartTime
+          );
+          this.driverData._realLoadTime = this.getTime2(
+            this.driverData.realLoadTime
+          );
+          this.driverData._realArriveTime = this.getTime2(
+            this.driverData.realArriveTime
+          );
+          this.driverData._realEndTime = this.getTime2(
+            this.driverData.realEndTime
+          );
+          this.driverData.totalTime = this.driverData.totalTime
+            ? (this.driverData.totalTime / 60).toFixed(1)
+            : '0.0';
+          this.setTimeData();
+          wx.hideToast();
+        });
+    },
+    getTime2(time) {
+      return time ? formatTimeTwo(time * 1000, 'h:m') : '';
+    },
+    getTime(time) {
+      return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'任务详情',
+      usingComponents: {
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+          "van-image": "module:@vant/weapp/dist/image/index",
+          "van-button": "module:@vant/weapp/dist/button/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+@import './index.less';
+.slider{
+  background-color: #005bac;
+  width: 700rpx;
+}
+</style>

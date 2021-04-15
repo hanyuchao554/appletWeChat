@@ -1,0 +1,180 @@
+<template>
+  <div class="pop_up_wrap">
+    <div class="prop_up_title">
+      <div>批量审批</div>
+      <!-- <div class="font-32 prop_up_title_r" @click="close">x</div> -->
+    </div>
+    <div class="content">
+      <div class="radio_wrap">
+        <div class="label">请选择</div>
+        <van-radio-group
+          class="radio_group"
+          value="{{ upData.opinion }}"
+          @change="onChange">
+          <div class="selet">
+            <van-radio custom-class="radio" checked-color="#005bac" name="同意">同意</van-radio>
+            <van-radio custom-class="radio" checked-color="#005bac" name="驳回">驳回</van-radio>
+          </div>
+        </van-radio-group>
+      </div>
+      <div class="label margin-b-25">请输入通过的原因</div>
+      <div class="remarks">
+        <!-- <m-textarea
+          height="250rpx"
+          :placeholder="undefined"
+          customStyle="background:#EDF1F4;"
+          :data=""
+          @onChageData="onChangeTextarea"
+        ></m-textarea> -->
+        <textarea value="{{upData.reason}}" bindinput="onChangeTextarea"></textarea>
+      </div>
+      <van-button
+        custom-class="btn"
+        :disabled="isDisabled"
+        @click="submit"
+        color="#005BAC"
+        type="default"
+        >确定</van-button
+      >
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+
+wepy.component({
+  props: {
+    applyIds: {
+      type: Array,
+      required: true,
+    },
+  },
+  data: {
+    isDisabled: false,
+    upData: {
+      applyId: [],
+      opinion: '',
+      reason: '',
+      reasonDetail: '',
+    },
+  },
+
+  computed: {
+    userId() {
+      return wepy.$auth.getUserId();
+    },
+  },
+  methods: {
+    onChangeTextarea(e) {
+      this.upData.reason = e.$wx.detail.value;
+    },
+    onChange(e) {
+      let data = e.$wx.detail;
+      this.upData.opinion = this.upData.reason = data;
+    },
+    close() {
+      this.$emit('close');
+    },
+    submit() {
+      if (!this.upData.opinion) {
+        wx.showToast({
+          icon: 'none',
+          title: '请选择审批结果',
+        });
+      } else {
+        this.completeUserApprovalTask();
+      }
+    },
+    completeUserApprovalTask() {
+      if (this.isDisabled) return;
+      this.isDisabled = true;
+      wepy.$loading();
+      this.upData.applyId = this.applyIds;
+      wepy
+        .$api('app/platformReason/completeUserApprovalTask', this.upData)
+        .then((res) => {
+          this.$emit('onSuccess');
+        })
+        .finally(() => {
+          wx.hideLoading();
+          this.isDisabled = false;
+        });
+    },
+  },
+});
+</script>
+
+<config>
+{
+  usingComponents:{
+    "van-button": "module:@vant/weapp/dist/button/index",
+    "van-radio": "module:@vant/weapp/dist/radio/index",
+    "van-radio-group": "module:@vant/weapp/dist/radio-group/index",
+    "m-textarea": "~@/components/control/m-textarea"
+
+  }
+}
+</config>
+
+<style lang="less" scoped>
+@import './index.less';
+.remarks{
+    border: 1rpx solid #EDF1F4;
+    border-radius:10rpx;
+    height: 150rpx;
+    padding: 20rpx; 
+    textarea{
+      height: 150rpx;
+    }
+}
+.selet{
+  display: flex
+}
+.prop_up_title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  &_r {
+    width: 50rpx;
+    height: 50rpx;
+    text-align: center;
+  }
+}
+
+.margin-b-25 {
+  margin-bottom: 25rpx;
+}
+
+.label {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #2b2b2b;
+  line-height: 44rpx;
+}
+
+.radio_wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 44rpx;
+}
+
+.content {
+  width: 702rpx;
+  margin: 0 auto;
+  padding: 20rpx 0;
+}
+
+.radio_group {
+  display: flex;
+  .radio {
+    font-size: 32rpx;
+    padding-left: 80rpx;
+  }
+}
+
+.btn {
+  width: 100%;
+  margin: 25rpx 0;
+}
+</style>

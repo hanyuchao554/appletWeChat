@@ -1,0 +1,196 @@
+<template>
+    <div class="platformGoodsQueryList_page">
+        <div class="header">
+            <div class="header_left">
+            </div>
+            <div class="header_center text-c">对象查询</div>
+            <div @click="goToQuery"
+                 class="header_right text-r">
+                筛选条件
+            </div>
+        </div>
+        <div class="content">
+            <div class="item"
+                 v-for="item in list">
+                <div class="goodsCodesDetail">
+                    <div class="title">{{item.goodsDo.proCode}}-{{item.goodsDo.goodsCode}}</div>
+                    <div class="flex section">
+                        <div class="text_l">类别：{{ item.goodsDo.goodsType }}</div>
+                        <div class="text_r">
+                            吨位：{{ item.goodsDo.goodsWeight / 1000 }}吨
+                        </div>
+                    </div>
+                    <div class="section">
+                        尺寸：{{ item.goodsDo.goodsWidth }}*{{
+                        item.goodsDo.goodsHigh
+                        }}*{{ item.goodsDo.goodsLength }}（米）
+                    </div>
+                    <div class="section">
+                        是否大型分段：{{ item.goodsDo.isBigGoods === 0 ? '否' : '是' }}
+                    </div>
+                    <div class="section">是否超宽高：{{ item.goodsDo.isOverSize }}</div>
+                </div>
+                <div class="goodsCodesDetail_footer">
+                    <div class="goodsCodesDetail_footer_item">
+                        <van-icon name="location-o"
+                                  size="32rpx" />
+                        <text>{{ item.goodsDo.newGoodsPositionName }}</text>
+                    </div>
+                    <div class="goodsCodesDetail_footer_item">
+                        <van-icon name="clock-o"
+                                  size="32rpx" />
+                        <text>{{item.goodsDo.lastTranTime}}</text>
+                    </div>
+                    <div class="detail_btn"
+                         @click="goToDetail(item)">查看驳运记录 ></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import store from '@/store';
+import { mapMutations } from '@wepy/x';
+wepy.page({
+    store,
+    data: {
+        list: []
+    },
+    onShow() {
+        this.setPlatformGoodsQueryData({});
+    },
+    onLoad() {
+        wx.navigateTo({
+            url: '/pages/platformGoodsQuery/platformGoodsQuery'
+        });
+    },
+    onUnload() {
+        this.setPlatformGoodsQueryData({});
+    },
+    methods: {
+        ...mapMutations(['setPlatformGoodsQueryData']),
+        goToQuery() {
+            wx.navigateTo({
+                url: '/pages/platformGoodsQuery/platformGoodsQuery'
+            });
+        },
+        goToDetail(item) {
+            this.setPlatformGoodsQueryData(item);
+            wx.navigateTo({
+                url: '/pages/platformGoodsQuery/platformGoodsQueryDetail'
+            });
+        }
+    }
+});
+</script>
+
+<config>
+{
+    navigationBarTitleText:'对象查询',
+    usingComponents:{
+        "van-button": "module:@vant/weapp/dist/button/index",
+        "van-icon": "module:@vant/weapp/dist/icon/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.platformGoodsQueryList_page {
+    position: relative;
+    height: 100vh;
+    background: #f3f4f6;
+}
+
+.content {
+    position: absolute;
+    width: 100%;
+    top: 108rpx;
+    bottom: 20rpx;
+    overflow-y: scroll;
+}
+.title {
+    margin-bottom: 20rpx;
+    font-size: 44rpx;
+    font-weight: bold;
+    color: #2b2b2b;
+    line-height: 60rpx;
+}
+.header {
+    display: flex;
+    position: fixed;
+    width: 100%;
+    height: 88rpx;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 28rpx;
+    background: #fff;
+    padding: 0 24rpx;
+    box-sizing: border-box;
+    &_right {
+        color: #005bac;
+    }
+    &_left,
+    &_right {
+        width: 25%;
+    }
+    &_center {
+        width: 50%;
+    }
+    .btn_d {
+        display: inline-block;
+        width: 110rpx;
+        height: 48rpx;
+        line-height: 48rpx;
+        border-radius: 4rpx;
+        font-size: 30rpx;
+        background: #005bac;
+        text-align: center;
+        font-size: 32rpx;
+        color: #ffff;
+    }
+}
+
+.item {
+    width: 702rpx;
+    margin: 0 auto 20rpx;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+}
+.goodsCodesDetail {
+    font-size: 32rpx;
+    .section {
+        margin-bottom: 20rpx;
+        line-height: 44rpx;
+    }
+    .flex {
+        display: flex;
+        .text_l {
+            padding-right: 170rpx;
+        }
+    }
+}
+.goodsCodesDetail_footer {
+    padding-top: 20rpx;
+    box-sizing: border-box;
+    border-top: 2rpx solid #ececec;
+    font-size: 32rpx;
+    .detail_btn {
+        text-align: right;
+        color: #005bac;
+        line-height: 44rpx;
+    }
+    &_item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20rpx;
+        text {
+            margin-left: 8rpx;
+        }
+    }
+}
+</style>

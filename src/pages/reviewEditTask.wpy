@@ -1,0 +1,182 @@
+
+<template>
+  <div class="addTask_page">
+    <div class="content">
+      <van-cell-group custom-class="item">
+        <van-cell required @click="goToPosition('startPositionId',1)" title="起始地" :value="detailApplyDo.startPositionName || '请选择'" />
+        <van-cell required @click="goToPosition('endPositionId',2)" title="目的地" :value="detailApplyDo.endPositionName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell required @click="hasPopUp('isStartTime')" title="起始时间" :value="detailApplyDo._startTime || '请选择'" />
+        <van-cell required @click="hasPopUp('isEndTime')" title="到达时间" :value="detailApplyDo._endTime || '请选择'" />
+      </van-cell-group>
+    </div>
+    <div class="footer">
+      <van-button custom-class="btn" color="#005BAC" @click="submit" type="default">提交</van-button>
+    </div>
+    <van-popup v-if="popUpTypes.isStartTime" round position="bottom" :show="popUpTypes.isStartTime" @close="colseTime">
+      <time-picker startKey="startTime" endKey="endTime" startStrKey="_startTime" endStrKey="_endTime" :time="detailApplyDo.startTime" dataKey="startTime" @onSelect="colseTime" @onCancel="colseTime"></time-picker>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isEndTime" round position="bottom" :show="popUpTypes.isEndTime" @close="colseTime">
+      <time-picker startKey="startTime" endKey="endTime" startStrKey="_startTime" endStrKey="_endTime" :time="detailApplyDo.endTime" dataKey="endTime" @onSelect="colseTime" @onCancel="colseTime"></time-picker>
+    </van-popup>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import addTaskMixin from '@/mixins/addTaskMixin.js';
+  import store from '@/store';
+  import {
+    mapState,
+    mapMutations
+  } from '@wepy/x';
+  const rules = {
+    startPositionId: {
+      message: '请选择起始地'
+    },
+    endPositionId: {
+      message: '请选择目的地'
+    },
+    startTime: {
+      message: '请选择起始时间'
+    },
+    endTime: {
+      message: '请选择到达时间'
+    }
+  };
+  wepy.page({
+    store,
+    mixins: [addTaskMixin],
+    data: {
+      isDisabled: false,
+      isLinkage: 0
+    },
+    onLoad({
+      applyType
+    }) {
+      this.applyType = Number(applyType) || 0;
+      this.init();
+    },
+    computed: {
+      ...mapState(['detailApplyDo'])
+    },
+    methods: {
+      init() {
+        let title = '';
+        switch (this.applyType) {
+          case 0:
+            title = '平板车-编辑任务审核'
+            break;
+          case 1:
+            title = '叉车-编辑任务审核'
+            break;
+          case 2:
+            title = '龙门吊-编辑任务审核'
+            break;
+          case 3:
+            title = '塔吊-编辑任务审核'
+            break;
+          default:
+            break;
+        }
+        wx.setNavigationBarTitle({
+          title
+        });
+      },
+      valid(tagerData) {
+        return wepy.$valid.handleValid(rules, tagerData);
+      },
+      initPopUp() {
+        this.hasInput = false;
+        for (let key of Object.keys(this.popUpTypes)) this.popUpTypes[key] = false;
+      },
+      colseTime() {
+        this.popUpTypes.isEndTime = false;
+        this.popUpTypes.isStartTime = false;
+      },
+      submit() {
+        this.sendEditTask()
+      },
+      sendEditTask() {
+        if (this.isDisabled) return;
+        let {
+          startPositionId,
+          endPositionId,
+          startTime,
+          endTime,
+          prsId
+        } = this.detailApplyDo;
+        let data = {
+          startPositionId,
+          endPositionId,
+          startTime,
+          endTime,
+          applyType: this.applyType,
+          prsId
+        };
+        if (this.valid(data)) {
+          this.isDisabled = true;
+          wepy.$api('app/forkPullDown/updateApplyTimeAddress', data)
+            .then(() => {
+              this.$back();
+            })
+            .finally(() => {
+              this.isDisabled = false;
+            });
+        }
+      },
+      goToPosition(target,type) {
+        wx.navigateTo({
+          url: `/pages/position/position?code=${target}&applyType=${this.applyType}&type=${type}`
+        });
+      }
+    }
+  });
+</script>
+
+<config>
+{
+    usingComponents: {
+          "van-cell": "module:@vant/weapp/dist/cell/index",
+          "van-cell-group": "module:@vant/weapp/dist/cell-group/index",
+          "van-popup": "module:@vant/weapp/dist/popup/index",
+          "van-button": "module:@vant/weapp/dist/button/index",
+          "time-picker": "~@/components/pop-up/time-picker",
+    }
+}
+</config>
+
+<style lang="less" scoped>
+  .addTask_page {
+    position: relative;
+    height: 100vh;
+    background: #f0f3f6;
+    .item {
+      margin-bottom: 22rpx;
+    }
+  }
+  .content {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 150rpx;
+    overflow-y: scroll; // zoom: 1;
+  }
+  .footer {
+    position: fixed;
+    width: 100%;
+    height: 150rpx;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    .btn {
+      width: 702rpx;
+    }
+  }
+  .input_wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+</style>

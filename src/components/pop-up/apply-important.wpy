@@ -1,0 +1,59 @@
+<template>
+  <div class="pop_up_wrap">
+    <div class="prop_up_title">选择重要程度</div>
+    <div class="prop_up_item_group">
+      <div
+        class="prop_up_item"
+        @click="onSelect(item)"
+        v-for="item in dataList"
+      >
+        {{ item }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import { mapState, mapMutations } from '@wepy/x';
+import store from '@/store';
+wepy.component({
+  store,
+  data: {
+    dataList: []
+  },
+  created() {
+    this.getAppDepartment();
+  },
+  computed: {
+    ...mapState(['detailApplyDo']),
+    userId() {
+      return wepy.$auth.getUserId();
+    },
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    onSelect(data) {
+      // 展示
+      this.detailApplyDo.important = data;
+      // 提交
+      this.detailApplyDo.importance = data;
+      this.setDetailApplyDo(this.detailApplyDo);
+      this.$emit('onSelect');
+    },
+    getAppDepartment() {
+      wepy
+        .$api('app/enum/getApplyImportant', {
+          userId: this.userId,
+        })
+        .then((res) => {
+          this.dataList = res;
+        });
+    },
+  },
+});
+</script>
+
+<style lang="less" scoped>
+@import './index.less';
+</style>

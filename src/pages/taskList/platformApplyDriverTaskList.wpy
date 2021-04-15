@@ -1,0 +1,100 @@
+<template>
+  <div class="taskList_page">
+    <div class="content">
+      <div @click="goToPage(item.applyId)"
+           class="item"
+           v-for="item in list">
+        <div class="item_header">
+          <div class="tag"
+               style="background:{{item.requestTypeBg}}">
+            {{ item.requestTypeStr }}
+          </div>
+          <div>{{ item.listName }}</div>
+        </div>
+        <div class="item_header_c">
+          {{ item.deptName }}/{{ item.goodsWeight / 1000 }}吨/{{ item.startTimeStamp }}至{{ item.endTimeStamp }}
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
+                <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="item_content_right">
+            <text style="color: #2b2b2b">></text>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import {
+  BaseDataKey
+} from '@/constant';
+import wepy from '@wepy/core';
+import formatTimeTwo from '@/utils/moment.js';
+import CommonMixin from '@/mixins/commonMixin.js'
+
+wepy.page({
+  mixins: [CommonMixin],
+  data: {
+    list: [],
+  },
+  onShow() {
+    this.getPlatformApplyDriverTaskList();
+  },
+  methods: {
+    getPlatformApplyDriverTaskList() {
+      wepy.$loading();
+      wepy
+        .$api('app/massage/getPlatformApplyDriverTaskList', {
+          userId: wepy.$auth.getUserId(),
+        })
+        .then((res) => {
+          this.list = []
+          if (!res.length) {
+            wepy.$showToast('未查询到数据');
+          } else {
+            res.forEach((item) => {
+              item.carTasks.forEach((subitem) => {
+                this.setRequestType(subitem);
+                subitem.startTimeStamp = this.getTime(subitem.startTimeStamp);
+                subitem.endTimeStamp = this.getTime(subitem.endTimeStamp);
+                this.list.push(subitem);
+              });
+            });
+            wx.hideToast()
+          }
+        });
+    },
+    goToPage(businessKey) {
+      wx.navigateTo({
+        url: `/pages/taskDetail/taskDetail?businessKey=${businessKey}&fromType=已完成`,
+      });
+    },
+    getTime(time) {
+      return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'司机已完成任务列表'
+}
+</config>
+
+<style lang="less" scoped>
+@import './index.less';
+</style>

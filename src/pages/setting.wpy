@@ -1,0 +1,119 @@
+<template>
+  <div class="setting_page">
+    <div class="item" @click="goToPage">
+      <div class="text">版本号</div>
+      <van-icon color="#8E9298" name="arrow" size="23rpx" />
+    </div>
+    <div class="item btn" @click="logOn">退出登录</div>
+    <van-overlay show="{{ show }}" @click="onClickHide">
+      <view class="wrapper">
+        <div class="title">确认是否退出登录？</div>
+        <div class="btn-box">
+          <van-button custom-class="btn" @click="onClickHide" type="default"
+            >取消</van-button
+          >
+          <van-button
+            custom-class="btn"
+            color="#005BAC"
+            type="default"
+            @click="submitConfirm"
+            >确认</van-button
+          >
+        </div>
+      </view>
+    </van-overlay>
+  </div>
+</template>
+<script>
+import wepy from '@wepy/core';
+import { BaseDataKey } from '@/constant';
+wepy.page({
+  data: {
+    show: false,
+  },
+  methods: {
+    onClickHide() {
+      this.show = false;
+    },
+    goToPage() {
+      wx.navigateTo({
+        url: '/pages/edition',
+      });
+    },
+    submitConfirm() {
+      wx.removeStorageSync(BaseDataKey);
+      wx.reLaunch({
+        url: '/pages/login/login',
+      });
+    },
+    logOn() {
+      this.show = true;
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'设置',
+  usingComponents: {
+    "van-icon": "module:@vant/weapp/dist/icon/index",
+    "van-overlay": "module:@vant/weapp/dist/overlay/index",
+    "van-button": "module:@vant/weapp/dist/button/index"
+  }
+}
+</config>
+
+<style lang="less" scoped>
+.setting_page {
+  height: 100vh;
+  padding: 24rpx;
+  background: #fff;
+  box-sizing: border-box;
+}
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 88rpx;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e6e6e6;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  background: #fff;
+  padding: 0 36rpx;
+}
+.btn {
+  margin-top: 40rpx;
+  text-align: center;
+  color: #e0291e;
+}
+
+.wrapper {
+  width: 702rpx;
+  padding: 24rpx;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10rpx;
+  background: #fff;
+  text-align: center;
+  box-sizing: border-box;
+  .title {
+    margin-bottom: 25rpx;
+    font-size: 36rpx;
+    color: #2b2b2b;
+    line-height: 50rpx;
+  }
+  .btn-box {
+    display: flex;
+    justify-content: space-between;
+    .btn {
+      width: 320rpx;
+      height: 64rpx;
+      border-radius: 8rpx;
+    }
+  }
+}
+</style>

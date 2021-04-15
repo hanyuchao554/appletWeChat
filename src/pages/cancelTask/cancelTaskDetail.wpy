@@ -1,0 +1,292 @@
+<template>
+  <div class="taskDetail_page">
+    <div class="content">
+      <div class="wrap not-top-padding">
+        <div class="cell">
+          <div>任务状态</div>
+          <div class="status_task">
+            {{ isStartTask === 1 ? '未开始' : '已开始' }}
+          </div>
+        </div>
+      </div>
+      <div class="wrap">
+        <div class="title margin_bottom_8">
+          <div class="tag" style="background:{{requestTypeBg}}">
+            {{ requestTypeStr }}
+          </div>
+          <div class="title_content">
+            {{ _detailApplyDo.goodsProCode }}-{{ _detailApplyDo.goodsGoodsCode }} {{ _detailApplyDo.jobContent }}
+          </div>
+        </div>
+        <div class="font-color-gray font-24 margin_bottom_8">
+          申请部门: {{ _detailApplyDo.applyDeptName }} / 驳运部门: {{ _detailApplyDo.transDeptName }}
+        </div>
+        <div class="font-24">
+          选择分段: {{ _detailApplyDo.goodsProCode }}-{{ _detailApplyDo.goodsGoodsCode }}; 重量: {{ _detailApplyDo._goodsWeight }}吨; 尺寸: ({{ _detailApplyDo.goodsWidth }}*{{ _detailApplyDo.goodsHigh }}*{{ _detailApplyDo.goodsLength }}) (米)
+        </div>
+      </div>
+      <div class="wrap not-top-padding">
+        <div class="cell">
+          <div>起始时间</div>
+          <div>{{ _detailApplyDo._startTime }}</div>
+        </div>
+        <div class="cell">
+          <div>到达时间</div>
+          <div>{{ _detailApplyDo._endTime }}</div>
+        </div>
+      </div>
+      <div class="wrap">
+        <div class="wrap_content">
+          <div class="wrap_content_left">
+            <div class="wrap_content_left_t"></div>
+            <div class="wrap_content_left_c"></div>
+            <div class="wrap_content_left_b"></div>
+          </div>
+          <div class="wrap_content_right">
+            <div class="ellipsis">
+              起始地: {{ _detailApplyDo.startPositionName || '' }}
+            </div>
+            <div class="ellipsis">
+              目的地: {{ _detailApplyDo.endPositionName || '' }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wrap not-top-padding">
+        <div class="cell">
+          <div class="label">联系人</div>
+          <div @click="makePhoneCall(_detailApplyDo.contastsPhone)">{{ _detailApplyDo.contastsName || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">工作内容</div>
+          <div>{{ _detailApplyDo.jobContent || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">重要程度</div>
+          <div style="color: #bea365">{{ _detailApplyDo.important || '' }}</div>
+        </div>
+        <div class="cell">
+          <div>
+            <div class="label">申请备注</div>
+            <div style="min-height: 150rpx; margin-top: 20rpx">
+              {{ _detailApplyDo.memo }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer footer_btn_d">
+      <van-button custom-class="btn" color="#AD251F" @click="goToPage" type="default">取消任务</van-button>
+    </div>
+  </div>
+</template>
+
+<script>
+  import {
+    BaseDataKey
+  } from '@/constant';
+  import wepy from '@wepy/core';
+  import formatTimeTwo from '@/utils/moment.js';
+  import CommonMixin from '@/mixins/commonMixin.js'
+  wepy.page({
+    mixins: [CommonMixin],
+    data: {
+      applyId: '',
+      detailCancelDo: {},
+      approvalList: [],
+      _detailApplyDo: {},
+      requestTypeBg: '',
+      showApplicationBtn: false,
+      showOtherDetail: false,
+      isStartTask: undefined,
+    },
+    onLoad({
+      businessKey
+    }) {
+      this.applyId = businessKey;
+      this.getTaskDetail(businessKey);
+    },
+    methods: {
+      goToPage() {
+        let ids = JSON.stringify([this.applyId])
+        wx.navigateTo({
+          url: `/pages/cancelTask/cancelTask?applyIdList=${ids}`,
+        });
+      },
+      makePhoneCall(phone) {
+        phone && wx.makePhoneCall({
+          phoneNumber: phone
+        })
+      },
+      getTaskDetail(businessKey) {
+        wepy.$loading();
+        wepy
+          .$api('app/platformApply/getPlatformApplyDetail', {
+            businessKey,
+          })
+          .then((res) => {
+            this.isStartTask = res.isStartTask;
+            this.approvalList = res.approvalList.map((item) => {
+              item._approvalTime = this.getTime(item.approvalTime, true);
+              return item;
+            });
+            if (res.detailCancelDo && res.detailCancelDo.cancelId) {
+              this.detailCancelDo = res.detailCancelDo;
+              this.detailCancelDo.cancelTime = this.getTime(
+                this.detailCancelDo.cancelTime
+              );
+            }
+            this._detailApplyDo = res.detailApplyDo;
+            this._detailApplyDo._startTime = this.getTime(
+              this._detailApplyDo.startTime
+            );
+            this.getTagBgColor(this._detailApplyDo.requestType);
+            this._detailApplyDo._endTime = this.getTime(
+              this._detailApplyDo.endTime
+            );
+            this._detailApplyDo._applyTime = this.getTime(
+              this._detailApplyDo.applyTime
+            );
+            this._detailApplyDo._goodsWeight = this.getWeight(
+              this._detailApplyDo.goodsWeight
+            );
+            wx.hideToast()
+          })
+      },
+      getTime(time, hasYear) {
+        let str = hasYear ? 'Y-M-D h:m' : 'M-D h:m';
+        return time ? formatTimeTwo(time * 1000, str) : '';
+      },
+    },
+  });
+</script>
+
+<config>
+{
+      navigationBarTitleText:'任务详情',
+      usingComponents: {
+          "van-button": "module:@vant/weapp/dist/button/index"
+
+    }
+}
+</config>
+
+<style lang="less" scoped>
+  .taskDetail_page {
+    position: relative;
+    height: 100vh;
+    padding-top: 20rpx;
+    box-sizing: border-box;
+    background: #f3f4f6;
+  }
+  .content {
+    width: 100%;
+    position: absolute;
+    overflow-y: scroll;
+    top: 20rpx;
+    bottom: 170rpx;
+  }
+  .footer {
+    width: 702rpx;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+  .margin_bottom_8 {
+    margin-bottom: 8rpx;
+  }
+  .not-top-padding {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .title {
+    display: flex;
+    align-items: center;
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+    }
+    &_content {
+      margin-left: 10rpx;
+      font-size: 28rpx;
+      font-weight: 500;
+      color: #2b2b2b;
+      line-height: 40rpx;
+    }
+  }
+  .wrap {
+    width: 702rpx;
+    margin: 0 auto 20rpx;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 26rpx;
+    line-height: 34rpx;
+    box-sizing: border-box;
+    .cell {
+      display: flex;
+      justify-content: space-between;
+      padding: 26rpx 0;
+      font-size: 28rpx;
+      line-height: 40rpx;
+      border-bottom: 2rpx solid #ececec;
+      .label {
+        flex: none;
+        padding-right: 25rpx;
+      }
+    }
+    .cell:last-child {
+      border: transparent;
+    }
+    &_content {
+      display: flex;
+      align-items: center;
+      font-size: 24rpx;
+      &_left {
+        flex: none;
+        &_t {
+          width: 4rpx;
+          height: 4rpx;
+          border: 2rpx solid #005bac;
+          border-radius: 2rpx;
+        }
+        &_c {
+          width: 4rpx;
+          height: 28rpx;
+          background: #005bac;
+          margin: 4rpx 0 4rpx 2rpx;
+        }
+        &_b {
+          width: 4rpx;
+          height: 4rpx;
+          background: #005bac;
+          border: 2rpx solid #005bac;
+          border-radius: 2rpx;
+        }
+      }
+      &_right {
+        width: 75%;
+        padding-left: 20rpx;
+        font-size: 24rpx;
+        line-height: 34rpx;
+        &>view {
+          padding: 5rpx 0;
+        }
+      }
+    }
+  }
+  .wrap:last-child {
+    margin-bottom: 0;
+  }
+  .status_task {
+    font-size: 28rpx;
+    font-weight: 400;
+    color: #037d3d;
+    line-height: 40rpx;
+  }
+</style>
