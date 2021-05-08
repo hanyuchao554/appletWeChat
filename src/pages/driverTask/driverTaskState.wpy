@@ -1,11 +1,28 @@
 <template>
   <div class="driverTaskState_page">
     <div class="wrap">
+<<<<<<< HEAD
       <!-- 头部信息 -->
       <div class="car_info">
         <div class="car_info_left">
           <div class="tag_drop">{{ driverData.carNumber }}</div>
           <div class="font-color-gray">{{ driverData.carFullWeight / 1000 }}吨</div>
+=======
+      <!-- <van-image
+        width="100%"
+        height="400rpx"
+        src="/static/images/home_bg_img3.png"
+      /> -->
+      <div class="car_info">
+        <div class="car_info_left">
+          <div class="tag_drop">
+            <div class="drop"></div>
+            {{ driverData.carNumber }}
+          </div>
+          <div class="font-color-gray">
+            {{ driverData.carFullWeight / 1000 }}吨
+          </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
           <div class="car_info_sw">
             <div class="car_info_s">
               <van-icon color="#8E9298" name="clock-o" size="26rpx" />
@@ -30,6 +47,7 @@
           <text class="car_info_right_t">{{driverData.contactName}}</text>
         </div>
       </div>
+<<<<<<< HEAD
       <!-- 主要内容 -->
       <div class="content">
         <div class="tast_info">
@@ -88,6 +106,32 @@
         </div>
       </div> 
       <!-- 执行步骤 -->
+=======
+      <div class="tast_info">
+        <div class="tast_info_listName">{{ driverData.listName }}</div>
+        <div class="tast_info_deptName">
+          {{ driverData.deptName }}/{{ driverData.goodsWeight / 1000 }}吨/{{
+            driverData.startTimeStamp
+          }}至{{ driverData.endTimeStamp }}
+        </div>
+        <div class="font-24">
+          选择分段: {{ driverData.proCode }}-{{ driverData.goodsCode }}; 重量:
+          {{ driverData.goodsWeight / 1000 }}吨; 尺寸: ({{
+            driverData.goodsWidth
+          }}*{{ driverData.goodsHigh }}*{{ driverData.goodsLength }}) (米)
+        </div>
+        <div class="tast_info_footer">
+          <van-button
+            custom-class="btn"
+            color="#EFA600"
+            @click="goToLighterage"
+            type="default"
+            >添加衍生任务</van-button
+          >
+          <div class="font-color-deep-red">{{ driverData.realTranState }}</div>
+        </div>
+      </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       <div class="steps">
         <div class="steps_item">
           <van-image
@@ -98,7 +142,11 @@
           <div class="steps_item_content">
             <div class="steps_item_content_left">
               <text>{{ driverData._realStartTime }}</text>
+<<<<<<< HEAD
               <text>开始1</text>
+=======
+              <text>开始接单</text>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             </div>
             <div
               v-if="driverData.timeTranState === 4"
@@ -172,9 +220,12 @@
             </div>
           </div>
         </div>
+<<<<<<< HEAD
         <div class="slider" @click="dragOver">
           <div class="text">{{ textStr }}</div>
         </div>
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </div>
     </div>
     <!-- <movable-area class="slider" style="width:{{area_width}}%">
@@ -193,6 +244,12 @@
         <van-image width="44rpx" height="38rpx" src="/static/images/icon_slider.png"/>
       </movable-view>
     </movable-area> -->
+<<<<<<< HEAD
+=======
+    <div class="slider" @click="dragOver">
+      <div class="text">{{ textStr }}</div>
+    </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   </div>
 </template>
 
@@ -210,13 +267,20 @@ wepy.page({
     isOvertime: false,
     birpx: 0,
     applyId: undefined,
+<<<<<<< HEAD
     driverData:{},
+=======
+    driverData:{
+      id:1,
+    },
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     sideWeight: 0,
     x: 0,
     area_width: 96, //可滑动区域的宽，单位是百分比，设置好后自动居中
     box_width: 140, //滑块的宽,单位是 rpx
     maxNum: 0, //验证成功时的坐标，不需要设置，代码自动计算；
     realTime:null,
+<<<<<<< HEAD
   },
 
   onShow() {
@@ -225,6 +289,25 @@ wepy.page({
       this.driverStartPlatformOtherTask();
     }
     this.getDriverTaskState()
+=======
+    state:'',
+
+  },
+  onHide(){
+    clearInterval(this.realTime)
+    this.realTime = null
+  },
+  onUnload(){
+    clearInterval(this.realTime)
+    this.setDetailApplyDoInit();
+    this.realTime = null
+  },
+  onShow() {
+    this.getDriverTaskState();
+    if (this.detailApplyDo.goodsId) {
+      this.driverStartPlatformOtherTask();
+    }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   },
   onLoad({ applyId }) {
     this.applyId = applyId;
@@ -240,6 +323,7 @@ wepy.page({
         that.maxNum = Math.floor(n * that.birpx);
       },
     });
+<<<<<<< HEAD
   },
   onHide(){
     clearInterval(this.realTime)
@@ -247,11 +331,18 @@ wepy.page({
   onUnload(){
     this.setDetailApplyDoInit();
     clearInterval(this.realTime);
+=======
+    this.timereTofresh()
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   },
   computed: {
     ...mapState(['detailApplyDo']),
     textStr() {
       let state = this.driverData.timeTranState;
+<<<<<<< HEAD
+=======
+      this.state = state
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       let str = '开始接单';
       if (state === 3) {
         str = '开始接单';
@@ -262,7 +353,11 @@ wepy.page({
       } else if (state === 6) {
         str = '到达目的地';
       } else if (state === 7) {
+<<<<<<< HEAD
         str = '卸载完成';
+=======
+        str = '装载完成';
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       } else if (state === 8) {
         str = '确认完成任务';
       }
@@ -271,6 +366,7 @@ wepy.page({
   },
   methods: {
     ...mapMutations(['setDetailApplyDoInit','setDetailApplyDo']),
+<<<<<<< HEAD
     // 每隔30秒向后台发送一次当前位置的坐标
     timereTofresh(state){
       console.log(state)
@@ -280,6 +376,15 @@ wepy.page({
           this.driverLocationRecord();
         }, 30000);
       }
+=======
+    timereTofresh(){
+      let that = this
+      this.realTime = setInterval(function(){
+          if(that.driverData.timeTranState > 3 ){
+            that.driverLocationRecord()
+          }
+        },30000);
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     //获取到的位置信息存到数据库
     driverLocationRecord() {
@@ -312,7 +417,12 @@ wepy.page({
         startTimeStamp: Math.floor(new Date().getTime() / 1000),
         userId: wepy.$auth.getUserId(),
       };
+<<<<<<< HEAD
       wepy.$api('app/platformApply/driverStartPlatformOtherTask', req)
+=======
+      wepy
+        .$api('app/platformApply/driverStartPlatformOtherTask', req)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         .then((res) => {
           let params = {
             mainApplyId: this.applyId,
@@ -328,6 +438,7 @@ wepy.page({
           });
         });
     },
+<<<<<<< HEAD
     init() {
       if (this.timer) {
         clearInterval(this.timer);
@@ -339,6 +450,11 @@ wepy.page({
       });
       this.getDriverTaskState();
     },
+=======
+    // init() {
+    //   this.getDriverTaskState();
+    // },
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     goToLighterage() {
       wx.navigateTo({
         url: '/pages/lighterage/lighterage',
@@ -435,6 +551,14 @@ wepy.page({
         } else {
           this.completeDriverTaskState();
         }
+<<<<<<< HEAD
+=======
+      // } else {
+      //   this.$wx.setData({
+      //     x: 0,
+      //   });
+      // }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     completeDriverTaskState() {
       wepy.$loading();
@@ -443,7 +567,12 @@ wepy.page({
         completeTimeStamp: Math.floor(new Date().getTime() / 1000),
         completeTimeType: this.driverData.timeTranState + 1,
       };
+<<<<<<< HEAD
       wepy.$api('platform/driver/task/completeDriverTaskState', upData)
+=======
+      wepy
+        .$api('platform/driver/task/completeDriverTaskState', upData)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         .then(() => {
           this.init();
         });
@@ -477,8 +606,14 @@ wepy.page({
           this.driverData.totalTime = this.driverData.totalTime
             ? (this.driverData.totalTime / 60).toFixed(1)
             : '0.0';
+<<<<<<< HEAD
           this.setTimeData();
           this.timereTofresh(this.driverData.timeTranState)
+=======
+          // this.state = res.timeTranState  
+          this.setTimeData();
+          // this.timereTofresh()
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
           wx.hideToast();
         });
     },
@@ -488,6 +623,7 @@ wepy.page({
     getTime(time) {
       return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
     },
+<<<<<<< HEAD
     getperfor(id){
       this.setDetailApplyDo({
         addressName: this.driverData.endAddressName,
@@ -499,6 +635,9 @@ wepy.page({
       // clearInterval(this.realTime);
     }
   }
+=======
+  },
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 });
 </script>
 
@@ -515,6 +654,7 @@ wepy.page({
 
 <style lang="less" scoped>
 @import './index.less';
+<<<<<<< HEAD
 .driverTaskState_page{
   background: #fff;
 }
@@ -574,5 +714,10 @@ wepy.page({
   background:#d7d7d7;
   color: #555555;
   pointer-events: none;
+=======
+.slider{
+  background-color: #005bac;
+  width: 700rpx;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 }
 </style>

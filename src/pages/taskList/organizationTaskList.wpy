@@ -1,6 +1,7 @@
 <template>
   <div class="taskList_page">
     <div class="header">
+<<<<<<< HEAD
       <van-checkbox v-if="ishasCheck" custom-class="v_checkBox"  checked-color="#005bac"  value="{{ allCheck }}"  @change="onChangeAllCheck"></van-checkbox>
       <div class="header_left">
           <div class="transfertime">
@@ -46,11 +47,45 @@
         <div :class="{ not_task: item.task.length }" class="car_info item">
           <div>
             <div class="tag_drop">{{ item.carNumber }}</div>
+=======
+      <van-dropdown-menu :z-index="99">
+        <van-dropdown-item id="time" :title="currTimeName" @open="getTimeList">
+          <div class="dropdown_item_cell" @click="onClickTime(undefined)">
+            所有班次
+          </div>
+          <div class="dropdown_item_cell" v-for="item in timeList" @click="onClickTime(item)">
+            {{ item.startTimeStr }}
+          </div>
+        </van-dropdown-item>
+        <van-dropdown-item id="cart" @open="getDistributionCars" :title="currCartName">
+          <div class="dropdown_item_cell" @click="onClickCart(undefined)">
+            所有车辆
+          </div>
+          <div class="dropdown_item_cell" v-for="item in cartList" @click="onClickCart(item)">
+            <div class="tag_drop">
+              <div class="drop"></div>
+              {{ item.carNumber }}
+            </div>
+            <div>{{ item.carFullWeight / 1000 }}吨</div>
+          </div>
+        </van-dropdown-item>
+      </van-dropdown-menu>
+    </div>
+    <div class="content">
+      <div class="car_wrap" v-for="item in list">
+        <div :class="{ not_task: item.task.length }" class="car_info item">
+          <div>
+            <div class="tag_drop">
+              <div class="drop"></div>
+              {{ item.carNumber }}
+            </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             <div class="font-color-gray">{{ item.carFullWeight / 1000 }}吨</div>
           </div>
           <div>
             <div class="car_info_s">
               <van-icon color="#8E9298" name="clock-o" size="26rpx" />
+<<<<<<< HEAD
               <div>用时:{{ item.totalTime || 0.0}}小时</div>
             </div>
             <div class="car_info_s">
@@ -156,6 +191,69 @@
       </div>
     </van-popup>
     <!-- 选择新增任务的选项 -->
+=======
+              <div>用时:{{ item.totalTime }}小时</div>
+            </div>
+            <div class="car_info_s">
+              <van-icon color="#8E9298" name="notes-o" size="26rpx" />
+              <div>任务:{{ item.carTaskCount }}个</div>
+            </div>
+          </div>
+        </div>
+        <div class="item" :class="{ not_task_item: item.task.length }" v-for="subItem in item.task">
+          <div @click="goToDetail(subItem.applyId,1)">
+            <div class="item_header">
+              <div class="tag" style="background:{{subItem.requestTypeBg}}">
+                {{ subItem.reqStr }}
+              </div>
+              <div class="item_header_t">
+                <div>
+                  申请驳运时间: {{ subItem._applyTime }}
+                  <text style="padding-left: 10rpx">{{
+                      subItem.applyImportant
+                      }}</text>
+                </div>
+                <div class="font-color-deep-red">
+                  {{ subItem.isStartTask === 0 ? '执行中' : '' }}
+                </div>
+              </div>
+            </div>
+            <div class="font-26 item_header_tc">{{ subItem.listName }}</div>
+            <div class="contName" @tap.stop="conName(subItem.contPhone)">联系人:{{subItem.contName}}</div>
+            <div class="remark">备注：{{subItem.memo==null ? '': subItem.memo}}</div>
+            <div class="item_header_c">
+              {{ subItem.deptName }}/{{ subItem.goodsWeight / 1000 }}吨/{{ subItem._startTimeStamp }}至{{ subItem._endTimeStamp }}
+            </div>
+          </div>
+          <div class="item_content">
+            <div @click="goToDetail(subItem.applyId,1)" class="item_content_left">
+              <div class="common_step">
+                <div class="common_step_left">
+                  <div class="common_step_left_t"></div>
+                  <div class="common_step_left_c"></div>
+                  <div class="common_step_left_b"></div>
+                </div>
+                <div class="common_step_center">
+                  <div class="ellipsis">
+                    起始地：{{ subItem.startPositionName }}
+                  </div>
+                  <div class="ellipsis">
+                    目的地：{{ subItem.endPositionName }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div @click="showAction(item.task, subItem.applyId, item, subItem)" class="item_content_right">
+              <text class="font-color-blue">编制 ></text>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <van-popup v-if="showActionPopUp" round position="bottom" :show="showActionPopUp">
+      <action :tagTask="tagTask" :currApplyId="currApplyId" @onSelect="onSelect" @close="closeAction"></action>
+    </van-popup>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   </div>
 </template>
 
@@ -171,6 +269,7 @@
     mixins: [CommonMixin],
     data: {
       currCartName: '选择车辆',
+<<<<<<< HEAD
       currTimeName: '驳运类别',
       timeList: [],
       cartList: [],
@@ -178,6 +277,11 @@
       ishasCheck:false,
       hasCheck:false,
       new_task:false,
+=======
+      currTimeName: '选择班次',
+      timeList: [],
+      cartList: [],
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       filterData: {
         carId: undefined,
         startTimeStamp: undefined
@@ -186,9 +290,13 @@
       currApplyId: undefined,
       list: [],
       showActionPopUp: false,
+<<<<<<< HEAD
       realTime:null,
       carindex:'',
       state:''
+=======
+      realTime:null
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     //监听用户下拉事件
     onPullDownRefresh(){
@@ -214,22 +322,41 @@
       });
     },
     onShow() {
+<<<<<<< HEAD
       
       let isSuccessCallBack = wx.getStorageSync('isSuccessCallBack');
       console.log(isSuccessCallBack)
+=======
+      let isSuccessCallBack = wx.getStorageSync('isSuccessCallBack');
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       if (isSuccessCallBack) {
         this.appGetOrganizationTaskList();
         wx.removeStorage({
           key: 'isSuccessCallBack'
         });
+<<<<<<< HEAD
       }else{
         this.appGetOrganizationTaskList();
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       }
       this.setCurrOrganizationData({
         currTag: {}
       });
       this.showActionPopUp = false;
+<<<<<<< HEAD
       this.startcounting()
+=======
+
+      //页面显示时触发每间隔一段时间就刷新数据
+      let that = this
+      this.realTime = setInterval(function(){
+      that.appGetOrganizationTaskList()
+        wx.showToast({
+          title: '数据已更新！'
+        })
+      },30000)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     created() {
       this.appGetOrganizationTaskList();
@@ -241,6 +368,7 @@
     },
     methods: {
       ...mapMutations(['setCurrOrganizationData']),
+<<<<<<< HEAD
       //开始计时，30秒刷新一次
       startcounting(){
         //页面显示时触发每间隔一段时间就刷新数据
@@ -263,6 +391,8 @@
         })
         // console.log(type,index)
       },
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       onClickCart(item) {
         this.filterData.carId = item ? item.carId : undefined;
         this.currCartName = item ? item.carNumber : '选择车辆';
@@ -300,6 +430,7 @@
           this.cartList = res.carDetailList;
         });
       },
+<<<<<<< HEAD
       /**
        * 编制列表选项
        */
@@ -318,6 +449,11 @@
         wx.navigateTo({
             url: `/pages/taskList/new_task?type=${type}&index=${index}&applyId=${this.currApplyId}`,
         });
+=======
+      onSelect() {
+        this.appGetOrganizationTaskList();
+        this.closeAction();
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       },
       showAction(tagTask, applyId, item, subitem) {
         this.tagTask = tagTask;
@@ -327,12 +463,19 @@
           currTag: subitem
         });
         this.showActionPopUp = true;
+<<<<<<< HEAD
         this.state = subitem.isStartTask;
 
       },
       closeAction() {
         // this.tagTask = [];
         // this.currApplyId = undefined;
+=======
+      },
+      closeAction() {
+        this.tagTask = [];
+        this.currApplyId = undefined;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         this.showActionPopUp = false;
       },
       appGetOrganizationTaskList() {
@@ -347,7 +490,10 @@
                   subItem._startTimeStamp = this.getTime(subItem.startTimeStamp);
                   subItem._endTimeStamp = this.getTime(subItem.endTimeStamp);
                   subItem._applyTime = this.getTime(subItem.applyTime);
+<<<<<<< HEAD
                   subItem.checked = false
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
                 });
                 setTimeout(()=>{
                   wx.stopPullDownRefresh()
@@ -377,6 +523,7 @@
       },
       getTime(time) {
         return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+<<<<<<< HEAD
       },
       //新增联运任务
       appMergeTask(listid){
@@ -469,6 +616,10 @@
       },
 
     },
+=======
+      }
+    }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   });
 </script>
 
@@ -481,10 +632,15 @@
     "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
     "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
     "van-popup": "module:@vant/weapp/dist/popup/index",
+<<<<<<< HEAD
     "action": "~@/components/pop-up/action",
     "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
     "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index"
     }
+=======
+    "action": "~@/components/pop-up/action"
+  }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 }
 </config>
 
@@ -496,6 +652,7 @@
   }
   .header {
     position: fixed;
+<<<<<<< HEAD
     display: flex;
     justify-content:space-between;
     // justify-content:sw;
@@ -537,10 +694,15 @@
         line-height: 1.2rem;
       }
     }
+=======
+    width: 100%;
+    z-index: 99;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   }
   .content {
     position: absolute;
     width: 100%;
+<<<<<<< HEAD
     top: 220rpx;
     overflow-y: scroll;
     z-index: 1;
@@ -579,6 +741,11 @@
   }
   .van-dropdown-menu__item:nth-child(1){
      padding-right: 120rpx
+=======
+    top: 100rpx;
+    overflow-y: scroll;
+    z-index: 1;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   }
   .dropdown_item_cell {
     display: flex;
@@ -592,22 +759,33 @@
     width: 100%;
     display: flex;
     justify-content: space-between;
+<<<<<<< HEAD
     &_detailed{
       display: flex;
       .txt{
         margin-right: 30rpx;
       }
     }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   }
   .item_header_tc {
     margin: 10rpx 0;
   }
+<<<<<<< HEAD
+=======
+  .contName{
+    font-size: 28rpx;
+    padding: 10rpx 0;
+  }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   .remark{
       font-size: 28rpx;
       padding-bottom: 10rpx
   }
   .item {
     box-shadow: none !important;
+<<<<<<< HEAD
     display: flex;
     align-items: center;
     .item_checkBox{
@@ -619,6 +797,8 @@
     .select_item_wrap{
       width: 100%;
     }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   }
   .not_task {
     border-bottom-left-radius: 0 !important;
@@ -660,6 +840,7 @@
     border: 1rpx  solid #333 ;
     color: #000;
   }}
+<<<<<<< HEAD
   .tags{
     background:#70b603;
   }
@@ -722,4 +903,7 @@
       }
     }
   }
+=======
+
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 </style>

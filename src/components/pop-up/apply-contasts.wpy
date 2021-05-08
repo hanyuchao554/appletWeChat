@@ -5,7 +5,11 @@
             <div class="icon">
             <van-icon name="search" />
             </div>
+<<<<<<< HEAD
             <input type="text" value="{{searchData}}" placeholder="请输入联系人姓名" placeholder-class="placeholder" bindinput="onChage" />
+=======
+            <input type="text"  value="{{searchData}}" placeholder="请输入联系人姓名" placeholder-class="placeholder"  bindinput="onChage" />
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </div>
       <div v-if="Type == 1">
         <div class="addcontacts" v-if="addshow" @click="add">
@@ -125,15 +129,29 @@ wepy.component({
         //搜索联系人
         onChage(e) {
             this.searchData = e.$wx.detail.value;
+<<<<<<< HEAD
             let reg = new RegExp(this.searchData);
             this.searchList = this.dataList.filter((item) => reg.test(item.contName));
+=======
+            // let reg = new RegExp(this.searchData);
+            // this.searchList = this.dataList.filter((item) => reg.test(item.contName));
+            this.getAppDepartment(this.Type)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         },
         // 获取联系人
         getAppDepartment(type) {
             wepy.$api('app/platform/contasts/getApplyContasts', {
               applyCarType:type,
+<<<<<<< HEAD
             }).then((res) => {
                 this.dataList = res;
+=======
+              contactScreening:this.searchData || null
+            }).then((res) => {
+                this.dataList = res;
+                this.searchList = res
+                console.log(this.dataList)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             });
         },
         // 点击添加联系人按钮

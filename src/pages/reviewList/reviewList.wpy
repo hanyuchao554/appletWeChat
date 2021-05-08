@@ -1,4 +1,5 @@
 <template>
+<<<<<<< HEAD
 
   <div class="reviewList_page">
     <div class="header">
@@ -10,10 +11,37 @@
               <div class="dropdown_item_cell" v-for="item in deptList"  @click="onClickDept(item)"> {{ item.deptName }}</div>
             </van-dropdown-item>
           </van-dropdown-menu>
+=======
+  <div class="reviewList_page">
+    <div class="header">
+      <div class="header_left">
+        <van-checkbox v-if="hasCheck"
+                      custom-class="v_checkBox"
+                      checked-color="#005bac"
+                      value="{{ allCheck }}"
+                      @change="onChangeAllCheck"></van-checkbox>
+        <van-dropdown-menu style="margin-left: 20rpx;"
+                           :z-index="9999">
+          <van-dropdown-item id="dept"
+                             :title="currDeptName"
+                             @open="getDeptList">
+            <div class="dropdown_item_cell"
+                 @click="onClickDept(undefined)">
+              所有部门
+            </div>
+            <div class="dropdown_item_cell"
+                 v-for="item in deptList"
+                 @click="onClickDept(item)">
+              {{ item.deptName }}
+            </div>
+          </van-dropdown-item>
+        </van-dropdown-menu>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </div>
       <!-- <div class="header_center text-c">
       </div> -->
       <div class="header_right text-r">
+<<<<<<< HEAD
         <div class="btn_d" @click="hasSelect">审核</div>
       </div>
     </div>
@@ -40,6 +68,47 @@
           <div class="item_content">
             <div class="item_content_right">
               <div class="item_content_right_t">驳运时间：{{item._startTime}}至{{item._endTime}}</div>
+=======
+        <div class="btn_d"
+             @click="hasSelect">审核</div>
+      </div>
+    </div>
+    <div class="content"
+         :class="{'select_wrap':hasCheck}">
+      <div class="item_wrap" 
+v-for="(item,index) in list">
+        <div v-if="hasCheck"
+             class="checkBox">
+          <van-checkbox custom-class="v_checkBox"
+                        checked-color="#005bac"
+                        value="{{ item.checked }}"
+                        @change="onChange(index)"></van-checkbox>
+        </div>
+        <div @click="onEditTask(item)"
+             class="item"
+             :class="{'select_item_wrap':hasCheck}">
+          <div class="item_header">
+            <div class="item_header_left">
+              <div class="tag"
+                   style="background:{{item.requestTypeBg}}">
+                {{ item.requestTypeStr }}
+              </div>
+              <div>
+                {{item.listName}} {{item.important}}
+              </div>
+            </div>
+            <div class="item_header_right">待审核</div>
+          </div>
+          <div class="contName" catchtap="contName(item.contPhone)" >联系人：{{item.contName}}</div>
+          <div class="memo">
+            申请备注:{{item.memo}}
+          </div>
+          <div class="item_content">
+            <div class="item_content_right">
+              <div class="item_content_right_t">
+                {{item.deptName}} / {{item.goodsWeight}}吨 /{{item._startTime}}至{{item._endTime}}
+              </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
               <div class="common_step">
                 <div class="common_step_left">
                   <div class="common_step_left_t"></div>
@@ -47,6 +116,7 @@
                   <div class="common_step_left_b"></div>
                 </div>
                 <div class="common_step_center">
+<<<<<<< HEAD
                   <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
                   <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
                 </div>
@@ -65,11 +135,20 @@
                   </div>
                 </div>
               </div>  
+=======
+                  <div class="ellipsis">
+                    起始地：{{ item.startPositionName }}
+                  </div>
+                  <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
+                </div>
+              </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             </div>
           </div>
         </div>
       </div>
     </div>
+<<<<<<< HEAD
 
     <div v-show="hasCheck" class="footer">
       <van-button custom-class="btn" type="default" @click="close">取消</van-button>
@@ -81,6 +160,31 @@
     <approve @onSelect="onSelect" @onSuccess="onSuccess" :applyIds="applyIds" @close="triggerPopUp"></approve>
   </van-popup>
 
+=======
+    <div v-show="hasCheck"
+         class="footer">
+      <van-button custom-class="btn"
+                  type="default"
+                  @click="close">取消</van-button>
+      <van-button custom-class="btn"
+                  color="#005BAC"
+                  type="default"
+                  @click="submit">确认</van-button>
+    </div>
+    <van-popup v-if="hasApprovePop"
+               round
+               position="bottom"
+               :close-on-click-overlay="false" 
+                closeable 
+               :show="hasApprovePop"
+               @close="triggerPopUp">
+      <approve @onSelect="onSelect"
+               @onSuccess="onSuccess"
+               :applyIds="applyIds"
+               @close="triggerPopUp"></approve>
+    </van-popup>
+  </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 </template>
 
 <script>
@@ -102,9 +206,17 @@ wepy.page({
     hasApprovePop: false,
     deptId: undefined,
     realTime:null,//实时数据对象
+<<<<<<< HEAD
   },
   onShow() {
     this.appGetApprovalTasksList();
+=======
+
+  },
+  onShow() {
+    this.appGetApprovalTasksList();
+
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     //页面显示时触发每间隔一段时间就刷新数据
     let that = this
     this.realTime = setInterval(function(){
@@ -145,9 +257,12 @@ wepy.page({
   },
   methods: {
     ...mapMutations(['setDetailApplyDo']),
+<<<<<<< HEAD
     /**
      * 修改主任务的起始地目的地
      */
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     onEditTask(item) {
       let {
         applyId,
@@ -161,11 +276,19 @@ wepy.page({
         _endTime
       } = item
       let data = {
+<<<<<<< HEAD
         prsId: applyId, //任务id
         endPositionName,//目的地
         startPositionId,//起始地id
         endPositionId,//目的地id
         startPositionName,//起始地
+=======
+        prsId: applyId,
+        endPositionName,
+        startPositionId,
+        endPositionId,
+        startPositionName,
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         startTime: startTimeStamp,
         endTime: endTimeStamp,
         _startTime,
@@ -176,14 +299,18 @@ wepy.page({
           url: `/pages/reviewEditTask?applyType=${0}`,
        }) 
     },
+<<<<<<< HEAD
     /**
      * 拨打联系人电话
      */
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     contName(tel){
       wx.makePhoneCall({ 
         phoneNumber:tel
       });
     },
+<<<<<<< HEAD
     /**
      * 修改副任务的起始地目的地
      */
@@ -204,6 +331,8 @@ wepy.page({
           url: `/pages/reviewEditTask?applyType=${0}&index=${index}`,
        }) 
     },
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     triggerPopUp() {
       this.hasApprovePop = !this.hasApprovePop;
     },
@@ -367,6 +496,14 @@ wepy.page({
     overflow-y: scroll;
   }
 }
+<<<<<<< HEAD
+=======
+.contName{
+  font-size: 28rpx;
+  padding:10rpx 0;
+  width: 50%;
+}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 .memo {
   font-size: 28rpx;
   margin: 0rpx 0 10rpx;
@@ -387,10 +524,13 @@ wepy.page({
 .select_item_wrap {
   width: 640rpx !important;
 }
+<<<<<<< HEAD
 .title{
   margin-top: 15rpx;
   font-size: 28rpx;
 }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 .item {
   width: 100%;
   background: #fff;
@@ -417,6 +557,7 @@ wepy.page({
         line-height: 32rpx;
         border-radius: 5rpx;
         font-weight: 500;
+<<<<<<< HEAD
         margin-right: 15rpx;
       }
       .tags{
@@ -427,6 +568,9 @@ wepy.page({
       }
       .text{
         margin:0;
+=======
+        margin-right: 10rpx;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       }
     }
     &_right {
@@ -454,8 +598,14 @@ wepy.page({
       //   align-self: flex-end;
       // }
       &_t {
+<<<<<<< HEAD
         font-size:28rpx;
         font-weight: 400;
+=======
+        font-size: 22rpx;
+        font-weight: 400;
+        color: #8e9298;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         line-height: 32rpx;
       }
     }
@@ -479,8 +629,11 @@ wepy.page({
 .select_wrap {
   bottom: 130rpx !important;
 }
+<<<<<<< HEAD
 .transcript{
   border-top:1rpx solid #d7d7d7;
   padding-top:10rpx;
 }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 </style>

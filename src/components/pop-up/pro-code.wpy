@@ -37,8 +37,13 @@ wepy.component({
     onChage(e) {
       this.searchData = e.$wx.detail.value;
       let reg = new RegExp(this.searchData);
+<<<<<<< HEAD
       this.searchList = this.list.filter(item => reg.test(item));
       console.log(this.searchData)
+=======
+      this.searchList = this.list.filter((item) => reg.test(item));
+      console.log(e)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
   },
 });

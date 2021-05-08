@@ -10,7 +10,11 @@
                             <div class="drop"></div>
                             {{ item.carNumber }}
                         </div>
+<<<<<<< HEAD
                         <div>{{ item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+=======
+                        <div>{{item.shipNumber ||item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
                     </div>
                     <div class="item_header_c">
                         {{ item.applyDeptName }}/{{ item.goodWeight }}/{{ item.driverStartTimes }}至{{ item.driverToSubmitTaskTimes }}

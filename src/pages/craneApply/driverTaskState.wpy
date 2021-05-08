@@ -74,11 +74,19 @@
       </div>
     </div>
     <movable-area class="slider" style="width:{{area_width}}%">
+<<<<<<< HEAD
       <div class="text">{{ textStr }}</div>
       <div class="side" :style="{ width: sideWeight + 120 + 'rpx' }"></div>
       <movable-view class="box" inertia :friction="1" style="width:{{box_width}}rpx" direction="horizontal" :x="x" bindchange="drag" bindtouchend="dragOver">
         <van-image width="44rpx" height="38rpx" src="/static/images/icon_slider.png" />
       </movable-view>
+=======
+      <div class="text" @click="setDriverTaskRecord">{{ textStr }}</div>
+      <!-- <div class="side" :style="{ width: sideWeight + 120 + 'rpx' }"></div>
+      <movable-view class="box" inertia :friction="1" style="width:{{box_width}}rpx" direction="horizontal" :x="x" bindchange="drag" bindtouchend="dragOver">
+        <van-image width="44rpx" height="38rpx" src="/static/images/icon_slider.png" />
+      </movable-view> -->
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     </movable-area>
   </div>
 </template>
@@ -150,7 +158,11 @@
         } else if (state === 25) {
           str = '作业结束';
         } else if (state === 26) {
+<<<<<<< HEAD
           str = '滑动完成任务';
+=======
+          str = '完成任务';
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         }
         return str;
       },
@@ -194,6 +206,10 @@
           },
         });
       },
+<<<<<<< HEAD
+=======
+      //1
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       getDriverTaskState() {
         wepy.$loading();
         wepy
@@ -208,6 +224,10 @@
             wx.hideToast();
           });
       },
+<<<<<<< HEAD
+=======
+      // pp/craneDriver/setDriverTaskRecord
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       setDriverTaskRecord() {
         wepy.$loading();
         let req = {

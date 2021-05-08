@@ -87,7 +87,11 @@
                   :value="detailApplyDo._endTime || '请选择'" />
       </van-cell-group>
       <van-cell-group custom-class="item">
+<<<<<<< HEAD
         <van-cell required
+=======
+      <van-cell required
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
                   title="工作内容"
                   :value="detailApplyDo.jobContentStr || '请选择'" />
       </van-cell-group>
@@ -310,7 +314,14 @@ wepy.page({
     }
   },
   onShow() {
+<<<<<<< HEAD
     // this.getApplyContasts();
+=======
+    if (this.detailApplyDo.lighterageStr == 'null-null') {
+        this.detailApplyDo.lighterageStr = ''
+    }
+      // this.getApplyContasts();
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     this.initdetailApplyDo();
     // this.$set(this.detailApplyDo, 'jobContentStr', '驳运');
     this.getjobcontent()
@@ -350,10 +361,16 @@ wepy.page({
       this.$set(this.detailApplyDo, 'jobQuantity', e.$wx.detail.value);
     },
     onSelectJobContent(data) {
+<<<<<<< HEAD
       console.log(data)
       this.$set(this.detailApplyDo , 'shipNumber',data)
       // this.$set(this.detailApplyDo, 'jobContent', data.confId);
       // this.$set(this.detailApplyDo, 'jobContentStr', data.paramValue);
+=======
+      // this.$set(this.detailApplyDo, 'jobContent', data.confId);
+      // this.$set(this.detailApplyDo, 'jobContentStr', data.paramValue);
+      this.$set(this.detailApplyDo , 'shipNumber',data)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       this.initPopUp();
     },
     onSelectimportance(data) {
@@ -387,7 +404,11 @@ wepy.page({
       this.popUpTypes.isEndTime = false;
       this.popUpTypes.isStartTime = false;
     },
+<<<<<<< HEAD
     //app/platform/contasts/getDefaultContact
+=======
+        //app/platform/contasts/getDefaultContact
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     // 获取上一单的联系人
     getDefaultContact(){
       wepy.$api('app/platform/contasts/getDefaultContact',{
@@ -400,12 +421,19 @@ wepy.page({
         this.$set(this.detailApplyDo, 'contastsNumber',res.contNumber)
       })
     },
+<<<<<<< HEAD
     // 获取默认联系人
+=======
+    // // 获取默认联系人
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     // getApplyContasts() {
     //   if (this.detailApplyDo.contactsId) return;
     //   wepy.$api('app/platform/contasts/getApplyContasts', {}).then((res) => {
     //     let baseData = wepy.$auth.getBaseUser();
+<<<<<<< HEAD
     //     console.log(res)
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     //     let flag = res.find((item) => item.contNumber === baseData.username);
     //     if (flag) {
     //       this.detailApplyDo.contactsId = flag.contId;
@@ -473,9 +501,15 @@ wepy.page({
         })
         .finally(() => (this.isDisabled = false));
     },
+<<<<<<< HEAD
     goToPosition(target, type,index) {
       wx.navigateTo({
         url: `/pages/position/position?code=${target}&applyType=1&type=${type}&index=${index}`,
+=======
+    goToPosition(target, type) {
+      wx.navigateTo({
+        url: `/pages/position/position?code=${target}&applyType=1&type=${type}`,
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       });
     },
     goToLighterage() {

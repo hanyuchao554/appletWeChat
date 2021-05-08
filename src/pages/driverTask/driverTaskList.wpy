@@ -23,7 +23,11 @@
         <div>
           <div class="car_info_s">
             <van-icon color="#8E9298" name="clock-o" size="26rpx" />
+<<<<<<< HEAD
             <div style="margin-left: 10rpx">耗时:{{ item.totalTime }}小时</div>
+=======
+            <div style="margin-left: 10rpx">耗时123:{{ item.totalTime }}小时</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
           </div>
           <div class="car_info_s car_info_r">
             <van-icon color="#8E9298" name="notes-o" size="26rpx" />
@@ -40,6 +44,7 @@
           <div class="item_header">
             <div class="item_header_left">
               <div class="tag" style="background:{{subItem.requestTypeBg}}">{{ subItem.reqStr }}</div>
+<<<<<<< HEAD
               <div class="tag tags" v-if="subItem.isIntermodal == 1">联</div>
               <div class="item_header_left_cont">
                 <div class="txt">{{subItem.deptName}}</div>
@@ -55,6 +60,17 @@
           <div>{{ subItem.listName  }}</div>
           <div class="remark">备注：{{subItem.memo==null ? '': subItem.memo}}</div>
           <div class="item_header_c">驳运时间：{{ subItem._startTimeStamp }}至{{ subItem._endTimeStamp }}</div>
+=======
+              <div>{{ subItem.listName  }}</div>
+            </div>
+            <div class="contName" catchtap="conName(subItem.contPhon,2)"> {{subItem.contName}} </div>
+          </div>
+          <!-- <div class="contName" catchtap="conName(subItem.contPhon,2)">联系人：{{subItem.contName}}</div> -->
+          <div class="remark">备注：{{subItem.memo==null ? '': subItem.memo}}</div>
+          <div class="item_header_c">
+            {{ subItem.deptName }}/{{ subItem.goodsWeight / 1000 }}吨/{{ subItem._startTimeStamp }}至{{ subItem._endTimeStamp }}
+          </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         </div>
         <div class="item_content">
           <div class="item_content_left">
@@ -65,8 +81,17 @@
                 <div class="common_step_left_b"></div>
               </div>
               <div class="common_step_center">
+<<<<<<< HEAD
                 <div class="ellipsis">起始地：{{ subItem.startPositionName }}</div>
                 <div class="ellipsis">目的地：{{ subItem.endPositionName }}</div>
+=======
+                <div class="ellipsis">
+                  起始地：{{ subItem.startPositionName }}
+                </div>
+                <div class="ellipsis">
+                  目的地：{{ subItem.endPositionName }}
+                </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
               </div>
             </div>
           </div>
@@ -75,6 +100,7 @@
             <text style="margin-left: 8rpx; color: #2b2b2b">></text>
           </div>
         </div>
+<<<<<<< HEAD
         <div class="item_content child" v-for="(k,j) in subItem.intermodalTaskVoList">
           <div class="itme_content_hde">{{k.listName}}</div>
           <div class="item_content_left">
@@ -95,6 +121,8 @@
             <text style="margin-left: 8rpx; color: #2b2b2b">></text>
           </div> -->
         </div>
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </div>
     </div>
     <van-popup show="{{ show }}" position="bottom" custom-style="height: 55%;" bind:close="onClose" :z-index="999" @touchmove.stop.prevent="moveHandle">
@@ -199,11 +227,16 @@
     onUnload(){
       clearInterval(this.realTime)
     },
+<<<<<<< HEAD
     onLoad(){
        this.getLocation()
     },
     onShow() {
       this.getLocation()
+=======
+    onShow() {
+      this.getLocation();
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       let that = this
       this.realTime = setInterval(function(){
         that.getDriverTaskList()
@@ -404,8 +437,12 @@
     "van-icon": "module:@vant/weapp/dist/icon/index",
     "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
     "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
+<<<<<<< HEAD
     "van-popup": "module:@vant/weapp/dist/popup/index",
     "van-image": "module:@vant/weapp/dist/image/index",
+=======
+    "van-popup": "module:@vant/weapp/dist/popup/index"
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   }
 }
 </config>
@@ -479,6 +516,7 @@ view.van-dropdown-menu{
     display: flex;
     justify-content:space-between;
     font-size: 28rpx;
+<<<<<<< HEAD
     &_left{
       display: flex;
       .tag {
@@ -499,16 +537,33 @@ view.van-dropdown-menu{
           margin-right:30rpx;
         }
       }
+=======
+    .item_header_left{
+      display: flex
+    }
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+      margin-right: 10rpx;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     }
   }
   .contName{
     font-size: 28rpx;
     display: flex;
+<<<<<<< HEAD
     align-items: center;
     justify-content: right;
     text{
       margin-left: 20rpx;
     }
+=======
+    justify-content: right;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   }
   .remark{
     font-size: 28rpx;
@@ -552,16 +607,22 @@ view.van-dropdown-menu{
 }
 .relevance{
   font-size: 26rpx;
+<<<<<<< HEAD
   display: flex;
   justify-content:space-between;
   padding: 0 80rpx;
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   .driverName{
     margin-right: 100rpx;
   }
 }
+<<<<<<< HEAD
 .child{
   display:inline-block;
   width: 100%;
   border-top: 1rpx solid #e1e1e1;
 }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 </style>

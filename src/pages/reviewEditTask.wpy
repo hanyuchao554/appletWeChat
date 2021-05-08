@@ -6,12 +6,19 @@
         <van-cell required @click="goToPosition('startPositionId',1)" title="起始地" :value="detailApplyDo.startPositionName || '请选择'" />
         <van-cell required @click="goToPosition('endPositionId',2)" title="目的地" :value="detailApplyDo.endPositionName || '请选择'" />
       </van-cell-group>
+<<<<<<< HEAD
 
       <van-cell-group custom-class="item" v-if="!index">
         <van-cell required @click="hasPopUp('isStartTime')" title="起始时间" :value="detailApplyDo._startTime || '请选择'" />
         <van-cell required @click="hasPopUp('isEndTime')" title="到达时间" :value="detailApplyDo._endTime || '请选择'" />
       </van-cell-group>
 
+=======
+      <van-cell-group custom-class="item">
+        <van-cell required @click="hasPopUp('isStartTime')" title="起始时间" :value="detailApplyDo._startTime || '请选择'" />
+        <van-cell required @click="hasPopUp('isEndTime')" title="到达时间" :value="detailApplyDo._endTime || '请选择'" />
+      </van-cell-group>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     </div>
     <div class="footer">
       <van-button custom-class="btn" color="#005BAC" @click="submit" type="default">提交</van-button>
@@ -52,6 +59,7 @@
     mixins: [addTaskMixin],
     data: {
       isDisabled: false,
+<<<<<<< HEAD
       isLinkage: 0,
       index:'' 
     },
@@ -62,6 +70,15 @@
       this.applyType = Number(applyType) || 0;
       this.init();
       this.index = index
+=======
+      isLinkage: 0
+    },
+    onLoad({
+      applyType
+    }) {
+      this.applyType = Number(applyType) || 0;
+      this.init();
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     computed: {
       ...mapState(['detailApplyDo'])
@@ -120,6 +137,7 @@
           applyType: this.applyType,
           prsId
         };
+<<<<<<< HEAD
         if(this.index){
           // intermodalId
            console.log('修改zi任务地点')
@@ -127,6 +145,8 @@
         }else{
           console.log('修改主任务地点')
         }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         if (this.valid(data)) {
           this.isDisabled = true;
           wepy.$api('app/forkPullDown/updateApplyTimeAddress', data)
@@ -140,7 +160,11 @@
       },
       goToPosition(target,type) {
         wx.navigateTo({
+<<<<<<< HEAD
           url: `/pages/position/position?code=${target}&applyType=${this.applyType}&type=${type}&index=${'undefined'}`
+=======
+          url: `/pages/position/position?code=${target}&applyType=${this.applyType}&type=${type}`
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         });
       }
     }

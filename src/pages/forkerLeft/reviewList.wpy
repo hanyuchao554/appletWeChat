@@ -1,5 +1,6 @@
 <template>
   <div class="reviewList_page">
+<<<<<<< HEAD
     <div class="hed">
       <van-checkbox v-if="hasCheck" custom-class="v_checkBox" checked-color="#005bac" value="{{ allCheck }}"
                       @change="onChangeAllCheck"></van-checkbox>
@@ -32,6 +33,27 @@
       </div>
     </div>
     <div class="content" :class="{'select_wrap': hasCheck , 'top' : detailApplyDo._startTime}">
+=======
+    <div class="header">
+      <div class="header_left">
+        <van-checkbox v-if="hasCheck" custom-class="v_checkBox" checked-color="#005bac" value="{{ allCheck }}"
+                      @change="onChangeAllCheck"></van-checkbox>
+        <van-dropdown-menu style="margin-left: 20rpx;" :z-index="9999">
+          <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList">
+            <div class="dropdown_item_cell" @click="onClickDept(undefined)"> 所有部门</div>
+            <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
+          </van-dropdown-item>
+        </van-dropdown-menu>
+      </div>
+      <!-- <div class="header_center text-c">任务审核列表</div> -->
+      <div class="header_right text-r">
+        <div class="btn_d"
+             @click="hasSelect">审核</div>
+      </div>
+    </div>
+    <div class="content"
+         :class="{'select_wrap': hasCheck}">
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       <div class="item_wrap"
            v-for="(item,index) in list">
         <div v-if="hasCheck"
@@ -46,6 +68,7 @@
              :class="{'select_item_wrap':hasCheck}">
           <div class="item_header">
             <div class="item_header_left">
+<<<<<<< HEAD
               <div class="txt">{{item.applyDeptName}}</div>
               <div class="txt">{{item.goodsWeight}}吨</div>
               <div class="txt">{{item.importance}}</div>
@@ -62,6 +85,19 @@
                                 </div> -->
             <div class="item_content_right">
               <div class="item_content_right_t">驳运时间：{{item.startTime}}至{{item.endTime}}</div>
+=======
+              <div>{{item.shipNumber || item.jobContent}} {{item.goodsTypeName}}-{{ item.goodsCode }}</div>
+            </div>
+            <div class="contName item_header_right" catchtap="conName(item.applyerPhone,2)">{{item.applyer}}</div>
+          </div>
+          <div>申请提交时间:{{item.applyDateTime}}</div>
+          <div class="memo">申请备注:{{item.memo || ''}}</div>
+          <div class="item_content">
+            <div class="item_content_right">
+              <div class="item_content_right_t">
+                {{item.applyDeptName}} / {{item.goodsWeight || 0}}吨 /{{item.startTime}}至{{item.endTime}}
+              </div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
               <div class="common_step">
                 <div class="common_step_left">
                   <div class="common_step_left_t"></div>
@@ -75,6 +111,15 @@
                   <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
                 </div>
               </div>
+<<<<<<< HEAD
+=======
+                <div class="carlist">
+                  <div class="cardetail" v-for="k in item.carTypeCount">
+                    <div class="txt">{{k.carTypeName}}*{{k.carCount}}</div>
+                  </div>
+                </div>
+                <div style="font-size: 24rpx;">铲次:{{item.jobQuantity}}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             </div>
           </div>
           <div class="pending">待审核</div>
@@ -103,6 +148,7 @@
                :applyIds="applyIds"
                @close="triggerPopUp"></approve>
     </van-popup>
+<<<<<<< HEAD
     <!-- 选择起始时间 -->
     <van-popup v-if="popUpTypes.isStartTime" round position="bottom" :show="popUpTypes.isStartTime" @close="colseTime">
       <time-picker startKey="startTime"
@@ -126,6 +172,8 @@
               @onCancel="colseTime">
       </time-picker>
   </van-popup>
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   </div>
 </template>
 
@@ -135,6 +183,7 @@ import wepy from '@wepy/core';
 import formatTimeTwo from '@/utils/moment.js';
 import CommonMixin from '@/mixins/commonMixin.js';
 import store from '@/store';
+<<<<<<< HEAD
 import { mapMutations , mapState} from '@wepy/x';
 import { applyStateEnum } from '@/enums';
 import addTaskMixin from '@/mixins/addTaskMixin.js';
@@ -144,6 +193,14 @@ wepy.page({
   data: {
     currDeptName: '申请部门',
     currDeptTitle:'驳运类别',
+=======
+import { mapMutations } from '@wepy/x';
+wepy.page({
+  store,
+  mixins: [CommonMixin],
+  data: {
+    currDeptName: '所有部门',
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     deptList: [],
     list: [],
     hasCheck: false,
@@ -155,6 +212,12 @@ wepy.page({
   },
   onShow() {
     this.appGetApprovalTasksList();
+<<<<<<< HEAD
+=======
+    this.hasCheck = false
+    this.allCheck = false
+
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     let that = this
     this.realTime = setInterval(function(){
       that.appGetApprovalTasksList()
@@ -176,7 +239,10 @@ wepy.page({
      })
   },
   computed: {
+<<<<<<< HEAD
      ...mapState(['detailApplyDo']),
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     applyIds() {
       let _applyIds = [];
       this.list.forEach((item) => {
@@ -258,25 +324,37 @@ wepy.page({
     },
     onClickDept(item) {
       this.deptId = item ? item.deptId : undefined;
+<<<<<<< HEAD
       this.currDeptName = item.deptName ? item.deptName : '申请部门';
       this.currDeptTitle = item.goodsTypeName ? item.goodsTypeName : '申请部门';
       this.goodsTypeId = item.goodsTypeId ? item.goodsTypeId :undefined;
       this.$wx.selectComponent('#dept').toggle(false)
       this.$wx.selectComponent('#deptt').toggle(false)
+=======
+      this.currDeptName = item ? item.deptName : '所有部门';
+      this.$wx.selectComponent('#dept').toggle(false)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       this.appGetApprovalTasksList();
       console.log(item)
 
     },
+<<<<<<< HEAD
     getDeptList(applyType) {
       wepy.$api('/app/forkPullDown/getAllDrawUpBox', {
         type:1,
         applyType:applyType,
         applyCarType:1,
+=======
+    getDeptList() {
+      wepy.$api('app/forkPullDown/auditListDept', {
+        applyType: 1
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       }).then(res => {
         this.deptList = res
       })
     },
     appGetApprovalTasksList() {
+<<<<<<< HEAD
       wepy.$api('app/forkliftApply/applyDeptCheckApplyDetail', { 
         deptId: this.deptId || undefined ,
         goodsTypeId:this.goodsTypeId,
@@ -297,6 +375,23 @@ wepy.page({
               return item;
             });
           }
+=======
+      wepy.$api('app/forkliftApply/applyDeptCheckApplyDetail', { deptId: this.deptId || undefined }).then((res) => {
+        this.list = [];
+        if (!res || !res.length) {
+          wx.showToast({
+            title: '暂无审核内容',
+            icon: 'none',
+            duration: 3000
+          });
+        } else {
+          this.list = res.map((item) => {
+            item.checked = false;
+            wx.stopPullDownRefresh()
+            return item;
+          });
+        }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       });
     },
     goToPage(url) {
@@ -312,6 +407,7 @@ wepy.page({
         phoneNumber:tel
       });
       console.log(val)
+<<<<<<< HEAD
     },
     colseTime() {
       this.popUpTypes.isEndTime = false;
@@ -320,6 +416,9 @@ wepy.page({
         this.appGetApprovalTasksList()
       }
     },
+=======
+    }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   }
 });
 </script>
@@ -337,15 +436,26 @@ wepy.page({
      "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
      "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index",
      "van-popup": "module:@vant/weapp/dist/popup/index",
+<<<<<<< HEAD
      "approve": "~@/pages/forkerLeft/approve",
      "time-picker": "~@/components/pop-up/time-picker",
+=======
+     "approve": "~@/pages/forkerLeft/approve"
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   }
 }
 </config>
 
 <style lang="less" scoped>
+<<<<<<< HEAD
 view .van-dropdown-menu{
   height:80rpx;
+=======
+/deep/.van-dropdown-menu{
+  height:80rpx;
+    border: 1rpx solid #000;
+  box-shadow:none;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 }
 .dropdown_item_cell {
   display: flex;
@@ -359,15 +469,25 @@ view .van-dropdown-menu{
   position: relative;
   height: 100vh;
   background: #f3f4f6;
+<<<<<<< HEAD
   .hed{
     display: flex;
     position: absolute;
     width: 100%;
+=======
+  .header {
+    display: flex;
+    position: absolute;
+    width: 100%;
+    height: 100rpx;
+    justify-content: space-between;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     align-items: center;
     font-size: 32rpx;
     background: #fff;
     padding: 0 24rpx;
     box-sizing: border-box;
+<<<<<<< HEAD
     .header{
       width:100%;
       &_top{
@@ -422,6 +542,39 @@ view .van-dropdown-menu{
   .top{
      top:200rpx;
   }
+=======
+    &_left {
+      display: flex;
+      align-items: center;
+    }
+    &_left,
+    &_right {
+      width: 25%;
+    }
+    &_center {
+      width: 50%;
+    }
+    .btn_d {
+      display: inline-block;
+      width: 110rpx;
+      height: 48rpx;
+      line-height: 48rpx;
+      border-radius: 4rpx;
+      font-size: 30rpx;
+      background: #005bac;
+      text-align: center;
+      font-size: 32rpx;
+      color: #ffff;
+    }
+  }
+  .content {
+    position: absolute;
+    width: 100%;
+    top: 120rpx;
+    bottom: 20rpx;
+    overflow-y: scroll; // padding-top: 34rpx;
+  }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 }
 .contName{
   font-size: 28rpx;
@@ -467,9 +620,12 @@ view .van-dropdown-menu{
       font-weight: 500;
       color: #2b2b2b;
       line-height: 40rpx;
+<<<<<<< HEAD
       .txt{
         margin-right:35rpx
       }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       .tag {
         color: #fff;
         font-size: 22rpx;
@@ -543,4 +699,15 @@ view .van-dropdown-menu{
   font-size: 24rpx;
   color: #efa600;
 }
+<<<<<<< HEAD
+=======
+.carlist{
+  display: flex;
+  font-size: 24rpx;
+  margin-top: 10rpx;
+  .txt{
+    margin-right: 25rpx;
+  }
+}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 </style>

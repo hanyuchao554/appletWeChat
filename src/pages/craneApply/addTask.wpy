@@ -69,11 +69,22 @@
                   :value="detailApplyDo.importanceName || '请选择'" />
       </van-cell-group>
       <van-cell-group>
+<<<<<<< HEAD
         <m-textarea height="150rpx"
                     placeholder="请输入备注"
                     :data="detailApplyDo.memo"
                     :isReplaceTextarea="hasInput"
                     @onChageData="onChageEemo"></m-textarea>
+=======
+        <div class="textarea">
+          <textarea placeholder="请输入备注" v-model="detailApplyDo.memo" bindinput="onChageEemo"></textarea>
+        </div>
+        <!-- <m-textarea height="150rpx"
+                    placeholder="请输入备注"
+                    :data="detailApplyDo.memo"
+                    :isReplaceTextarea="hasInput"
+                    @onChageData="onChageEemo"></m-textarea> -->
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </van-cell-group>
     </div>
     <div class="footer">
@@ -148,6 +159,10 @@
                @close="initPopUp">
       <apply-contasts @onSelect="onSelectContasts"></apply-contasts>
     </van-popup>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     <van-popup v-if="popUpTypes.isCraneApplyCar"
                round
                position="bottom"
@@ -156,6 +171,10 @@
       <craneApplyCar :applyType="2"
                      @onSelect="onSelectCraneApplyCar"></craneApplyCar>
     </van-popup>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     <van-popup v-if="popUpTypes.isCraneApplyAddress"
                round
                position="bottom"
@@ -354,6 +373,10 @@ wepy.page({
       this.$set(this.detailApplyDo, 'carNumber', data.carNumber);
       this.$set(this.detailApplyDo, 'craneAddress', data.areaId[0]);
       this.$set(this.detailApplyDo, 'craneAddressName', data.areaName);
+<<<<<<< HEAD
+=======
+      console.log(data)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       this.initPopUp();
     },
     onSelectCraneApplyAddress({
@@ -367,7 +390,12 @@ wepy.page({
       this.initPopUp();
     },
     onChageEemo(memo) {
+<<<<<<< HEAD
       this.$set(this.detailApplyDo, 'memo', memo);
+=======
+
+      this.$set(this.detailApplyDo, 'memo', memo.$wx.detail.value);
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     onSelect() {
       this.initPopUp();
@@ -476,6 +504,17 @@ wepy.page({
 </config>
 
 <style lang="less" scoped>
+<<<<<<< HEAD
+=======
+.textarea{
+  padding: 20rpx;
+  background: #fff;
+  textarea{
+    width: 100%;
+    height: 200rpx;
+  }
+}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 .addTask_page {
   position: relative;
   height: 100vh;

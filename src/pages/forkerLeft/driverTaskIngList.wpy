@@ -44,7 +44,11 @@
               <div v-if="item.tranState === 5" class="tag tag_gray">
                 自
               </div>
+<<<<<<< HEAD
               <div>{{ item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+=======
+              <div>{{item.shipNumber || item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             </div>
             <div class="contName"  @tap.stop="contName(item.contPhone)" >{{item.contName}}</div>
           </div>

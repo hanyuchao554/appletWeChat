@@ -5,7 +5,11 @@
            v-for="item in list">
         <div>
           <div class="item_header">
+<<<<<<< HEAD
             <div> {{ item.jobContent }} {{item.goodsTypeName}}-{{ item.goodsCode }}
+=======
+            <div> {{item.shipNumber || item.jobContent }} {{item.goodsTypeName}}-{{ item.goodsCode }}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             </div>
           </div>
 

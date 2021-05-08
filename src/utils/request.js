@@ -2,9 +2,15 @@ import md5 from 'js-md5';
 import {
   BaseDataKey
 } from '@/constant'
+<<<<<<< HEAD
   const Host = 'http://39.100.7.84:8090/'
 
   // const Host = 'https://cssc.100mhb.com/'
+=======
+  //  const Host = 'http://39.100.7.84:8090/'
+
+  const Host = 'https://cssc.100mhb.com/'
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 
 function getBaeData() {
   let baseData = wx.getStorageSync(BaseDataKey) || {}

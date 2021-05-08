@@ -14,7 +14,11 @@
           <div class="item" v-for="item in forkliftTaskPlanList">
             <div>
               <div class="item_header">
+<<<<<<< HEAD
                 <div>{{ item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+=======
+                <div>{{item.shipNumber || item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
                 <div @click="conName(item.contPhone)">{{item.contName}}</div>
               </div>
               <div class="item_header_c">
@@ -52,7 +56,11 @@
           <div class="item" v-for="item in driverLocationTaskList">
             <div>
               <div class="item_header">
+<<<<<<< HEAD
                 <div>{{ item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+=======
+                <div>{{item.shipNumber ||item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
                 <div @click="conName(item.contPhone)">{{item.contName}}</div>
               </div>
               <div class="item_header_c">
@@ -116,7 +124,11 @@
           if(this.type == 0){
             this.queryForkliftTaskPlan()
           }
+<<<<<<< HEAD
           // this.Timerefresh()
+=======
+          this.Timerefresh()
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         },
         fail(err) {
           wepy.$showToast('获取当前地理位置失败')
@@ -199,7 +211,11 @@
         wepy.$api('app/forkliftDriver/queryForkliftTaskPlan', {
           deptId: this.deptId || undefined
         }).then(res => {
+<<<<<<< HEAD
           if(res){
+=======
+          if(res.length){
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
              this.forkliftTaskPlanList = res || []
           }else{
             wx.showToast({

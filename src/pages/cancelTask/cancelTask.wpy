@@ -11,12 +11,24 @@
         </div>
       </div>
       <div class="title">请输入取消详细原因</div>
+<<<<<<< HEAD
       <m-textarea height="250rpx"
                   :placeholder="undefined"
                   :isReplaceTextarea="hasCancelReason"
                   customStyle="background:#EDF1F4;"
                   :data="upData.reasonDetail"
                   @onChageData="onChangeTextarea"></m-textarea>
+=======
+      <div class="textarea">
+          <textarea v-model="upData.reasonDetail" bindinput="onChangeTextarea"/>
+      </div>
+      <!-- <m-textarea height="250rpx"
+                  :placeholder="undefined"
+                  :isReplaceTextarea="hasCancelReason"
+                  customStyle="background:#EDF1F4;"
+                  :data=""
+                  @onChageData="onChangeTextarea"></m-textarea> -->
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     </div>
     <div class="footer_btn_o">
       <van-button custom-class="btn"
@@ -81,7 +93,12 @@ wepy.page({
             });
         },
         onChangeTextarea(data) {
+<<<<<<< HEAD
             this.upData.reasonDetail = data;
+=======
+            this.upData.reasonDetail = data.$wx.detail.value;
+            console.log(data)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         },
         closeAndBreak() {
             wx.navigateBack();
@@ -133,7 +150,18 @@ wepy.page({
     height: 100%;
     background: #fff;
 }
+<<<<<<< HEAD
 
+=======
+.textarea{
+    padding: 20rpx;
+    border: 1rpx solid #e1e1e1;
+    textarea{
+        width: 100%;
+        height: 200rpx;
+    }
+}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 .content {
     padding: 24rpx;
 }

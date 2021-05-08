@@ -21,7 +21,11 @@
       <div class="item"
            @click="hasPop('hasGoodsCodesPop')"
            v-if="goodData.operatorType === 1">
+<<<<<<< HEAD
         <div class="item_value">{{ goodData.goodsCode }}</div>
+=======
+        <div class="item_value">{{ goodData.goodsCode || '请选择分段' }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         <div class="item_right">
           <van-icon color="#8E9298"
                     name="arrow-down" />
@@ -39,11 +43,22 @@
         </div>
       </div>
       <div v-if="goodData.operatorType === 2">
+<<<<<<< HEAD
         <m-textarea height="150rpx"
                     placeholder="请输入物品"
                     :data="goodData.goodsCode"
                     :isReplaceTextarea="isReplaceTextarea"
                     @onChageData="onChageGoodsCode"></m-textarea>
+=======
+        <div class="textarea">
+          <textarea  placeholder="请输入物品" bindinput="onChageGoodsCode"></textarea>
+        </div>
+        <!-- <m-textarea height="150rpx"
+                   
+                    :data="goodData.goodsCode"
+                    :isReplaceTextarea="isReplaceTextarea"
+                    @onChageData="onChageGoodsCode"></m-textarea> -->
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </div>
       <!-- goodsCodesDetail -->
       <div v-if="goodsCodesDetail && goodData.operatorType === 1"
@@ -186,7 +201,12 @@ wepy.page({
   methods: {
     ...mapMutations(['setDetailApplyDo']),
     onChageGoodsCode(goodsCode) {
+<<<<<<< HEAD
       this.goodData.goodsCode = goodsCode;
+=======
+      this.goodData.goodsCode = goodsCode.$wx.detail.value;
+      console.log(this.goodData.goodsCode)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     getProCodes() {
       return wepy.$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {}).then((res) => {
@@ -378,6 +398,18 @@ wepy.page({
 </config>
 
 <style lang="less" scoped>
+<<<<<<< HEAD
+=======
+.textarea{
+  padding: 20rpx;
+  border: 1rpx solid #e1e1e1;
+  background: #fff;
+  textarea{
+     width: 100%;
+     height: 200rpx;
+  }
+}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 .lighterage_page {
   position: relative;
   height: 100vh;

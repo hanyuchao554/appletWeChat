@@ -8,6 +8,7 @@
       <div class="radio_wrap">
         <div class="label">请选择</div>
         <van-radio-group class="radio_group" value="{{ upData.opinionId }}" @change="onChange">
+<<<<<<< HEAD
           <van-radio custom-class="radio" checked-color="#005bac" name="1">同意</van-radio>
           <van-radio custom-class="radio" checked-color="#005bac" name="0">驳回</van-radio>
         </van-radio-group>
@@ -15,6 +16,19 @@
       <div class="label margin-b-25">请输入通过的原因</div>
       <div>
         <m-textarea height="250rpx" :placeholder="undefined" customStyle="background:#EDF1F4;" :data="upData.reason" @onChageData="onChangeTextarea"></m-textarea>
+=======
+          <div class="selet">
+            <van-radio custom-class="radio" checked-color="#005bac" name="1">同意</van-radio>
+            <van-radio custom-class="radio" checked-color="#005bac" name="0">驳回</van-radio>
+          </div>
+        </van-radio-group>
+      </div>
+      <div class="label margin-b-25">请输入通过的原因</div>
+      <div class="textarea">
+        <textarea v-model="upData.reason" bindinput="onChangeTextarea"></textarea>
+        <!-- <m-textarea height="250rpx" :placeholder="undefined" customStyle="background:#EDF1F4;" 
+        :data="" @onChageData="onChangeTextarea"></m-textarea> -->
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </div>
       <van-button custom-class="btn" :disabled="isDisabled" @click="submit" color="#005BAC" type="default">确定</van-button>
     </div>
@@ -39,7 +53,11 @@
     },
     methods: {
       onChangeTextarea(e) {
+<<<<<<< HEAD
         this.upData.reason = e;
+=======
+        this.upData.reason = e.$wx.detail.value;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       },
       onChange(e) {
         let data = e.$wx.detail;
@@ -100,6 +118,20 @@
 </config>
 
 <style lang="less" scoped>
+<<<<<<< HEAD
+=======
+.textarea{
+  border: 1rpx solid #e1e1e1;
+  padding: 20rpx;
+  textarea{
+     width: 100%;
+     height:  200rpx;
+  }
+}
+.selet{
+  display: flex;
+}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   .prop_up_title {
     display: flex;
     justify-content: space-between;

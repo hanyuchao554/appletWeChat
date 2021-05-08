@@ -44,6 +44,7 @@ wepy.page({
     upData: {
       applyId: '',
       addressId: '',
+<<<<<<< HEAD
       intermodalId:'',
       location:'',
     },
@@ -61,6 +62,17 @@ wepy.page({
   onShow(){
     this.getLocation()
   },
+=======
+      location:'',
+    },
+  },
+  onShow(){
+    this.getLocation()
+  },
+  onLoad({ applyId }) {
+    this.upData.applyId = applyId;
+  },
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   onUnload() {
     this.setDetailApplyDoInit();
   },
@@ -72,7 +84,11 @@ wepy.page({
   },
   methods: {
     ...mapMutations(['setDetailApplyDoInit']),
+<<<<<<< HEAD
     getLocation(){
+=======
+      getLocation(){
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       let that = this
       wx.getLocation({
         type: 'wgs84', // 默认为 wgs84 返回 gps 坐标，gcj02 返回可用于 wx.openLocation 的坐标
@@ -91,7 +107,11 @@ wepy.page({
     },
     goToPosition(target) {
       wx.navigateTo({
+<<<<<<< HEAD
         url: `/pages/position/position?code=driverEndAddressMassage&applyType=0&type=3&index=${'undefined'}`,
+=======
+        url: `/pages/position/position?code=driverEndAddressMassage&applyType=0&type=3`,
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       });
     },
     submit() {
@@ -105,12 +125,22 @@ wepy.page({
     driverCompleteTask() {
       if (this.isDisabled) return;
       wepy.$loading();
+<<<<<<< HEAD
       wepy.$api('platform/driver/task/driverCompleteTask', this.upData)
         .then((res) => {
           wepy.$showToast('确认成功');
           // wx.navigateBack({
           //   delta: getCurrentPages().length - 2,
           // });
+=======
+      wepy
+        .$api('platform/driver/task/driverCompleteTask', this.upData)
+        .then((res) => {
+          wepy.$showToast('确认成功');
+          wx.navigateBack({
+            delta: getCurrentPages().length - 2,
+          });
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         })
         .finally(() => {
           wx.hideLoading();

@@ -9,7 +9,11 @@
         <div>
           <div class="title margin_bottom_8">
             <div class="title_content">
+<<<<<<< HEAD
               {{ detailApplyDo.jobContentStr }} {{ detailApplyDo.goodsTypeName }}-{{ detailApplyDo.goodsCode }}
+=======
+              {{detailApplyDo.shipNumber || detailApplyDo.jobContentStr }} {{ detailApplyDo.goodsTypeName }}-{{ detailApplyDo.goodsCode }}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             </div>
           </div>
           <div class="font-color-gray font-24">

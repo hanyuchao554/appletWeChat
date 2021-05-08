@@ -323,6 +323,15 @@ wepy.page({
   }) {
     this.init(applyState);
   },
+<<<<<<< HEAD
+=======
+  onShow(){
+    this.detailApplyDo.forkliftAuditList.forEach(item =>{
+      this.$set(item, 'showDrop', false);
+      console.log(item)
+    })
+  },
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   computed: mapState(['detailApplyDo']),
   methods: {
     init(applyState) {
@@ -340,9 +349,20 @@ wepy.page({
     triggerDrop(key) {
       this[key] = !this[key];
     },
+<<<<<<< HEAD
     triggerDropListItem(tagList, index) {
       let data = this.detailApplyDo[tagList][index].showDrop;
       this.detailApplyDo[tagList][index].showDrop = !data;
+=======
+    triggerDropListItem(tagList, index,item) {
+      let data = this.detailApplyDo[tagList][index].showDrop;
+      this.detailApplyDo[tagList][index].showDrop = !data;
+      console.log(tagList,index)
+      console.log(data)
+    },
+    aaaaa(item){
+      item.showDrop
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     getTime(time, hasYear) {
       let str = hasYear ? 'Y-M-D h:m' : 'M-D h:m';

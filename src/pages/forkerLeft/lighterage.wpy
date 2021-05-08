@@ -142,6 +142,10 @@
         console.log(this.type)
         this.txt.parenttxt = this.Parentlist[index].paramValue
         this.$set(this.detailApplyDo ,'goodsTypeName',this.txt.parenttxt)
+<<<<<<< HEAD
+=======
+        this.$set(this.detailApplyDo ,'goodsCode',this.txt.itemname)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         this.$set(this.detailApplyDo, 'goodsType', id);
         this.confId = id
         this.type = 2
@@ -157,10 +161,16 @@
        */
       Selectchildren(index,id){
         this.txt.childrentxt = this.Parentlist[index].paramValue
+<<<<<<< HEAD
         let txt = this.detailApplyDo.goodsTypeName +'-'+this.txt.childrentxt
         this.$set(this.detailApplyDo, 'goodsTypeName', txt);
         this.$set(this.detailApplyDo, 'goodsnamestr',this.txt.childrentxt)
         this.$set(this.detailApplyDo, 'goodsType', id);
+=======
+        // let txt = this.detailApplyDo.goodsTypeName +'-'+this.txt.childrentxt
+        // this.$set(this.detailApplyDo, 'goodsTypeName', txt);
+        this.$set(this.detailApplyDo, 'goodsnamestr',this.txt.childrentxt)
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         this.hideForkPullDown()
       },
       /**
@@ -185,7 +195,11 @@
               this.isname = true
               this.Parentlist = []
               this.txt.childrentxt = ''
+<<<<<<< HEAD
               this.detailApplyDo.goodsCode = ''
+=======
+              // this.detailApplyDo.goodsCode = ''
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             }
         })
       },
@@ -214,7 +228,10 @@
        */
       showForkPullDown() {
         this.hasForkPullDown = true;
+<<<<<<< HEAD
         this.searchData = ''
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       },
       /**
        * 关闭弹出层
@@ -223,6 +240,7 @@
         this.hasForkPullDown = false;
       },
       /**
+<<<<<<< HEAD
        * 搜索框输入内容
        */
       Onchange(e){
@@ -235,6 +253,8 @@
         })
       },
       /**
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
        * 获取当前输入内容
        */
       changeName(e){
@@ -286,8 +306,16 @@
           wepy.$showToast('物品重量最大100000吨');
         } else {
           let lighterageStr = ''
+<<<<<<< HEAD
 
           lighterageStr = `${goodsTypeName}-${goodsCode}-${goodsWeight ? goodsWeightStr + '吨' : ''}`;
+=======
+          if(goodsnamestr){
+            lighterageStr = `${goodsTypeName}-${goodsnamestr}-${goodsCode}-${goodsWeight ? goodsWeightStr + '吨' : ''}`;
+          }else{
+            lighterageStr = `${goodsTypeName}-${goodsCode}-${goodsWeight ? goodsWeightStr + '吨' : ''}`;
+          }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
           this.$set(this.detailApplyDo, 'lighterageStr', lighterageStr);
           this.setJobQuantity()
           wx.navigateBack();

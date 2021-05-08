@@ -11,7 +11,11 @@
         <div>
           <div class="item_header">
             <div>
+<<<<<<< HEAD
               <text class="font-color-red" style="padding-right:20rpx;">{{detailApplyDo._applyStateName}}</text> {{ detailApplyDo.jobContent }}{{ detailApplyDo.goodsCode }}
+=======
+              <text class="font-color-red" style="padding-right:20rpx;">{{detailApplyDo._applyStateName}}</text> {{detailApplyDo.shipNumber || detailApplyDo.jobContent }}{{ detailApplyDo.goodsCode }}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             </div>
           </div>
           <div class="item_header_c">
@@ -42,7 +46,11 @@
             <div class="tranState_name">
               <div v-if="item.tranState===1" class="tag_drop">
                 <div class="drop"></div>
+<<<<<<< HEAD
                 {{ item.carNumber }}
+=======
+                {{ item.carNumber}}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
               </div>
               <div v-if="item.tranState!==1">
                 <div style="color:#EFA600;" v-if="item.tranState">{{item.tranStateName}}</div>

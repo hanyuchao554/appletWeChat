@@ -18,7 +18,11 @@
         <div class="icon">
           <van-icon name="search" />
         </div>
+<<<<<<< HEAD
         <input type="text" value="{{searchData}}" placeholder="查找地点" placeholder-class="placeholder" bindinput="onChage" />
+=======
+        <input type="text" value="{{searchData}}" placeholder="请输入地点名称" placeholder-class="placeholder" bindinput="onChage" />
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </div>
       <!-- <van-search background="#fff" @change="onChage" placeholder="查找地点" /> -->
     </div>
@@ -54,11 +58,15 @@ wepy.page({
     list: [],
     searchList: [],
     keyMaps: {},
+<<<<<<< HEAD
     index:''//子任务的下标
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
   },
   onLoad({
     code,
     applyType,
+<<<<<<< HEAD
     type,
     index
   }) {
@@ -68,6 +76,13 @@ wepy.page({
     console.log(index)
     this.initPage(code);
     console.log(index + '副任务的索引')
+=======
+    type
+  }) {
+    this.type = Number(type)
+    this.applyType = Number(applyType)
+    this.initPage(code);
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     this.getAppPlatAddressMassage();
   },
   computed: {
@@ -78,9 +93,12 @@ wepy.page({
   },
   methods: {
     ...mapMutations(['setDetailApplyDo']),
+<<<<<<< HEAD
     /**
      * 判断类型
      */
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     initPage(data) {
       let title = '';
       switch (data) {
@@ -139,17 +157,23 @@ wepy.page({
       this.mode = mode
       this.getAppPlatAddressMassage()
     },
+<<<<<<< HEAD
     /**
      * 搜索框当前输入内容
      */
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     onChage(e) {
       this.searchData = e.$wx.detail.value;
       let reg = new RegExp(this.searchData);
       this.searchList = this.list.filter((item) => reg.test(item.addressName));
     },
+<<<<<<< HEAD
     /**
      * 获取地点列表
      */
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     getAppPlatAddressMassage() {
       let areaId = undefined
       if (this.applyType === 1 && this.detailApplyDo.departmentOrArea === 2) {
@@ -166,6 +190,7 @@ wepy.page({
           this.list = res;
         });
     },
+<<<<<<< HEAD
     /**
      * 选中列表中的地点
      */
@@ -180,6 +205,11 @@ wepy.page({
         for (let [k, v] of Object.entries(this.keyMaps)) {
             this.detailApplyDo.intermodalist[index][v] = item[k];
         }
+=======
+    onSelect(item) {
+      for (let [k, v] of Object.entries(this.keyMaps)) {
+        this.detailApplyDo[v] = item[k];
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       }
       this.setDetailApplyDo(this.detailApplyDo);
       wx.navigateBack();

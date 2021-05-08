@@ -31,6 +31,7 @@
           "scene": null
         },
         {
+<<<<<<< HEAD
           "name": "轨迹播放",
           "pathName": "pages/taskList/trackplayback",
           "query": "",
@@ -45,6 +46,10 @@
         {
           "name": "叉车审批",
           "pathName": "pages/forkerLeft/reviewList",
+=======
+          "name": "平板车—计划任务",
+          "pathName": "pages/addTask",
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
           "query": "",
           "scene": null
         },

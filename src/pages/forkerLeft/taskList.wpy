@@ -16,13 +16,21 @@
         </div>
         <div class="item" :class="{'select_item_wrap':hasCheck}">
           <div class="item_header">
+<<<<<<< HEAD
             <div>{{ item.jobContent }} {{item.goodsTypeName}}-{{ item.goodsCode }}</div>
+=======
+            <div>{{item.shipNumber || item.jobContent }} {{item.goodsTypeName || '未选择'}}-{{ item.goodsCode  || '未选择' }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             <van-icon v-if="applyState === 0" @click="onDelect(item.prsId)" name="/static/images/icon_delete.png" size="40rpx"></van-icon>
           </div>
           <div class="item_content">
             <div v-if="!item.hasForkliftTaskList" @click="goToDetail(item)" class="item_content_right">
               <div class="item_content_right_t">
+<<<<<<< HEAD
                 {{ item.applyDeptName }}/{{ item.goodsWeight || 0 }}吨/{{ item.startTime }}至{{ item.endTime }}
+=======
+                {{ item.applyDeptName }}/{{ item.goodsWeight || 0 }}吨/{{ item.startTime  || '未选择' }}至{{ item.endTime || '未选择' }}
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
               </div>
               <div class="common_step">
                 <div class="common_step_left">
@@ -31,8 +39,13 @@
                   <div class="common_step_left_b"></div>
                 </div>
                 <div class="common_step_center">
+<<<<<<< HEAD
                   <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
                   <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
+=======
+                  <div class="ellipsis">起始地：{{ item.startPositionName  || '未选择' }}</div>
+                  <div class="ellipsis">目的地：{{ item.endPositionName  || '未选择' }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
                 </div>
               </div>
             </div>

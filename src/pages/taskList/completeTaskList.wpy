@@ -3,11 +3,18 @@
     <div class="content">
       <div class="item" v-for="item in list" @click="goToPage(item.applyId)">
         <div class="item_header">
+<<<<<<< HEAD
           <div class="item_header_left">
             <div class="tag" style="background:{{item.requestTypeBg}}">{{ item.reqStr }}</div>
             <div>{{ item.listName }}</div>
           </div>
           <div class="item_header_right" v-if="item.applyState != '取消' " @tap.stop="aaaa(item)">查看轨迹</div>
+=======
+          <div class="tag" style="background:{{item.requestTypeBg}}">
+            {{ item.reqStr }}
+          </div>
+          <div>{{ item.listName }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         </div>
         <div class="item_header_c">
           {{ item.deptName }}/{{ item.goodsWeight}}吨/{{ item.startTimeStamp }}至{{ item.endTimeStamp }}
@@ -53,7 +60,12 @@
     methods: {
       getDraftsTaskList() {
         wepy.$loading();
+<<<<<<< HEAD
         wepy.$api('app/massage/getPlatformApplyCompleteTaskList', {
+=======
+        wepy
+          .$api('app/massage/getPlatformApplyCompleteTaskList', {
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
             userId: wepy.$auth.getUserId(),
           })
           .then((res) => {
@@ -74,11 +86,14 @@
       getTime(time) {
         return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
       },
+<<<<<<< HEAD
       aaaa(item){
         wx.navigateTo({
           url:`/pages/taskList/trackplayback?applyId=${item.applyId}`
         })
       }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
   });
 </script>
@@ -91,6 +106,7 @@
 
 <style lang="less" scoped>
   @import './index.less';
+<<<<<<< HEAD
 .item_header{
   display: flex;
   justify-content:space-between;
@@ -103,4 +119,6 @@
     font-size: 24rpx;
   }
 }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 </style>

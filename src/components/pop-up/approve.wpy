@@ -129,7 +129,11 @@ wepy.component({
     }
 }
 .selet{
+<<<<<<< HEAD
   display: flex
+=======
+  display: flex ;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 }
 .prop_up_title {
   display: flex;

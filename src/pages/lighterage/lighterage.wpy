@@ -47,7 +47,11 @@
                     :isReplaceTextarea="isReplaceTextarea"
                     @onChageData="onChageGoodsCode"></m-textarea> -->
         <div class="remarks">
+<<<<<<< HEAD
           <textarea v-model="goodData.goodsCode"  placeholder="请输入物品名称" bindinput="onChageGoodsCode"  />
+=======
+          <textarea v-model="detailApplyDo.goodsCode"  placeholder="请输入备注" bindinput="onChageGoodsCode"  />
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         </div>
       </div>
       <!-- goodsCodesDetail -->
@@ -102,7 +106,10 @@ wepy.page({
   data: {
     isInputWeight: 0,
     type: '',
+<<<<<<< HEAD
     index:'',
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     goodData: {
       proCode: '',
       goodsType: '',
@@ -146,6 +153,7 @@ wepy.page({
       }
     }
   },
+<<<<<<< HEAD
   async onLoad(query) {
     this.type = query.data
     this.index = query.index
@@ -175,6 +183,32 @@ wepy.page({
       this.judgerole()
     }
     
+=======
+  async onLoad({
+    type
+  }) {
+    this.type = type
+    if (this.type === 'query') {
+      this.goodData.proCode = this.detailApplyDo.proCode;
+      this.goodData.goodsCode = this.detailApplyDo.goodsCode;
+      this.goodData.goodsType = this.detailApplyDo.goodsType;
+      this.goodData.goodsWeight = this.detailApplyDo.goodsWeight;
+      this.goodData.proCode && this.getGoodsTypes();
+      this.goodData.goodsType && await this.getGoodsCodesAndOperatorType();
+    } else if (this.detailApplyDo.goodsId) {
+      for (let key in this.goodData) {
+        this.goodData[key] = this.detailApplyDo[key];
+      }
+      this.goodData.proCode = this.detailApplyDo.goodsProCode;
+      this.goodData.goodsCode = this.detailApplyDo.goodsGoodsCode;
+      this.goodData.goodsWeight = Math.floor(Number(this.goodData.goodsWeight) / 1000);
+      this.getGoodsTypes();
+      await this.getGoodsCodesAndOperatorType();
+      if (this.goodData.operatorType === 1) {
+        this.getGoodsListByProCodeAndGoodsCode();
+      }
+    }
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     this.getProCodes();
   },
   computed: {
@@ -186,6 +220,7 @@ wepy.page({
   },
   methods: {
     ...mapMutations(['setDetailApplyDo']),
+<<<<<<< HEAD
     /**
      * 判断他是主任务还是子任务
      */
@@ -228,14 +263,22 @@ wepy.page({
     /**
      * 获取工程编码列表
      */
+=======
+    onChageGoodsCode(goodsCode) {
+      this.goodData.goodsCode = goodsCode.$wx.detail.value;
+    },
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     getProCodes() {
       return wepy.$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {}).then((res) => {
         this.proCodes = res.proCode;
       });
     },
+<<<<<<< HEAD
     /**
      * 获取类别列表
      */
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     getGoodsTypes() {
       return wepy
         .$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {
@@ -246,9 +289,12 @@ wepy.page({
           this.goodsTypes = res.goodsType;
         });
     },
+<<<<<<< HEAD
     /**
      * 获取名称
      */
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     getGoodsCodesAndOperatorType() {
       return wepy
         .$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {
@@ -261,9 +307,12 @@ wepy.page({
           this.goodsCodes = res.goodsCodes;
         });
     },
+<<<<<<< HEAD
     /**
      * 获取重量
      */
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     getGoodsListByProCodeAndGoodsCode() {
       let data = this.getSubmitData();
       return wepy.$api('appPlatform/goods/getGoodsListByProCodeAndGoodsCode', data).then((res) => {
@@ -276,6 +325,7 @@ wepy.page({
         }
       });
     },
+<<<<<<< HEAD
     /**
      * 关闭弹出层
      */
@@ -285,6 +335,11 @@ wepy.page({
     /**
      * 显示弹出层
      */
+=======
+    colsePopUp(key) {
+      this[key] = false;
+    },
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     hasPop(key) {
       if (key === 'hasGoodTypePop') {
         if (this.goodData.proCode) this[key] = true;
@@ -326,7 +381,10 @@ wepy.page({
       if (this.type !== 'query') valid = this.valid(data);
       if (valid) {
         if (this.type === 'query') {
+<<<<<<< HEAD
           console.log('query'+123)
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
           let {
             proCode,
             goodsCode,
@@ -351,7 +409,10 @@ wepy.page({
         }
       }
     },
+<<<<<<< HEAD
 
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     sendUpdateGoodsMessage() {
       let upData = JSON.parse(JSON.stringify(this.updateGoodsMessageData));
       for (let key in this.updateGoodsMessageData) {
@@ -400,6 +461,7 @@ wepy.page({
         this.detailApplyDo.startPositionGps = res.positionGps;
       });
     },
+<<<<<<< HEAD
     submitSuccess() {
       let { proCode , goodsCode , goodsType , goodsId , goodsWeight} = this.goodsCodesDetail;
       let index = this.index
@@ -421,6 +483,22 @@ wepy.page({
         this.detailApplyDo.intermodalist[index].lighterageStr = `${proCode}-${goodsType}-${goodsCode}`;
       }
 
+=======
+    async submitSuccess() {
+      let {
+        proCode,
+        goodsCode,
+        goodsType,
+        goodsId,
+        goodsWeight
+      } = this.goodsCodesDetail;
+      await this.getGoodsPositionGps(goodsId);
+      this.detailApplyDo.goodsId = goodsId;
+      this.detailApplyDo.goodsProCode = proCode;
+      this.detailApplyDo.goodsType = goodsType;
+      this.detailApplyDo.goodsGoodsCode = goodsCode;
+      this.detailApplyDo.goodsWeight = goodsWeight;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       this.setDetailApplyDo(this.detailApplyDo);
       wx.navigateBack();
     }

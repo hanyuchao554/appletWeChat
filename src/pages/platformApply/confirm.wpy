@@ -1,6 +1,7 @@
 <template>
   <div class="confirm_page">
     <div class="content">
+<<<<<<< HEAD
       <div class="wrap padding">
         <div class="title margin_bottom_8">
           <div class="tag" style="background:{{requestTypeBg}}">{{ requestTypeStr }}</div>
@@ -40,6 +41,35 @@
           <div class="name">{{ item.goodsProCode }}-{{item.goodsType}}-{{ item.goodsGoodsCode }}</div>
           <div>重量: {{ item.goodsWeight / 1000 }}吨</div>
         </div>
+=======
+      <div class="wrap">
+        <div class="title margin_bottom_8">
+          <div class="tag" style="background:{{requestTypeBg}}">
+            {{ requestTypeStr }}
+          </div>
+          <div class="title_content">
+            {{ detailApplyDo.goodsProCode }}-{{detailApplyDo.goodsType}}-{{ detailApplyDo.goodsGoodsCode }} {{ detailApplyDo.jobContent }}
+          </div>
+        </div>
+        <div class="font-color-gray font-24 margin_bottom_8">
+          申请部门: {{ detailApplyDo.applyDeptName }} / 驳运部门: {{ detailApplyDo.transDeptName }}
+        </div>
+        <div class="font-24">
+          选择分段: {{ detailApplyDo.goodsProCode }}-{{detailApplyDo.goodsType}}-{{ detailApplyDo.goodsGoodsCode }}; 重量: {{ detailApplyDo.goodsWeight / 1000 }}吨; 尺寸: ({{ detailApplyDo.goodsWidth }}*{{ detailApplyDo.goodsHigh }}*{{ detailApplyDo.goodsLength }}) (米)
+        </div>
+      </div>
+      <div class="wrap not-top-padding">
+        <div class="cell">
+          <div>起始时间</div>
+          <div>{{ detailApplyDo._startTime }}</div>
+        </div>
+        <div class="cell">
+          <div>到达时间</div>
+          <div>{{ detailApplyDo._endTime }}</div>
+        </div>
+      </div>
+      <div class="wrap">
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         <div class="wrap_content">
           <div class="wrap_content_left">
             <div class="wrap_content_left_t"></div>
@@ -48,6 +78,7 @@
           </div>
           <div class="wrap_content_right">
             <div class="ellipsis">
+<<<<<<< HEAD
               {{ item.startPositionName || '' }}
             </div>
             <div class="ellipsis">
@@ -68,6 +99,28 @@
         <div class="cell">
           <div>到达时间</div>
           <div>{{ detailApplyDo._endTime }}</div>
+=======
+              {{ detailApplyDo.startPositionName || '' }}
+            </div>
+            <div class="ellipsis">
+              {{ detailApplyDo.endPositionName || '' }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wrap not-top-padding">
+        <div class="cell">
+          <div class="label">工作内容</div>
+          <div>{{ detailApplyDo.jobContent || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">重要程度</div>
+          <div style="color: #bea365">{{ detailApplyDo.important || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">申请备注</div>
+          <div style="min-height: 150rpx">{{ detailApplyDo.memo }}</div>
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         </div>
       </div>
       <div class="wrap not-top-padding">
@@ -77,6 +130,7 @@
             {{ detailApplyDo.contastsName || '' }} {{ detailApplyDo.contastsPhone || '' }}
           </div>
         </div>
+<<<<<<< HEAD
         <div class="cell">
           <div class="label">重要程度</div>
           <div style="color: #bea365">{{ detailApplyDo.important || '' }}</div>
@@ -85,6 +139,8 @@
           <div class="label">申请备注</div>
           <div style="min-height: 150rpx">{{ detailApplyDo.memo }}</div>
         </div>
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       </div>
     </div>
     <div class="footer">
@@ -114,7 +170,10 @@
       requestType: '',
       requestTypeBg: '',
       showApplicationBtn: false,
+<<<<<<< HEAD
       totalweight:0,
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     onLoad({
       requestType
@@ -122,11 +181,15 @@
       this.requestType = requestType;
       this.getTagBgColor(requestType);
       this.setTilte(requestType);
+<<<<<<< HEAD
       this.Totalweight()
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     },
     computed: mapState(['detailApplyDo']),
     methods: {
       ...mapMutations(['setDetailApplyDo']),
+<<<<<<< HEAD
       /**
        *计算总重量
        */
@@ -141,6 +204,8 @@
           this.totalweight = this.detailApplyDo.goodsWeight / 1000
         }
       },
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       submit() {
         if (this.isDisabled) return;
         this.isDisabled = true;
@@ -206,7 +271,11 @@
     .content {
       position: absolute;
       width: 100%;
+<<<<<<< HEAD
       top:20rpx;
+=======
+      top: 0;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       bottom: 150rpx;
       overflow-y: scroll;
     }
@@ -244,11 +313,16 @@
       border-radius: 5rpx;
       font-weight: 500;
     }
+<<<<<<< HEAD
     .tags{
       background: #70b603;
       margin-left: 10rpx;
     }
     &_content {
+=======
+    &_content {
+      margin-left: 10rpx;
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
       font-size: 28rpx;
       font-weight: 500;
       color: #2b2b2b;
@@ -275,9 +349,12 @@
         flex: none;
         padding-right: 25rpx;
       }
+<<<<<<< HEAD
       .title{
 
       }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
     }
     .cell:last-child {
       border: transparent;
@@ -319,6 +396,7 @@
       }
     }
   }
+<<<<<<< HEAD
   .title_content{
     display: flex;
     .dep{
@@ -340,4 +418,6 @@
     padding-bottom: 0;
     padding-top:25rpx;
   }
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
 </style>

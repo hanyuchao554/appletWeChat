@@ -77,7 +77,10 @@ wepy.app({});
         'pages/addTask',
         'pages/draftsTaskList/draftsTaskList',
         'pages/taskList/completeTaskList',
+<<<<<<< HEAD
         "pages/taskList/trackplayback",
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         'pages/platformApply/confirm',
         'pages/lighterage/lighterage',
         'pages/taskSuccess/taskSuccess',
@@ -86,7 +89,10 @@ wepy.app({});
         'pages/fencing/fencingList',
         'pages/fencing/managementFence',
         'pages/fencing/addres',
+<<<<<<< HEAD
         'pages/taskList/new_task',
+=======
+>>>>>>> 44f8e328608455db489ed503617baad44fef2157
         'pages/login/login'
     ],
     subpackages: [
