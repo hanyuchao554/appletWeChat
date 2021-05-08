@@ -1,0 +1,203 @@
+<template>
+    <div class="platformGoodsQueryList_page">
+        <div class="content">
+            <div class="item">
+                <div class="goodsCodesDetail">
+                    <div class="title">{{platformGoodsQueryData.goodsDo.proCode}}-{{platformGoodsQueryData.goodsDo.goodsCode}}</div>
+                    <div class="flex section">
+                        <div class="text_l">类别：{{ platformGoodsQueryData.goodsDo.goodsType }}</div>
+                        <div class="text_r">
+                            吨位：{{ platformGoodsQueryData.goodsDo.goodsWeight / 1000 }}吨
+                        </div>
+                    </div>
+                    <div class="section">
+                        尺寸：{{ platformGoodsQueryData.goodsDo.goodsWidth }}*{{
+                        platformGoodsQueryData.goodsDo.goodsHigh
+                        }}*{{ platformGoodsQueryData.goodsDo.goodsLength }}（米）
+                    </div>
+                    <div class="section">
+                        是否大型分段：{{ platformGoodsQueryData.goodsDo.isBigGoods === 0 ? '否' : '是' }}
+                    </div>
+                    <div class="section">是否超宽高：{{ platformGoodsQueryData.goodsDo.isOverSize }}</div>
+                </div>
+                <div class="goodsCodesDetail_footer">
+                    <div class="goodsCodesDetail_footer_item">
+                        <van-icon name="location-o"
+                                  size="32rpx" />
+                        <text>{{ platformGoodsQueryData.goodsDo.newGoodsPositionName }}</text>
+                    </div>
+                    <div class="goodsCodesDetail_footer_item">
+                        <van-icon name="clock-o"
+                                  size="32rpx" />
+                        <text>{{platformGoodsQueryData.goodsDo.lastTranTime}}</text>
+                    </div>
+                </div>
+            </div>
+
+            <div class="car_wrap"
+                 v-for="item in platformGoodsQueryData.goodsQueryDos">
+                <div class="item">
+                    <div class="car_info">
+                        <div>
+                            <div class="tag_drop">
+                                <div class="drop"></div>
+                                {{ item.carNumber || '未知' }}
+                            </div>
+                            <div class="font-color-gray">{{ item.carFullWeight ? item.carFullWeight/1000 +'吨' : '未知'}}</div>
+                        </div>
+                        <div>
+                            <div class="car_info_s">
+                                <van-icon color="#8E9298"
+                                          name="clock-o"
+                                          size="26rpx" />
+                                <div>用时:{{ item.totalTime }}小时</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="item_header_tc">{{ item.listName }}</div>
+                        <div class="item_header_c">
+                            {{ item.deptName }}/{{ item.goodsWeight / 1000 }}吨/{{ item.startTimeStamp }}至{{ item.endTimeStamp }}
+                        </div>
+                    </div>
+                    <div class="item_content">
+                        <div @click="goToDetail(item.applyId)"
+                             class="item_content_left">
+                            <div class="common_step">
+                                <div class="common_step_left">
+                                    <div class="common_step_left_t"></div>
+                                    <div class="common_step_left_c"></div>
+                                    <div class="common_step_left_b"></div>
+                                </div>
+                                <div class="common_step_center">
+                                    <div class="ellipsis">
+                                        起始地：{{ item.startPositionName }}
+                                    </div>
+                                    <div class="ellipsis">
+                                        目的地：{{ item.endPositionName }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import store from '@/store';
+import { mapState } from '@wepy/x';
+wepy.page({
+    store,
+    data: {},
+    computed: {
+        ...mapState(['platformGoodsQueryData'])
+    },
+    methods: {
+        goToPage(ulr) {
+            wx.navigateTo({ url });
+        }
+    }
+});
+</script>
+
+<config>
+{
+    navigationBarTitleText:'对象查询详情',
+    usingComponents:{
+        "van-button": "module:@vant/weapp/dist/button/index",
+        "van-icon": "module:@vant/weapp/dist/icon/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.platformGoodsQueryList_page {
+    background: #f3f4f6;
+    padding-top: 20rpx;
+}
+
+.title {
+    margin-bottom: 20rpx;
+    font-size: 44rpx;
+    font-weight: bold;
+    color: #2b2b2b;
+    line-height: 60rpx;
+}
+
+.item {
+    width: 702rpx;
+    margin: 0 auto 20rpx;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+}
+.goodsCodesDetail {
+    font-size: 32rpx;
+    .section {
+        margin-bottom: 20rpx;
+        line-height: 44rpx;
+    }
+    .flex {
+        display: flex;
+        .text_l {
+            padding-right: 170rpx;
+        }
+    }
+}
+.goodsCodesDetail_footer {
+    padding-top: 20rpx;
+    box-sizing: border-box;
+    border-top: 2rpx solid #ececec;
+    font-size: 32rpx;
+    &_item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20rpx;
+        text {
+            margin-left: 8rpx;
+        }
+    }
+}
+.car_wrap {
+    &:not(:first-child) {
+        margin-top: 20rpx;
+    }
+    .not_task_item {
+        border-bottom: 2rpx solid #ececec;
+        margin-bottom: 0;
+    }
+}
+.car_info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30rpx;
+    font-size: 22rpx;
+    .car_info_s {
+        margin-left: 40rpx;
+    }
+    & > view,
+    .car_info_s {
+        display: flex;
+        align-items: center;
+        font-size: 22rpx;
+    }
+}
+.item_header_tc {
+    font-size: 28rpx;
+    font-weight: bold;
+    color: #2b2b2b;
+    line-height: 40rpx;
+}
+.item_header_c {
+    font-size: 22rpx;
+    color: #8e9298;
+    line-height: 32rpx;
+}
+</style>

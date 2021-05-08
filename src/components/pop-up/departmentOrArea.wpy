@@ -1,0 +1,41 @@
+<template>
+  <div class="pop_up_wrap">
+    <div class="prop_up_title">{{title || '选择区域/驳运部门'}}</div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item" @click="onSelect(item)" v-for="item in dataList">
+        {{ item.label }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import {
+    mapState
+  } from '@wepy/x';
+  import store from '@/store';
+  wepy.component({
+    store,
+    data: {
+      dataList: [{
+          id: 1,
+          label: '驳运部门'
+        },
+        {
+          id: 2,
+          label: '驳运区域'
+        }
+      ]
+    },
+    methods: {
+      onSelect(data) {
+        this.$emit('onSelect', data);
+      }
+    }
+  });
+</script>
+
+<style lang="less" scoped>
+  @import './index.less';
+</style>

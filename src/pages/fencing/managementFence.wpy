@@ -1,0 +1,394 @@
+<template>
+    <div style="margin-bottom: 20rpx;">
+        <div class="header">
+            <!-- <van-search value="{{searchName}}" placeholder="查找围栏"  bind:change="serchchange" bind:search="onSearch"> -->
+        </div>
+        <div class="content">
+            <div class="item" v-for="(item,index) in list">
+                <div class="item_left">
+                    <text>{{item.areaName}}</text>
+                </div>
+                <div class="item_right">
+                    <div class="text">
+                        <div class="text_item" v-if="item.state==1">启用</div>
+                        <div class="text_item as" v-else>禁用</div>
+                    </div>
+                    <div class="more" data-index="index" @click="bottomshows(index,item.id)">
+                        <div class="dots"></div>
+                        <div class="dots"></div>
+                        <div class="dots"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="button" @click="showPopup">
+            <text>添加围栏</text>
+        </div>
+        <div class="add">
+            <van-popup show="{{ addshow }}">
+                <div class="add_cont">
+                    <div class="title" v-if="fencestate">添加围栏</div>
+                    <div class="title" v-else>重命名围栏</div>
+                    <div class="input_box">
+                        <input class="txt" type="text" value="{{obj.areaName}}" placeholder="请输入围栏名称" bindinput="inputvalue" / >
+                    </div>
+                    <div class="add_btn" @click="addconfirm(1)" v-if="fencestate">
+                        <text>确定</text>
+                    </div>
+                    <div class="add_btn" @click="addconfirm(2)" v-else>
+                        <text>确定</text>
+                    </div>
+                </div>
+            </van-popup>
+        </div>
+        <!-- <div class="bottom">
+            <van-popup show="{{ bottomshow }}"position="bottom" closeable="true" @click="bottomhidder">
+                <div class="cont_hed">选择操作</div>
+                <div class="pop_cont">
+                    <div class="cont_item" @click="options(1)">
+                        <van-icon name="cluster-o" />
+                        <text>关联地点管理</text>
+                    </div>
+                    <div class="cont_item" @click="options(2)">
+                        <van-icon name="cross" />
+                        <text>禁用围栏</text>
+                    </div>
+                    <div class="cont_item" @click="options(3)">
+                        <van-icon name="bars" />
+                        <text>重命名围栏</text>
+                    </div>
+                    <div class="cont_item" @click="options(4)">
+                        <van-icon name="back-top" />
+                        <text>启用围栏</text>
+                    </div>
+                </div>
+        </div> -->
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+wepy.page({
+    // mixins: [CommonMixin],
+    data:{
+        addshow:false,//添加围栏弹出层(显示 关闭)
+        bottomshow:false,//操作栏弹出层(显示 关闭)
+        fencestate:true,//围栏选项(true添加围栏  flase重命名围栏)
+        listindex:'',//列表的下标
+        list:[],
+        obj:{
+            id: null,
+            applyType:1,
+            areaName:'',//修改围栏名称
+            searchName:''//查找围栏名称
+        }// /app/address/getAreaListVo
+    },
+    onload(){
+        
+    },
+    onShow(){
+        this.getAreaListVo()
+    },
+    methods:{
+        /**
+         * 获取围栏列表
+         */
+        getAreaListVo(){
+            wx.showLoading({
+                title: '加载中',
+            })
+            wepy.$api('/app/address/getAreaListVo',{
+                applyType:this.obj.applyType,
+                searchName:this.obj.searchName ||'',
+            }).then((res)=>{
+                if(res.length){
+                    this.list = res
+                }else{
+                    wx.showToast({
+                        title:'暂无内容'
+                    })
+                }
+                setTimeout(function () {
+                    wx.hideLoading()
+                }, 1500)
+            })
+        },
+        /**
+         * 新增/修改/删除围栏 /app/address/saveUpdateAreaVo
+         */
+        saveUpdateAreaVo(){
+            wepy.$api('/app/address/saveUpdateAreaVo',{
+                id: this.obj.id,
+                applyType:this.obj.applyType,
+                areaName:this.obj.areaName,
+                type:this.obj.type,
+                state:this.obj.state,
+            }).then((res)=>{
+                if(res){
+                    this.getAreaListVo()
+                    wx.showToast({
+                        title:'更新完成',
+                        icon:'none'
+                    })
+                }
+            })
+        },
+        /**
+         * 显示添加围栏弹出层
+         */
+        showPopup(){
+            this.addshow = true
+        },
+        /**
+         * 关闭添加围栏弹出层
+         */
+        addshowClose(){
+            this.addshow =false
+            this.obj.areaName = ''
+        },
+        /**
+         * 显示操作栏弹出层
+         */
+        bottomshows(index,id){
+            this.listindex = index 
+            this.obj.id = id
+            this.bottomshow = true
+            this.obj.areaName = this.list[index].areaName
+            console.log(this.list[index].areaName)
+        },
+        /**
+         * 关闭操作栏弹出层
+         */
+        bottomhidder(){
+            this.bottomshow = false
+        },
+        /**
+         * 用户确认添加围栏
+         */
+        addconfirm(val){
+            if(this.obj.areaName){
+                this.obj.type = val
+                this.saveUpdateAreaVo()
+            }else{
+                wx.showToast({
+                    title:'请输入您要添加的围栏名称',
+                    icon:'none'
+                })
+            }
+            this.addshowClose()
+        },
+        /**
+         * 操作选项
+         * 1 跳转关联地址管理页面
+         * 2 禁用围栏
+         * 3 重命名围栏this.list[index].addressList
+         * 4 启用围栏
+         */
+        options(index){
+            switch(index) {
+                case 1:
+                    let list = JSON.stringify(this.list[this.listindex].addressList) 
+                    wx.navigateTo({
+                        url: `/pages/fencing/addres?list=`+list
+                    });
+                    // console.log(list)
+                    break;
+                case 2:
+                    this.list[this.listindex].state = 0
+                    this.obj.state = 0
+                    this.obj.type = 3
+                    this.saveUpdateAreaVo()
+                    break;
+                case 3:
+                    this.fencestate = false
+                    this.showPopup()
+                    break;
+                 case 4:
+                     this.list[this.listindex].state = 1
+                      this.obj.state = 1
+                      this.obj.type = 2
+                      this.saveUpdateAreaVo()
+                    break;           
+                    default:
+
+            }
+        },
+        /**
+         * 键盘输入事件
+         */
+        inputvalue(e){
+           this.obj.areaName = e.$wx.detail.value
+        },
+        /**
+         * 搜索框输入事件
+         */
+        serchchange(e){
+            this.obj.searchName = e.$wx.detail
+        },
+        /**
+         * 确认搜索
+         */
+        onSearch(){
+            if(this.obj.searchName){
+                this.getAreaListVo()
+            }else{
+               wx.showToast({
+                    title:'请输入围栏名称',
+                    icon:'none'
+                })
+            }
+            //  console.log(this.obj.searchName);
+        }
+    }
+})
+</script>
+
+<style lang="less" scoped>
+.content{
+    padding:0rpx 20rpx;
+    .item{
+        display: flex;
+        justify-content:space-between;
+        align-items: center;
+        margin-top: 20rpx;
+        background: #ffffff;
+        padding: 23rpx;
+        border-radius:25rpx;
+        box-shadow: 3rpx 3rpx 3rpx #a8a9aa;
+        .item_left{
+            display: flex;
+            align-items: center;
+            font-size: 28rpx;
+            text{
+                margin-left: 22rpx;
+            }
+        }
+       .item_right{
+            display: flex;
+            align-items: center;
+            .text{
+                color: #027db4;
+                margin-right:30rpx ;
+                .as{
+                    color: #d9001b;
+                }
+            } 
+            .more{
+                margin-left:15rpx;
+                .dots{
+                    width: 15rpx;
+                    height: 15rpx;
+                    border-radius:25rpx ;
+                    background: #aaa;
+                    margin: 3rpx;
+                } 
+            }  
+       } 
+    }    
+}
+.header{
+    padding: 10rpx 22rpx 20rpx;
+    border-top: 2rpx solid #f2f2f2;
+    background: #fff;
+    view .van-icon{
+        color:#a6a6a6;
+        font-size: 40rpx;
+        margin: 0rpx 10rpx;
+    }
+}
+.add{
+    view .van-popup{
+        border-radius:15rpx; 
+    }
+    .add_cont{
+        width: 700rpx;
+        background: #fff;
+        padding-bottom: 20rpx;
+        .title{
+            font-size: 34rpx;
+            text-align: center;
+            padding: 30rpx 0;
+            font-weight: bold;
+        }
+        .input_box{
+            background: #f3f4f6;
+            padding: 20rpx;
+            .txt{
+                background: #fff;
+                padding: 20rpx;
+            }
+        }
+        .add_btn{
+            margin: 20rpx 20rpx 0;
+            background: #005bac;
+            padding: 25rpx 0;
+            text-align: center;
+            color: #fff;
+            border-radius:15rpx; 
+        }
+    }
+}
+.bottom{
+    .cont_hed{
+        padding: 30rpx 0 ;
+        font-size:34rpx; 
+        font-weight: bold;
+        padding: 20rpx;
+    }
+    .pop_cont{
+        padding: 20rpx;
+        .cont_item{
+            display: flex;
+            align-items: center;
+            padding: 30rpx 10rpx;
+            border-top:1rpx solid #f5f5f5 ;
+        }
+        view .van-icon{
+            color:#005bac;
+            font-size: 40rpx;
+            margin: 0rpx 20rpx;
+            font-weight: bold;
+        }
+    }
+}
+.button{
+    background: #005bac;
+    margin: 15rpx 22rpx 0;
+    padding: 22rpx 0;
+    border-radius: 20rpx;
+    text{
+        display:block;
+        color: #fff;
+        text-align: center;
+    }
+}
+// view .van-icon{
+//     color:#005bac;
+//     font-size: 40rpx;
+//     margin: 0rpx 10rpx;
+//     border: 1rpx solid #000;
+//     font-weight:bold; 
+// }
+// .dropdown_item_cell {
+//   display: flex;
+//   align-items: center;
+//   font-size: 32rpx;
+//   line.-height: 44rpx;
+//   border-bottom: 2rpx solid #ececec;
+//   padding: 20rpx 40rpx;
+// }
+
+</style>
+
+<config>
+    {
+        navigationBarTitleText:'围栏管理',
+        usingComponents:{
+            "van-icon": "module:@vant/weapp/dist/icon/index",
+            "van-search": "module:@vant/weapp/dist/search/index",
+             "van-popup": "module:@vant/weapp/dist/popup/index",
+        }
+    }
+</config>
+
+    

@@ -1,0 +1,529 @@
+<template>
+  <div class="addTask_page">
+    <div class="content">
+      <van-cell-group custom-class="item">
+        <van-cell title="申请部门"
+                  :value="detailApplyDo.applyDeptName" />
+        <van-cell required
+                  @click="hasPopUp('isDepartment')"
+                  title="驳运部门"
+                  :value="detailApplyDo.tranDeptName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell required
+                  @click="goToLighterage"
+                  title="驳运对象"
+                  :value="lighterageStr || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell v-if="detailApplyDo.tranDeptId"
+                  @click="hasPopUp('isCraneApplyCar')"
+                  required
+                  title="选择吊车"
+                  :value="detailApplyDo.carNumber || '请选择'"></van-cell>
+        <van-cell v-if="detailApplyDo.craneAddress"
+                  title="区域"
+                  :value="detailApplyDo.craneAddressName"></van-cell>
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="goToPosition('startPositionId',1)"
+                  required
+                  title="起始地"
+                  :value="detailApplyDo.startPositionName || '请选择'" />
+        <van-cell @click="goToPosition('endPositionId',2)"
+                  required
+                  title="目的地"
+                  :value="detailApplyDo.endPositionName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="hasPopUp('isStartTime')"
+                  required
+                  title="起始时间"
+                  :value="detailApplyDo._startTime || '请选择'" />
+        <van-cell @click="hasPopUp('isEndTime')"
+                  required
+                  title="到达时间"
+                  :value="detailApplyDo._endTime || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="hasPopUp('isJobContent')"
+                  required
+                  title="工作内容"
+                  :value="detailApplyDo.jobContentName || '请选择'" />
+        <van-cell v-if="detailApplyDo.important === 1"
+                  @click="hasPopUp('isProdDept')"
+                  required
+                  title="审批部门"
+                  :value="detailApplyDo.prodDeptName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="hasPopUp('isContacts')"
+                  required
+                  title="联系人"
+                  :value="detailApplyDo.contactsName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="hasPopUp('isImportance')"
+                  required
+                  title="重要程度"
+                  :value="detailApplyDo.importanceName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group>
+        <div class="textarea">
+          <textarea placeholder="请输入备注" v-model="detailApplyDo.memo" bindinput="onChageEemo"></textarea>
+        </div>
+        <!-- <m-textarea height="150rpx"
+                    placeholder="请输入备注"
+                    :data="detailApplyDo.memo"
+                    :isReplaceTextarea="hasInput"
+                    @onChageData="onChageEemo"></m-textarea> -->
+      </van-cell-group>
+    </div>
+    <div class="footer">
+      <van-button custom-class="btn"
+                  :disabled="isDisabled"
+                  @click="submitDrafts"
+                  type="default">保存</van-button>
+      <van-button custom-class="btn"
+                  color="#005BAC"
+                  type="default"
+                  @click="submitConfirm">下一步</van-button>
+    </div>
+    <van-popup v-if="popUpTypes.isDepartment"
+               round
+               position="bottom"
+               :show="popUpTypes.isDepartment"
+               @close="colsePopUp('isDepartment')">
+      <app-department api="app/craneDown/craneApplyDeptDetail"
+                      :params="{ applyType: 2 }"
+                      @onSelect="onSelectDepartment"></app-department>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isStartTime"
+               round
+               position="bottom"
+               :show="popUpTypes.isStartTime"
+               @close="colseTime">
+      <time-picker startKey="startTime"
+                   endKey="endTime"
+                   startStrKey="_startTime"
+                   endStrKey="_endTime"
+                   :time="detailApplyDo.startTime"
+                   dataKey="startTime"
+                   @onSelect="colseTime"
+                   @onCancel="colseTime"></time-picker>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isEndTime"
+               round
+               position="bottom"
+               :show="popUpTypes.isEndTime"
+               @close="colseTime">
+      <time-picker startKey="startTime"
+                   endKey="endTime"
+                   startStrKey="_startTime"
+                   endStrKey="_endTime"
+                   :time="detailApplyDo.endTime"
+                   dataKey="endTime"
+                   @onSelect="colseTime"
+                   @onCancel="colseTime"></time-picker>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isJobContent"
+               round
+               position="bottom"
+               :show="popUpTypes.isJobContent"
+               @close="initPopUp">
+      <forkPullDown title="选择工作内容"
+                    :requestData="jobContentReq"
+                    @onSelect="onSelectJobContent"></forkPullDown>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isImportance"
+               round
+               position="bottom"
+               :show="popUpTypes.isImportance"
+               @close="initPopUp">
+      <forkPullDown title="选择重要程度"
+                    :requestData="importanceReq"
+                    @onSelect="onSelectimportance"></forkPullDown>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isContacts"
+               round
+               position="bottom"
+               :show="popUpTypes.isContacts"
+               @close="initPopUp">
+      <apply-contasts @onSelect="onSelectContasts"></apply-contasts>
+    </van-popup>
+
+    <van-popup v-if="popUpTypes.isCraneApplyCar"
+               round
+               position="bottom"
+               :show="popUpTypes.isCraneApplyCar"
+               @close="initPopUp">
+      <craneApplyCar :applyType="2"
+                     @onSelect="onSelectCraneApplyCar"></craneApplyCar>
+    </van-popup>
+
+    <van-popup v-if="popUpTypes.isCraneApplyAddress"
+               round
+               position="bottom"
+               :show="popUpTypes.isCraneApplyAddress"
+               @close="initPopUp">
+      <craneApplyAddress :applyType="2"
+                         @onSelect="onSelectCraneApplyAddress"></craneApplyAddress>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isProdDept"
+               round
+               position="bottom"
+               :show="popUpTypes.isProdDept"
+               @close="initPopUp">
+      <prodDept @onSelect="onSelectProdDept"></prodDept>
+    </van-popup>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import addTaskMixin from '@/mixins/addTaskMixin.js';
+import store from '@/store';
+import {
+  mapState,
+  mapMutations
+} from '@wepy/x';
+const rules = {
+  tranDeptId: {
+    message: '请选择驳运部门',
+  },
+  goodsId: {
+    message: '请选择驳运对象',
+  },
+  carId: {
+    message: '请选择吊车',
+  },
+  craneAddressName: {
+    message: '请选择区域',
+  },
+  startPositionId: {
+    message: '请选择起始地',
+  },
+  endPositionId: {
+    message: '请选择目的地',
+  },
+  startTime: {
+    message: '请选择起始时间',
+  },
+  endTime: {
+    message: '请选择到达时间',
+  },
+  jobContent: {
+    message: '请选择工作内容',
+  },
+  contactsId: {
+    message: '请选择联系人',
+  },
+  importance: {
+    message: '请选择重要程度',
+  },
+};
+const defaultUpData = {
+  applyDeptId: null,
+  applyType: 2,
+  carId: null,
+  contactsId: null,
+  craneAddress: null,
+  craneAddressName: null,
+  endTime: null,
+  goodsId: null,
+  importance: null,
+  jobContent: null,
+  memo: '',
+  prsId: null,
+  saveOrSubmit: null,
+  startTime: null,
+  tranDeptId: null,
+  startPositionId: null,
+  endPositionId: null,
+  prodDeptId: null,
+};
+wepy.page({
+  store,
+  mixins: [addTaskMixin],
+  data: {
+    // important === 1 显示审批部门选择
+    important: null,
+    // 为了兼容
+    tranDeptId: 0,
+    isDisabled: false,
+    hasInput: false,
+    jobContentReq: {
+      followConfId: '4',
+      parentId: '7',
+    },
+    importanceReq: {
+      followConfId: '',
+      parentId: '9',
+    },
+  },
+  onLoad() {
+    this.tranDeptId = this.detailApplyDo.tranDeptId || 0
+  },
+  onShow() {
+    this.getApplyContasts();
+    this.getDepartment();
+    this.initdetailApplyDo();
+    this.getselByParamKeyOperatorType()
+  },
+  onUnload() {
+    this.setDetailApplyDo();
+  },
+  computed: {
+    ...mapState(['detailApplyDo']),
+    lighterageStr() {
+      if (this.detailApplyDo) {
+        let {
+          goodsProCode,
+          goodsCode,
+          goodsType,
+          goodsId,
+        } = this.detailApplyDo;
+        return goodsId ? `${goodsProCode}-${goodsType}-${goodsCode}` : '';
+      }
+      return '';
+    },
+  },
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    getselByParamKeyOperatorType() {
+      if (this.detailApplyDo.jobContent) {
+        wepy.$api('app/forkPullDown/selByParamKeyOperatorType', this.jobContentReq).then((res) => {
+          this.dataList = res;
+          let flag = res.find(item => item.confId === this.detailApplyDo.jobContent)
+          this.$set(this.detailApplyDo, 'important', flag ? flag.important : null)
+        });
+      }
+    },
+    valid() {
+      if (this.detailApplyDo.important === 1) {
+        let other = {
+          prodDeptId: {
+            message: '请选择审批部门'
+          },
+        }
+        return wepy.$valid.handleValid({          ...rules,
+          ...other
+        }, this.detailApplyDo);
+      }
+      return wepy.$valid.handleValid(rules, this.detailApplyDo);
+    },
+    onChangeJobQuantity(e) {
+      this.$set(this.detailApplyDo, 'jobQuantity', e.$wx.detail.value);
+    },
+    onSelectProdDept(data) {
+      this.$set(this.detailApplyDo, 'prodDeptId', data.id);
+      this.$set(this.detailApplyDo, 'prodDeptName', data.deptName);
+      this.initPopUp();
+    },
+    onSelectJobContent(data) {
+      if (data.important === 1) {
+        this.$set(this.detailApplyDo, 'important', 1);
+      } else {
+        this.$set(this.detailApplyDo, 'important', null);
+        this.$set(this.detailApplyDo, 'prodDeptId', null);
+        this.$set(this.detailApplyDo, 'prodDeptName', '');
+      }
+      this.$set(this.detailApplyDo, 'jobContent', data.confId);
+      this.$set(this.detailApplyDo, 'jobContentName', data.paramValue);
+      this.initPopUp();
+    },
+    onSelectimportance(data) {
+      this.$set(this.detailApplyDo, 'importance', data.confId);
+      this.$set(this.detailApplyDo, 'importanceName', data.paramValue);
+      this.initPopUp();
+    },
+    onSelectContasts(data) {
+      this.$set(this.detailApplyDo, 'contactsId', data.contId);
+      this.$set(this.detailApplyDo, 'contactsName', data.contName);
+      this.initPopUp();
+    },
+    onSelectDepartment(data) {
+      if (!this.tranDeptId || this.tranDeptId !== data.id) {
+        this.tranDeptId = data.id
+        this.$set(this.detailApplyDo, 'tranDeptId', data.id);
+        this.$set(this.detailApplyDo, 'tranDeptName', data.deptName);
+        this.$set(this.detailApplyDo, 'deptId', 0);
+        this.$set(this.detailApplyDo, 'carNumber', '');
+        this.$set(this.detailApplyDo, 'craneAddress', 0);
+        this.$set(this.detailApplyDo, 'craneAddressName', '');
+      }
+      this.initPopUp();
+    },
+    onSelectCraneApplyCar(data) {
+      this.$set(this.detailApplyDo, 'carId', data.carId);
+      this.$set(this.detailApplyDo, 'carNumber', data.carNumber);
+      this.$set(this.detailApplyDo, 'craneAddress', data.areaId[0]);
+      this.$set(this.detailApplyDo, 'craneAddressName', data.areaName);
+      console.log(data)
+      this.initPopUp();
+    },
+    onSelectCraneApplyAddress({
+      id,
+      addressName
+    }) {
+      this.$set(this.detailApplyDo, 'carId', 0);
+      this.$set(this.detailApplyDo, 'carNumber', '');
+      this.$set(this.detailApplyDo, 'craneAddress', id);
+      this.$set(this.detailApplyDo, 'craneAddressName', addressName);
+      this.initPopUp();
+    },
+    onChageEemo(memo) {
+
+      this.$set(this.detailApplyDo, 'memo', memo.$wx.detail.value);
+    },
+    onSelect() {
+      this.initPopUp();
+    },
+    initPopUp() {
+      this.hasInput = false;
+      for (let key of Object.keys(this.popUpTypes))
+        this.popUpTypes[key] = false;
+    },
+    colseTime() {
+      this.hasInput = false;
+      this.popUpTypes.isEndTime = false;
+      this.popUpTypes.isStartTime = false;
+    },
+    getDepartment() {
+      if (this.detailApplyDo.tranDeptId) return;
+      wepy.$api('app/craneDown/craneApplyDeptDetail', {
+        applyType: 2
+      }).then((res) => {
+        if (res && res.length) {
+          this.$set(this.detailApplyDo, 'tranDeptId', res[0].id);
+          this.$set(this.detailApplyDo, 'tranDeptName', res[0].deptName);
+        }
+      });
+    },
+    getApplyContasts() {
+      if (this.detailApplyDo.contactsId) return;
+      wepy.$api('app/platform/contasts/getApplyContasts', {}).then((res) => {
+        let baseData = wepy.$auth.getBaseUser();
+        let flag = res.find((item) => item.contNumber === baseData.username);
+        if (flag) {
+          this.detailApplyDo.contactsId = flag.contId;
+          this.$set(this.detailApplyDo, 'contactsName', flag.contName);
+        }
+      });
+    },
+    initdetailApplyDo() {
+      let baseData = wepy.$auth.getBaseUser();
+      this.$set(this.detailApplyDo, 'applyDeptName', baseData.userDeptName)
+      if (!this.detailApplyDo.prsId) {
+        this.detailApplyDo.applyDeptId = baseData.userDeptId;
+      }
+    },
+    submitConfirm() {
+      if (this.valid()) {
+        this.$set(this.detailApplyDo, 'applyType', 2);
+        wx.navigateTo({
+          url: `/pages/craneApply/confirm?requestType=forkerLeft`,
+        });
+      }
+    },
+    submitDrafts() {
+      if (this.isDisabled) return;
+      this.isDisabled = true;
+      wepy.$loading();
+      let upData = {};
+      for (let key in defaultUpData) {
+        upData[key] = this.detailApplyDo[key] || null;
+      }
+      upData.saveOrSubmit = 0;
+      upData.applyType = 2;
+      wx.hideToast();
+      wepy
+        .$api('app/craneApply/saveOrSubmitCraneApply', upData)
+        .then((res) => {
+          wx.hideToast();
+          wx.navigateBack({
+            delta: 1,
+          });
+        })
+        .finally(() => (this.isDisabled = false));
+    },
+    goToPosition(target, type) {
+      wx.navigateTo({
+        url: `/pages/position/position?code=${target}&applyType=2&type=${type}`,
+      });
+    },
+    goToLighterage() {
+      wx.navigateTo({
+        url: '/pages/craneApply/lighterage',
+      });
+    },
+  },
+});
+</script>
+
+<config>
+{
+      navigationBarTitleText:'龙门吊-任务申请',
+      usingComponents: {
+          "van-cell": "module:@vant/weapp/dist/cell/index",
+          "van-cell-group": "module:@vant/weapp/dist/cell-group/index",
+          "van-field": "module:@vant/weapp/dist/field/index",
+          "van-popup": "module:@vant/weapp/dist/popup/index",
+          "van-button": "module:@vant/weapp/dist/button/index",
+          "app-department": "~@/components/pop-up/app-department",
+          "craneApplyCar": "~@/components/pop-up/craneApplyCar",
+          "prodDept": "~@/components/pop-up/prodDept",
+          "craneApplyAddress": "~@/components/pop-up/craneApplyAddress",
+          "forkPullDown": "~@/components/pop-up/forkPullDown",
+          "apply-contasts": "~@/components/pop-up/apply-contasts",
+          "time-picker": "~@/components/pop-up/time-picker",
+          "m-textarea": "~@/components/control/m-textarea"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.textarea{
+  padding: 20rpx;
+  background: #fff;
+  textarea{
+    width: 100%;
+    height: 200rpx;
+  }
+}
+.addTask_page {
+  position: relative;
+  height: 100vh;
+  background: #f0f3f6;
+  .item {
+    margin-bottom: 22rpx;
+  }
+}
+.content {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  bottom: 150rpx;
+  overflow-y: scroll; // zoom: 1;
+}
+.footer {
+  display: flex;
+  position: fixed;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  height: 150rpx;
+  padding: 15rpx 24rpx;
+  bottom: 0;
+  box-sizing: border-box;
+  .btn {
+    width: 320rpx;
+    height: 64rpx;
+  }
+}
+.input_wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>

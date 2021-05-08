@@ -1,0 +1,312 @@
+<template>
+    <div style="margin-bottom: 20rpx;">
+        <div class="header">
+            <div class="hed_top">
+                <div class="site">关联地点管理</div>
+                <div class="delete" @click="getdelete()">删除</div>
+            </div>
+            <div class="header_search">
+                <van-search value="{{searchName}}" placeholder="查找地点" bind:change="serchchange" bind:search="onSearch"/>
+            </div>
+        </div>
+        <div class="content">
+            <div class="item" v-for="item in list">
+                <div class="item_left" v-if="isdelete">
+                    <van-checkbox value="{{item.checked}}" bind:change="onChange" :id="index"></van-checkbox>
+                </div>
+                <div class="text">{{item.addressName}}</div>
+            </div>
+        </div>
+        <div class="button" @click="showPopup">
+            <text>添加地点</text>
+        </div>
+        <div class="bottom" v-if="isdelete">
+            <div class="cancel">
+                <text>取消</text>    
+            </div>
+            <div class="cancel confirm" @click="submit">
+                <text>确定</text>    
+            </div>
+        </div>
+        <div class="sitelist">
+            <van-popup v-model="addshow" position="bottom">
+                <div class="pop_cont">
+                    <div class="header">
+                        <div class="hed_top">
+                            <div class="site" style="margin-left: 0">添加地点</div>
+                            <div class="delete" @click="addshowClose">确定</div>
+                        </div>
+                        <div class="header_search">
+                            <van-search value="{{ value }}" placeholder="查找地点" />
+                        </div>
+                    </div>
+                    <div class="content">
+                        <div class="item">
+                            <div class="item_left">
+                                <van-checkbox value="{{checked }}" bind:change="onChange" :id="index"></van-checkbox>
+                            </div>
+                            <div class="text">9号平台</div>
+                        </div>
+                        <div class="item">
+                            <div class="item_left">
+                                <van-checkbox value="{{checked}}" bind:change="onChange" :id="index">1</van-checkbox>
+                            </div>
+                            <div class="text">9号平台</div>
+                        </div>
+                    </div>
+                </div>
+            </van-popup>
+        </div>    
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+wepy.page({
+    // mixins: [CommonMixin],
+    data:{
+        addshow:false,
+        list:[],
+        isdelete:false,
+        addressList:[],
+        obj:{
+            id: 1,
+            applyType:1,
+            searchName:'',
+        }// /app/address/getAreaListVo
+    },
+    onLoad(options){
+       this.addressList = JSON.parse(options.list)
+    },
+    onShow(){
+        this.getAreaListVo()
+    },
+    methods:{
+        /**
+         * 获取地点列表
+         */
+        getAreaListVo(){
+            wx.showLoading()
+            wepy.$api('/app/address/getAppPlatAddressMassage',{
+            type: 1,
+            applyType:1, 
+            searchName:this.obj.searchName ||''
+            }).then((res)=>{
+                if(res.length){
+                    let list = res
+                    this.obj.searchName = ''
+                    for(let i = 0; i <list.length; i++){
+                        list[i].checked = false
+                        for(let j = 0; j <this.addressList.length; j++){
+                            if(this.addressList[j].addressId == list[i].id){
+                                list[i].checked = true
+                            }
+                        }
+                    }
+                    this.list = list
+                    setTimeout(function () {
+                        wx.hideLoading()
+                    }, 1500)
+                }else{
+                    wx.showToast({
+                        title:'暂无列表数据',
+                        icon:'none'
+                    })
+                }
+            })
+        },
+        /**
+         * 新增和删除列表 app/address/saveUpdateAreaVo
+         *                        
+         */
+        saveUpdateAreaVo(){
+            wepy.$api('app/address/saveUpdateAreaVo',{
+                id:this.obj.id,
+                applyType:this.obj.applyType,
+                type:3
+            }).then((res)=>{
+                this.getAreaListVo()
+            })
+        },
+        /**
+         * 显示添加围栏弹出层
+         */
+        showPopup(){
+            this.addshow = true
+        },
+        /**
+         * 关闭添加围栏弹出层
+         */
+        addshowClose(){
+            this.addshow =false
+        },
+        addconfirm(){
+            this.addshowClose()
+        },
+        /**
+         * 用户点击复选框
+         */
+        onChange(e){
+            let index = e.currentTarget.id
+            this.list[index].checked = e.$wx.detail
+            this.obj.id = this.list[index].id
+        },
+        /**
+         * 用户点击删除
+         */
+        getdelete(){
+            this.isdelete = true
+        },
+        submit(){
+            this.isdelete = false
+            this.saveUpdateAreaVo()
+        },
+        /**
+         * 搜索框输入事件
+         */
+        serchchange(e){
+            this.obj.searchName = e.$wx.detail
+        },
+        /**
+         * 确认搜索
+        */
+        onSearch(){
+            if(this.obj.searchName){
+                wx.showToast({
+                    title:'更新中',
+                    icon:'none'
+                })
+               this.getAreaListVo()
+            }else{
+               wx.showToast({
+                    title:'请输入围栏名称',
+                    icon:'none'
+                })
+            }
+            //  console.log(this.obj.searchName);
+        }
+
+    }
+})
+</script>
+
+<style lang="less" scoped>
+page{
+  height:100%;
+  background-color: #fff; 
+}
+.content{
+    padding:210rpx 20rpx 150rpx;
+    .item{
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        padding:20rpx;
+        border-top: 1rpx solid #e6e3e3;
+        &_left{
+            margin-right: 25rpx
+        } 
+    }
+    .item:nth-last-child(1){
+        border-bottom: 1rpx solid #e6e3e3;
+    }    
+}
+.header{
+    position:fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top:1rpx solid #cccccc; 
+    .hed_top{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20rpx 22rpx;
+        .site{
+            font-size: 34rpx;
+            font-weight:bold;
+            text-align: center;
+            margin-left: 250rpx
+        }
+        .delete{
+            background: #005bac;
+            padding: 12rpx 25rpx;
+            font-size: 26rpx;
+            color: #fff;
+            border-radius:10rpx;
+        }
+    }
+    view .van-icon{
+        color:#a6a6a6;
+        font-size: 40rpx;
+        margin: 0rpx 10rpx;
+    }
+}
+.bottom{
+    position:fixed;
+    bottom:0;
+    right: 0;
+    left: 0;
+    padding: 0 20rpx;
+    display: flex;
+    justify-content: space-between;
+    background: #fff;
+    padding-bottom:20rpx ;
+    .cancel{
+        padding: 30rpx 110rpx;
+        border: 1rpx solid #f7f7fa;
+        border-radius:5rpx;
+    }
+    .confirm{
+        background:#005bac;
+        border: 1rpx solid #005bac;
+        color: #fff;
+    }
+}
+.button{
+    background: #fff;
+    padding: 22rpx 30rpx 40rpx;
+    position:fixed;
+    bottom:0rpx;
+    right: 0;
+    left: 0;
+    text{
+        display:block;
+        color: #fff;
+        text-align: center;
+        padding: 22rpx 0;
+        background: #005bac;
+        border-radius: 20rpx;
+    }
+}
+.sitelist{
+    .top_site{
+        margin-left: 0
+    }
+}
+// .dropdown_item_cell {
+//   display: flex;
+//   align-items: center;
+//   font-size: 32rpx;
+//   line.-height: 44rpx;
+//   border-bottom: 2rpx solid #ececec;
+//   padding: 20rpx 40rpx;
+// }
+
+</style>
+
+<config>
+    {
+        navigationBarTitleText:'关联地点管理',
+        usingComponents:{
+            "van-icon": "module:@vant/weapp/dist/icon/index",
+            "van-search": "module:@vant/weapp/dist/search/index",
+            "van-popup": "module:@vant/weapp/dist/popup/index",
+            "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
+            "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index"
+        }
+    }
+</config>
+
+    

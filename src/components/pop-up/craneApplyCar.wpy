@@ -1,0 +1,69 @@
+<template>
+  <div class="pop_up_wrap">
+    <div class="prop_up_title">{{title}}</div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item" @click="onSelect(item)" v-for="item in dataList">
+        {{ item.carNumber }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import {
+    mapState,
+    mapMutations
+  } from '@wepy/x';
+  import store from '@/store';
+  wepy.component({
+    store,
+    props: {
+      applyType: {
+        type: Number,
+      }
+    },
+    data: {
+      dataList: [],
+      title: '选择龙门吊'
+    },
+    attached() {
+      this.initTitle()
+      this.getList();
+    },
+    computed: {
+      ...mapState(['detailApplyDo']),
+      userId() {
+        return wepy.$auth.getUserId();
+      },
+    },
+    methods: {
+      ...mapMutations(['setDetailApplyDo']),
+      initTitle() {
+        if (this.applyType == 2) {
+          this.title = '选择龙门吊'
+        } else if (this.applyType == 3) {
+          this.title = '选择塔吊'
+        }
+      },
+      onSelect(data) {
+        this.$emit('onSelect', data);
+      },
+      getList() {
+        wepy
+          .$api('app/craneDown/craneApplyCarDetail', {
+            // addressId: this.detailApplyDo.craneAddress,
+            applyType: this.applyType,
+            deptId: this.detailApplyDo.tranDeptId,
+          })
+          .then((res) => {
+            this.dataList = res;
+          });
+      },
+    },
+  });
+</script>
+
+<style lang="less" scoped>
+  @import './index.less';
+</style>

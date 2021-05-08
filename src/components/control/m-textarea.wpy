@@ -1,0 +1,81 @@
+<template>
+    <div class="m_textarea">
+        <van-field v-if="!isReplaceTextarea" class="i_textarea"
+                   type="textarea"
+                   custom-style="height:200rpx"
+                   value="{{ data }}"
+                   :border="false"
+                   input-class="i_class"
+                   placeholder-style="color: #afafaf;"
+                   :placeholder="placeholder"
+                   :autosize="autosize"
+                   @change="onChange" />
+        <div class="replace"
+             style="height:200rpx;padding:25rpx 32rpx;box-sizing: border-box;"
+             v-if="isReplaceTextarea">
+            <text v-show="!data">{{placeholder || ''}}</text>
+            {{data || ''}}
+        </div>
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+wepy.component({
+    props: ['placeholder', 'height', 'isReplaceTextarea', 'data', 'customStyle'],
+    data: {
+        autosize: {},
+        style: ''
+    },
+    ready() {
+        this.autosize = { maxHeight: `${this.height}`, minHeight: `${this.height}` };
+        this.style = `height:${this.height};${this.customStyle}`;
+    },
+    methods: {
+        onChange(e) {
+            this.$emit('onChageData', e.$wx.detail);
+        }
+    }
+});
+</script>
+
+<config>
+{
+      usingComponents: {
+          "van-field": "module:@vant/weapp/dist/field/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.m_textarea {
+    background: #fff;
+    border: 2rpx solid #ececec;
+    border-radius: 8rpx;
+    box-sizing: border-box;
+    word-break: break-all;
+}
+
+.i_class {
+    font-size: 32rpx;
+    line-height: 1.2 !important;
+}
+
+.placeholder-class {
+    color: red;
+}
+
+// .replace {
+//     line-height: 1.2 !important;
+//     font-size: 32rpx !important;
+//     padding: 20rpx;
+//     box-sizing: border-box;
+//     text {
+//         color: #afafaf;
+//     }
+// }
+</style>
+
+
+
+

@@ -1,0 +1,36 @@
+<template>
+  <div class="pop_up_wrap">
+    <div class="prop_up_title">选择类别</div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item" @click="onSelect(item)" v-for="item in list">
+        {{ item }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+wepy.component({
+  props: {
+    list: {
+      type: Array,
+    },
+    goodsType: {
+      type: String,
+    },
+  },
+  methods: {
+    onSelect(goodsType) {
+      this.$emit('onSelectGoodsType', goodsType);
+    },
+  },
+});
+</script>
+
+<style lang="less" scoped>
+@import './index.less';
+.prop_up_item_group {
+  height: 700rpx;
+}
+</style>

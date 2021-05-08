@@ -1,0 +1,572 @@
+<template>
+  <div class="addTask_page">
+    <div class="content">
+      <van-cell-group custom-class="item">
+        <van-cell title="申请部门"
+                  :value="detailApplyDo.applyDeptName" />
+        <van-cell required>
+              <van-radio-group class="addRadio"
+                           :value="detailApplyDo.departmentOrArea"
+                           @change="onSelectDepartmentOrArea">
+                  <div class="felx">
+                      <van-radio :name="1"
+                          checked-color="#000"
+                          icon-size="30rpx">
+                            部门管理模式</van-radio>
+                      <van-radio :name="2"
+                          checked-color="#000"
+                          style="margin-left:30rpx;"
+                          icon-size="30rpx">围栏管理模式</van-radio>
+                  </div>      
+            </van-radio-group>
+        </van-cell>
+        <van-cell v-if="detailApplyDo.departmentOrArea === 1"
+                  @click="hasPopUp('isDepartment')"
+                  required
+                  title="驳运部门"
+                  :value="detailApplyDo.tranDeptName || '请选择'" />
+        <van-cell v-if="detailApplyDo.departmentOrArea === 2"
+                  @click="hasPopUp('isAreaPullDownList')"
+                  required
+                  title="区域"
+                  :value="detailApplyDo.craneAddressName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell required
+                  @click="hasPopUp('isJobContent')"
+                  title="船号"
+                  :value="detailApplyDo.shipNumber || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell required
+                  @click="goToLighterage"
+                  title="驳运对象"
+                  :value="detailApplyDo.lighterageStr || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="hasPopUp('isCarTypeCount')"
+                  required
+                  title="申请数量">
+          <div class="text-r"
+               v-if="detailApplyDo._carTypeCountList && detailApplyDo._carTypeCountList.length"
+               v-for="item in detailApplyDo._carTypeCountList">
+            {{item}}
+          </div>
+          <div v-if="!detailApplyDo._carTypeCountList || !detailApplyDo._carTypeCountList.length">请选择</div>
+        </van-cell>
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell required
+                  title="铲次">
+          <div class="input_wrap">
+            <input type="number"
+                   input-align="right"
+                   @change="onChangeJobQuantity"
+                   v-model="detailApplyDo.jobQuantity" /> 次
+          </div>
+        </van-cell>
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="goToPosition('startPositionId',1)"
+                  required
+                  title="起始地"
+                  :value="detailApplyDo.startPositionName || '请选择'" />
+        <van-cell @click="goToPosition('endPositionId',2)"
+                  required
+                  title="目的地"
+                  :value="detailApplyDo.endPositionName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="hasPopUp('isStartTime')"
+                  required
+                  title="起始时间"
+                  :value="detailApplyDo._startTime || '请选择'" />
+        <van-cell @click="hasPopUp('isEndTime')"
+                  required
+                  title="到达时间"
+                  :value="detailApplyDo._endTime || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+      <van-cell required
+                  title="工作内容"
+                  :value="detailApplyDo.jobContentStr || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="hasPopUp('isContacts')"
+                  required
+                  title="联系人"
+                  :value="detailApplyDo.contastsName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="hasPopUp('isImportance')"
+                  required
+                  title="重要程度"
+                  :value="detailApplyDo.importanceStr || '请选择'" />
+      </van-cell-group>
+      <van-cell-group>
+        
+        <!-- <m-textarea 
+                    placeholder="请输入备注"
+                    :data=""
+                    :isReplaceTextarea="hasInput"
+                    @onChageData="onChageEemo">
+        </m-textarea> -->
+        <div class="remarks">
+          <textarea v-model="detailApplyDo.memo"  placeholder="请输入备注" bindinput="onChageEemo" />
+        </div>
+      </van-cell-group>
+    </div>
+    <div class="footer">
+      <van-button custom-class="btn"
+                  :disabled="isDisabled"
+                  @click="submitDrafts"
+                  type="default">保存</van-button>
+      <van-button custom-class="btn"
+                  color="#005BAC"
+                  type="default"
+                  @click="submitConfirm">下一步</van-button>
+    </div>
+    <van-popup v-if="popUpTypes.isDepartment"
+               round
+               position="bottom"
+               :show="popUpTypes.isDepartment"
+               @close="initPopUp">
+      <app-department api="app/forkPullDown/forkApplyDeptDetail"
+                      @onSelect="onSelectDepartment"></app-department>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isAreaPullDownList"
+               round
+               position="bottom"
+               :show="popUpTypes.isAreaPullDownList"
+               @close="initPopUp">
+      <areaPullDownList @onSelect="onSelectAreaPullDownList">
+      </areaPullDownList>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isDepartmentOrArea"
+               round
+               position="bottom"
+               :show="popUpTypes.isDepartmentOrArea"
+               @close="initPopUp">
+      <departmentOrArea @onSelect="onSelectDepartmentOrArea">
+      </departmentOrArea>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isStartTime"
+               round
+               position="bottom"
+               :show="popUpTypes.isStartTime"
+               @close="colseTime">
+      <time-picker startKey="startTime"
+                   endKey="endTime"
+                   startStrKey="_startTime"
+                   endStrKey="_endTime"
+                   :time="detailApplyDo.startTime"
+                   dataKey="startTime"
+                   @onSelect="colseTime"
+                   @onCancel="colseTime"></time-picker>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isEndTime"
+               round
+               position="bottom"
+               :show="popUpTypes.isEndTime"
+               @close="colseTime">
+      <time-picker startKey="startTime"
+                   endKey="endTime"
+                   startStrKey="_startTime"
+                   endStrKey="_endTime"
+                   :time="detailApplyDo.endTime"
+                   dataKey="endTime"
+                   @onSelect="colseTime"
+                   @onCancel="colseTime"></time-picker>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isJobContent"
+               round
+               position="bottom"
+               :show="popUpTypes.isJobContent"
+               @close="initPopUp">
+      <forkPullDown title="选择船号"
+                    :requestData=""
+                    :hasSearch="true"
+                    @onSelect="onSelectJobContent"></forkPullDown>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isImportance"
+               round
+               position="bottom"
+               :show="popUpTypes.isImportance"
+               @close="initPopUp">
+      <forkPullDown title="选择重要程度"
+                    :requestData="importanceReq"
+                    @onSelect="onSelectimportance"></forkPullDown>
+    </van-popup>
+    <!-- 联系人 -->
+    <van-popup v-if="popUpTypes.isContacts"
+               round
+                :close-on-click-overlay="false"
+               closeable
+               position="bottom"
+               :show="popUpTypes.isContacts"
+               @close="initPopUp">
+      <apply-contasts @onSelect="onSelectContasts" :Type="1"></apply-contasts>
+    </van-popup>
+    <!-- 申请数量 -->
+    <van-popup v-if="popUpTypes.isCarTypeCount"
+               round
+               :close-on-click-overlay="false"
+               closeable
+               position="bottom"
+               :show="popUpTypes.isCarTypeCount"
+               @close="initPopUp">
+      <carTypeCount @onConfirm="initPopUp"></carTypeCount>
+    </van-popup>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import addTaskMixin from '@/mixins/addTaskMixin.js';
+import store from '@/store';
+import {
+  mapState,
+  mapMutations
+} from '@wepy/x';
+const rules = {
+  departmentOrArea: {
+    message: '请选择区域／驳运部门',
+  },
+  goodsType: {
+    message: '请选择驳运对象',
+  },
+  shipNumber: {
+    message: '请选择船号',
+  },
+  carTypeCount: {
+    message: '请选择申请数量',
+  },
+  jobQuantity: {
+    message: '请输入铲次',
+  },
+  startPositionId: {
+    message: '请选择起始地',
+  },
+  endPositionId: {
+    message: '请选择目的地',
+  },
+  startTime: {
+    message: '请选择起始时间',
+  },
+  endTime: {
+    message: '请选择到达时间',
+  },
+  jobContent: {
+    message: '请选择工作内容',
+  },
+  contactsId: {
+    message: '请选择联系人',
+  },
+  importance: {
+    message: '请选择重要程度',
+  },
+};
+const defaultUpData = {
+  prsId: '',
+  craneAddress: '',
+  applyDeptId: '',
+  applyState: '',
+  carTypeCount: '',
+  contactsId: '',
+  endPositionId: '',
+  endTime: '',
+  goodsCode: '',
+  goodsType: '',
+  goodsWeight: '',
+  importance: '',
+  jobContent: '',
+  jobQuantity: '',
+  memo: '',
+  goodsId: '',
+  startPositionId: '',
+  startTime: '',
+  tranDeptId: '',
+  shipNumber:'',
+};
+wepy.page({
+  store,
+  mixins: [addTaskMixin],
+  data: {
+    isSelectDefault: true,
+    isDisabled: false,
+    hasInput: false,
+    jobContentReq: {
+      followConfId: '3',
+      parentId: '7',
+    },
+    importanceReq: {
+      followConfId: '',
+      parentId: '9',
+    },
+  },
+  onLoad() {
+    if (!this.detailApplyDo.departmentOrArea) {
+      this.$set(this.detailApplyDo, 'departmentOrArea', 1);
+    }
+  },
+  onShow() {
+    if (this.detailApplyDo.lighterageStr == 'null-null') {
+        this.detailApplyDo.lighterageStr = ''
+    }
+      // this.getApplyContasts();
+    this.initdetailApplyDo();
+    // this.$set(this.detailApplyDo, 'jobContentStr', '驳运');
+    this.getjobcontent()
+
+    this.getDefaultContact()
+
+    // this.popUpTypes.isContacts = true
+  },
+  onUnload() {
+    this.isOpenAdd = false
+    this.setDetailApplyDo();
+  },
+  computed: mapState(['detailApplyDo']),
+  methods: {
+    ...mapMutations(['setDetailApplyDo']),
+    getjobcontent(){
+      wepy.$api('app/forkPullDown/selByParamKeyOperatorType',this.jobContentReq).then((res)=>{
+        console.log(res[0].paramValue)
+        this.$set(this.detailApplyDo, 'jobContent', res[0].confId);
+        this.$set(this.detailApplyDo, 'jobContentStr', res[0].paramValue);
+      })
+    }, 
+    valid() {
+      return wepy.$valid.handleValid(rules, this.detailApplyDo);
+    },
+    onSelectAreaPullDownList(data) {
+      this.$set(this.detailApplyDo, 'craneAddress', data.id);
+      this.$set(this.detailApplyDo, 'craneAddressName', data.areaName);
+      this.initPopUp();
+    },
+    onSelectDepartmentOrArea(data) {
+      if (!this.detailApplyDo.departmentOrArea || this.detailApplyDo.departmentOrArea !== data.$wx.detail) {
+        this.$set(this.detailApplyDo, 'departmentOrArea', data.$wx.detail);
+      }
+    },
+    onChangeJobQuantity(e) {
+      this.$set(this.detailApplyDo, 'jobQuantity', e.$wx.detail.value);
+    },
+    onSelectJobContent(data) {
+      // this.$set(this.detailApplyDo, 'jobContent', data.confId);
+      // this.$set(this.detailApplyDo, 'jobContentStr', data.paramValue);
+      this.$set(this.detailApplyDo , 'shipNumber',data)
+      this.initPopUp();
+    },
+    onSelectimportance(data) {
+      this.$set(this.detailApplyDo, 'importance', data.confId);
+      this.$set(this.detailApplyDo, 'importanceStr', data.paramValue);
+      this.initPopUp();
+    },
+    onSelectContasts(data) {
+      this.$set(this.detailApplyDo, 'contactsId', data.contId);
+      this.$set(this.detailApplyDo, 'contactsName', data.contName);
+      this.initPopUp();
+    },
+    onSelectDepartment(data) {
+      this.$set(this.detailApplyDo, 'tranDeptId', data.id);
+      this.$set(this.detailApplyDo, 'tranDeptName', data.deptName);
+      this.initPopUp();
+    },
+    onChageEemo(e) {
+      this.$set(this.detailApplyDo, 'memo', e.$wx.detail.value);
+    },
+    onSelect() {
+      this.initPopUp();
+    },
+    initPopUp() {
+      this.hasInput = false;
+      for (let key of Object.keys(this.popUpTypes))
+        this.popUpTypes[key] = false;
+    },
+    colseTime() {
+      this.initPopUp();
+      this.popUpTypes.isEndTime = false;
+      this.popUpTypes.isStartTime = false;
+    },
+        //app/platform/contasts/getDefaultContact
+    // 获取上一单的联系人
+    getDefaultContact(){
+      wepy.$api('app/platform/contasts/getDefaultContact',{
+        applyCarType:1,
+      }).then((res)=>{
+        console.log(res)
+        this.$set(this.detailApplyDo, 'contactsId', res.contId);
+        this.$set(this.detailApplyDo, 'contPhone', res.contPhone);
+        this.$set(this.detailApplyDo, 'contastsName', res.contName);
+        this.$set(this.detailApplyDo, 'contastsNumber',res.contNumber)
+      })
+    },
+    // // 获取默认联系人
+    // getApplyContasts() {
+    //   if (this.detailApplyDo.contactsId) return;
+    //   wepy.$api('app/platform/contasts/getApplyContasts', {}).then((res) => {
+    //     let baseData = wepy.$auth.getBaseUser();
+    //     let flag = res.find((item) => item.contNumber === baseData.username);
+    //     if (flag) {
+    //       this.detailApplyDo.contactsId = flag.contId;
+    //       this.$set(this.detailApplyDo, 'contactsName', flag.contName);
+    //     }
+    //   });
+    // },
+    getDepartment() {
+      if (this.detailApplyDo.tranDeptId) return;
+      wepy.$api('app/forkPullDown/forkApplyDeptDetail', {}).then((res) => {
+        if (res && res.length) {
+          this.$set(this.detailApplyDo, 'tranDeptId', res[0].id);
+          this.$set(this.detailApplyDo, 'tranDeptName', res[0].deptName);
+        }
+      });
+    },
+    initdetailApplyDo() {
+      let baseData = wepy.$auth.getBaseUser();
+      this.$set(this.detailApplyDo, 'applyDeptName', baseData.userDeptName)
+      if (!this.detailApplyDo.prsId) {
+        this.detailApplyDo.applyDeptId = baseData.userDeptId;
+      }
+      this.getDepartment()
+    },
+    submitConfirm() {
+      if (this.valid()) {
+        if (this.detailApplyDo.departmentOrArea === 1 && !this.detailApplyDo.tranDeptId) {
+          wepy.$showToast('请选择驳运部门')
+        } else if (this.detailApplyDo.departmentOrArea === 2 && !this.detailApplyDo.craneAddress) {
+          wepy.$showToast('请选择驳运区域')
+        } else {
+          if (this.detailApplyDo.departmentOrArea === 1) {
+            this.$set(this.detailApplyDo, 'departmentOrAreaDetailStr', '驳运部门: ' + this.detailApplyDo.tranDeptName)
+          }
+          if (this.detailApplyDo.departmentOrArea === 2) {
+            this.$set(this.detailApplyDo, 'departmentOrAreaDetailStr', '驳运区域: ' + this.detailApplyDo.craneAddressName)
+          }
+          wx.navigateTo({
+            url: `/pages/forkerLeft/confirm?requestType=forkerLeft`,
+          });
+        }
+      }
+    },
+    submitDrafts() {
+      if (this.isDisabled) return;
+      this.isDisabled = true;
+      wepy.$loading();
+      let upData = {};
+      for (let key in defaultUpData) {
+        upData[key] = this.detailApplyDo[key];
+      }
+      upData.applyState = 0;
+      if (this.detailApplyDo.departmentOrArea === 2) {
+        upData.tranDeptId = null
+      } else if (this.detailApplyDo.departmentOrArea === 1) {
+        upData.craneAddress = null
+      }
+      wepy
+        .$api('app/forkliftApply/saveOrSubmitForkApply', upData)
+        .then((res) => {
+          wx.hideToast();
+          wx.navigateBack({
+            delta: 1,
+          });
+        })
+        .finally(() => (this.isDisabled = false));
+    },
+    goToPosition(target, type) {
+      wx.navigateTo({
+        url: `/pages/position/position?code=${target}&applyType=1&type=${type}`,
+      });
+    },
+    goToLighterage() {
+      wx.navigateTo({
+        url: '/pages/forkerLeft/lighterage',
+      });
+    },
+  },
+});
+</script>
+
+<config>
+{
+      navigationBarTitleText:'叉车-任务申请',
+      usingComponents: {
+          "van-cell": "module:@vant/weapp/dist/cell/index",
+          "van-radio": "module:@vant/weapp/dist/radio/index",
+          "van-radio-group": "module:@vant/weapp/dist/radio-group/index",
+          "van-cell-group": "module:@vant/weapp/dist/cell-group/index",
+          "van-field": "module:@vant/weapp/dist/field/index",
+          "van-popup": "module:@vant/weapp/dist/popup/index",
+          "van-button": "module:@vant/weapp/dist/button/index",
+          "app-department": "~@/components/pop-up/app-department",
+          "carTypeCount": "~@/components/pop-up/carTypeCount",
+          "forkPullDown": "~@/components/pop-up/forkPullDown",
+          "apply-contasts": "~@/components/pop-up/apply-contasts",
+          "time-picker": "~@/components/pop-up/time-picker",
+          "areaPullDownList": "~@/components/pop-up/areaPullDownList",
+          "departmentOrArea": "~@/components/pop-up/departmentOrArea",
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.remarks{
+  height: 150rpx;
+  width:93%;
+  background: #fff;
+  padding: 15rpx 25rpx;
+  textarea{
+    height: 150rpx;
+  }
+}
+.addTask_page {
+  position: relative;
+  height: 100vh;
+  background: #f0f3f6;
+  .item {
+    margin-bottom: 22rpx;
+  }
+}
+.content {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  bottom: 150rpx;
+  overflow-y: scroll; // zoom: 1;
+}
+.footer {
+  display: flex;
+  position: fixed;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  height: 150rpx;
+  padding: 15rpx 24rpx;
+  bottom: 0;
+  box-sizing: border-box;
+  .btn {
+    width: 320rpx;
+    height: 64rpx;
+  }
+}
+.input_wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.felx{
+   display: flex;
+}
+.addRadio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.van-radio {
+  .van-icon {
+    visibility: hidden !important;
+  }
+}
+</style>

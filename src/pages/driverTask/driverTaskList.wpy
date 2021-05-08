@@ -1,0 +1,520 @@
+<template>
+  <div class="taskList_page">
+    <div class="header">
+      <div class="header_left">
+        <van-dropdown-menu>
+          <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList">
+            <div class="dropdown_item_cell" @click="onClickDept(undefined)"> 所有部门</div>
+            <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
+          </van-dropdown-item>
+        </van-dropdown-menu>
+      </div>
+      <div class="header_right" @click="showhidd">{{timeValue}}</div>
+    </div>
+    <div class="wrap" v-for="item in list">
+      <div class="car_info">
+        <div class="flex">
+          <div class="tag_drop">
+            <div class="drop"></div>
+            {{ item.carNumber }}
+          </div>
+          <div class="font-color-gray">{{ item.carFullWeight }}吨</div>
+        </div>
+        <div>
+          <div class="car_info_s">
+            <van-icon color="#8E9298" name="clock-o" size="26rpx" />
+            <div style="margin-left: 10rpx">耗时123:{{ item.totalTime }}小时</div>
+          </div>
+          <div class="car_info_s car_info_r">
+            <van-icon color="#8E9298" name="notes-o" size="26rpx" />
+            <div style="margin-left: 10rpx">任务:{{ item.applyCount }}个</div>
+          </div>
+        </div>
+      </div>
+      <div class="relevance flex">
+        <div class="driverName">司机：{{item.driverName}}</div>
+        <div>跟车人员：{{item.followerName ||''}}</div>
+      </div>
+      <div @click="goToDriverTaskState(subItem.applyId)" class="item" v-for="subItem in item.applies">
+        <div> 
+          <div class="item_header">
+            <div class="item_header_left">
+              <div class="tag" style="background:{{subItem.requestTypeBg}}">{{ subItem.reqStr }}</div>
+              <div>{{ subItem.listName  }}</div>
+            </div>
+            <div class="contName" catchtap="conName(subItem.contPhon,2)"> {{subItem.contName}} </div>
+          </div>
+          <!-- <div class="contName" catchtap="conName(subItem.contPhon,2)">联系人：{{subItem.contName}}</div> -->
+          <div class="remark">备注：{{subItem.memo==null ? '': subItem.memo}}</div>
+          <div class="item_header_c">
+            {{ subItem.deptName }}/{{ subItem.goodsWeight / 1000 }}吨/{{ subItem._startTimeStamp }}至{{ subItem._endTimeStamp }}
+          </div>
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">
+                  起始地：{{ subItem.startPositionName }}
+                </div>
+                <div class="ellipsis">
+                  目的地：{{ subItem.endPositionName }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="item_content_right">
+            <text class="font-color-deep-red">{{ subItem.taskStateValue }}</text>
+            <text style="margin-left: 8rpx; color: #2b2b2b">></text>
+          </div>
+        </div>
+      </div>
+    </div>
+    <van-popup show="{{ show }}" position="bottom" custom-style="height: 55%;" bind:close="onClose" :z-index="999" @touchmove.stop.prevent="moveHandle">
+      <view class="container">
+          <view class="page-body">
+            <div class="page_head">
+              <div class="cancel">取消</div>
+              <view class="selected-date">{{year}}年{{month}}月{{day}}日{{hour}}时{{minute}}分</view>
+              <div class="confirm cancel" @click="confirm">确定</div>
+            </div>
+            <picker-view indicator-style="height: 50px;" style="width: 100%; height: 250px;" value="{{value}}" bindchange="bindChange">
+              <picker-view-column>
+                <view wx:for="{{years}}" wx:key="{{years}}" style="line-height: 50px; text-align: center; font-size: 28rpx;">{{item}}年</view>
+              </picker-view-column>
+              <picker-view-column>
+                <view wx:for="{{months}}" wx:key="{{months}}" style="line-height: 50px; text-align: center; font-size: 28rpx;">{{item}}月</view>
+              </picker-view-column>
+              <picker-view-column>
+                <view wx:for="{{days}}" wx:key="{{days}}" style="line-height: 50px; text-align: center; font-size: 28rpx;" >{{item}}日</view>
+              </picker-view-column>
+              <picker-view-column>
+                <view wx:for="{{hours}}" wx:key="{{hours}}" style="line-height: 50px; text-align: center; font-size: 28rpx; ">{{item}}时</view>
+              </picker-view-column>
+              <picker-view-column>
+                <view wx:for="{{minutes}}" wx:key="{{minutes}}" style="line-height: 50px; text-align: center; font-size: 28rpx;">{{item}}分</view>
+              </picker-view-column>
+            </picker-view>  
+        </view>
+      </view> 
+    </van-popup> 
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import formatTimeTwo from '@/utils/moment.js';
+  import CommonMixin from '@/mixins/commonMixin.js'
+  let date = new Date()
+  const years = [] //年
+  const months = []//月
+  // let month = date.getMonth()+1//当年的月
+  const days = [] //日
+  // let day =  date.getDate()//当前的天数
+  const hours = []//时
+  // let hour = date.getHours()//当前的小时
+  const minutes = []//分
+  // let minute=date.getMinutes()//当前的分钟
+  // 年
+  for (let i = 1990; i <= date.getFullYear(); i++) {
+    years.push(i)
+  }
+  // 月
+  for (let i = 1; i <= 12; i++) {
+    months.push(i)
+  }
+  // 日
+  for (let i = 1; i <= 31; i++) {
+    days.push(i)
+  }
+  //时
+   for (let i = 0; i <= 23; i++) {
+    hours.push(i)
+  }
+  // 分
+   for (let i = 0; i <= 59; i++) {
+     if(i<10){
+       minutes.push('0'+ i)
+     }else{
+       minutes.push(i)
+     }
+    
+  }
+  wepy.page({
+    mixins: [CommonMixin],
+    data: {
+      list: [],
+      realTime:null,
+      currDeptName:'所有部门',
+      deptList: [],
+      deptId:'',
+      show:false,//显示日期遮罩层
+      timeValue: '请选择时间',
+      years,
+      year: date.getFullYear(),//当前的年
+      months,
+      month:date.getMonth()+1,//当前的月
+      days,
+      day:date.getDate(),//当前的天数
+      hours,
+      hour:date.getHours(),//当前的小时
+      minutes,
+      minute:date.getMinutes() ,//当前的分钟
+      // value: [9999, month-1, day-1, hour-1, minute],
+      value:[],
+      // isDaytime: true,
+      timestamp:'',// 时间戳
+      location:''//位置信息
+    },
+    onHide(){
+      clearInterval(this.realTime)
+    },
+    onUnload(){
+      clearInterval(this.realTime)
+    },
+    onShow() {
+      this.getLocation();
+      let that = this
+      this.realTime = setInterval(function(){
+        that.getDriverTaskList()
+        console.log(that.list)
+        if(!that.list.length){
+          wepy.$showToast('当前没有可执行任务');
+        }else{
+          wx.showToast({
+            title: '数据已更新！'
+          })
+        }
+      },30000)
+    },
+    computed: {
+      userId() {
+        return wepy.$auth.getUserId();
+      },
+    },
+    //监听用户下拉事件
+    onPullDownRefresh(){
+      if(this.location){
+        this.getDriverTaskList();
+        wx.showToast({
+          title:'数据已更新',
+        })
+      }else{
+        wepy.$showToast('获取当前地理位置失败')
+        wx.stopPullDownRefresh()
+      }
+    },
+    methods: {
+      getLocation(){
+        let that = this
+        wx.getLocation({
+          type: 'wgs84', // 默认为 wgs84 返回 gps 坐标，gcj02 返回可用于 wx.openLocation 的坐标
+          success: function(res){
+              let {
+                longitude,
+                latitude
+              } = res
+              that.location = `${longitude},${latitude}`
+              that.getDriverTaskList();
+          },
+          fail: function() {
+             wepy.$showToast('获取当前地理位置失败')
+          },
+        })
+      },
+      setRequestTypeList(item) {
+        let type = item.requestType;
+        switch (type) {
+          case '计划任务':
+            item.requestTypeBg = '#005BAC';
+            item.requestTypeStr = '计';
+            break;
+          case '临时任务':
+            item.requestTypeBg = '#EFA600';
+            item.requestTypeStr = '临';
+            break;
+          default:
+            break;
+        }
+      },
+      getTime(time) {
+        return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+      },
+      getDriverTaskList() {
+        // wepy.$loading();
+        wx.showLoading({
+          title: '加载中',
+        })
+        wepy
+          .$api('platform/driver/task/getDriverTaskList', {
+            userId: this.userId,
+            deptId:this.deptId || '',
+            selectTimeStamp:this.timestamp || ''
+          })
+          .then((res) => {
+            this.list = []
+            if (res==null) {
+              wepy.$showToast('当前没有可执行任务');
+            } else {
+              // console.log(res)
+              this.list = res.map((item) => {
+                item.carFullWeight = this.getWeight(item.carFullWeight)
+                item.totalTime = item.carTotalMinute ?
+                  (item.carTotalMinute / 60).toFixed(1) :
+                  '0.0';
+                if (item.applies && item.applies.length) {
+                  item.applies.forEach((subItem) => {
+                    this.setRequestType(subItem);
+                    subItem._startTimeStamp = this.getTime(subItem.startTimeStamp);
+                    subItem._endTimeStamp = this.getTime(subItem.endTimeStamp);
+                  });
+                } else {
+                  item.applies = [];
+                }
+                return item;
+              });
+              wx.stopPullDownRefresh()
+              setTimeout(function () {
+                wx.hideLoading()
+              }, 1000)
+            }
+          })
+      },
+      goToDriverTaskState(applyId) {
+        let that = this
+          wx.navigateTo({
+            url: `/pages/driverTask/driverTaskState?applyId=${applyId}`,
+          });
+      },
+      conName(tel){
+          wx.makePhoneCall({
+            phoneNumber:tel,
+        })
+      },
+      //获取部门筛选列表
+      getDeptList() {
+        wepy.$api('/app/dropDown/allDrawUpBox', {
+          type:5
+        }).then(res => {
+          this.deptList = res
+        })
+      },
+      // 用户选择的部门
+      onClickDept(item) {
+        this.deptId = item ? item.id : undefined;
+        this.currDeptName = item ? item.deptName : '所有部门';
+        this.$wx.selectComponent('#dept').toggle(false);   
+        this.getDriverTaskList();
+      },
+      // 显示遮罩层
+      showhidd(){
+        this.show = true
+        date = new Date()
+        // this.month = date.getMonth()+1//当年的月
+        // this.day =  date.getDate()//当前的天数
+        // this.hour = date.getHours()//当前的小时
+        // this.minute = date.getMinutes()//当前的分钟
+        this.value.push(9999)
+        this.value.push(date.getMonth())
+        this.value.push(date.getDate()-1)
+        this.value.push(date.getHours())
+        this.value.push(date.getMinutes())
+        // console.log(this.month,this.day,this.hour,this.minute)
+      },
+      // 关闭遮罩层
+      onClose(){
+        this.show = false
+        this.value = []
+      },
+      onInput(event) {
+         this.currentDate = event.detail
+      },
+      // 用户选择的时间
+      bindChange(e) {
+        const val =  e.$wx.detail.value
+        this.year = this.years[val[0]],
+        this.month = this.months[val[1]],
+        this.day = this.days[val[2]],
+        this.hour = this.hours[val[3]],
+        this.minute = this.minutes[val[4]]
+        this.timeValue = this.year + '/' + this.month + '/' + this.day + ' ' + this.hour + ':' + this.minute 
+        // this.timestamp = parseInt(this.get_unix_time(this.timeValue)) 
+      },
+      // 把日期字符串转换为时间戳
+      get_unix_time(dateStr)
+      {
+        var date =  new Date(dateStr); 
+        var time_str = date.getTime().toString();
+        return time_str.substr(0, 10);
+      },
+      confirm(){
+        this.timestamp = parseInt(this.get_unix_time(this.timeValue)) 
+        if(this.timeValue == '请选择时间'){
+          wx.showToast({
+            title:'请选择您要查询的时间！',
+            icon:'none'
+          })
+          this.show = true
+        }else{
+          // this.timestamp = this.get_unix_time(this.timeValue)
+          this.getDriverTaskList()
+        }
+         
+      }
+    },
+  });
+</script>
+
+<config>
+{
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
+  navigationBarTitleText:'当前任务列表',
+  usingComponents:{
+    "van-icon": "module:@vant/weapp/dist/icon/index",
+    "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
+    "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
+    "van-popup": "module:@vant/weapp/dist/popup/index"
+  }
+}
+</config>
+
+<style lang="less" scoped>
+.flex{
+  display: flex;
+}
+.taskList_page {
+    background: #fff;
+  }
+view.van-dropdown-menu{
+  height:80rpx;
+}
+.dropdown_item_cell {
+  display: flex;
+  align-items: center;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  border-top: 2rpx solid #ececec;
+  padding: 20rpx;
+}
+.header {
+  display: flex;
+  position: fixed;
+  width: 100%;
+  height: 100rpx;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 32rpx;
+  background: #fff;
+  padding: 20rpx 24rpx;
+  box-sizing: border-box;
+  border-bottom:1rpx solid #ccc; 
+  z-index: 99,
+}
+.wrap {
+  padding: 110rpx 24rpx 24rpx;
+}
+.car_info {
+  // position:fixed;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 22rpx;
+  background: #fff;
+  width:100%;
+  // top:100rpx;
+  // z-index: 99;
+  // border: 1rpx solid #333;
+  .car_info_s {
+    margin-left: 40rpx;
+  }
+  .car_info_r{
+    margin-right: 60rpx;
+  }
+  &>view,
+  .car_info_s {
+    display: flex;
+    align-items: center;
+    font-size: 22rpx;
+  }
+}
+.item {
+  border-bottom: 2rpx solid #ececec;
+  background: #fff;
+  box-sizing: border-box;
+  padding: 25rpx 0;
+  // border: 1rpx solid #000;
+  &_header {
+    display: flex;
+    justify-content:space-between;
+    font-size: 28rpx;
+    .item_header_left{
+      display: flex
+    }
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+      margin-right: 10rpx;
+    }
+  }
+  .contName{
+    font-size: 28rpx;
+    display: flex;
+    justify-content: right;
+  }
+  .remark{
+    font-size: 28rpx;
+    padding-bottom: 10rpx
+  }
+  &_header_c {
+    font-size:28rpx;
+    line-height: 32rpx;
+  }
+  &_content {
+    display: flex;
+    justify-content: space-between;
+    &_left {
+      width: 65%;
+      flex: auto;
+    }
+    &_right {
+      display: flex;
+      align-items: flex-end;
+      text-align: right;
+      align-self: stretch;
+      font-size: 24rpx;
+      padding-bottom: 7rpx;
+      word-break: normal;
+      margin-left: 30rpx;
+      text {
+        flex: auto;
+        color: #bea365;
+      }
+    }
+  }
+}
+.page_head{
+  display:flex;
+  justify-content:space-between;
+  padding: 20rpx 30rpx;
+  font-size: 28rpx;
+  .cancel{
+    color:steelblue;
+  }
+}
+.relevance{
+  font-size: 26rpx;
+  .driverName{
+    margin-right: 100rpx;
+  }
+}
+</style>

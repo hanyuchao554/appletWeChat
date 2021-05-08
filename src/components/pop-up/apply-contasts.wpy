@@ -1,0 +1,290 @@
+<template>
+  <div class="pop_up_wrap">
+      <div class="prop_up_title">选择联系人</div>
+        <div class="search">
+            <div class="icon">
+            <van-icon name="search" />
+            </div>
+            <input type="text"  value="{{searchData}}" placeholder="请输入联系人姓名" placeholder-class="placeholder"  bindinput="onChage" />
+      </div>
+      <div v-if="Type == 1">
+        <div class="addcontacts" v-if="addshow" @click="add">
+          <div class="icon">
+            <van-icon name="add-o" />
+          </div>
+          <div class="txt">新建联系人</div>
+        </div>
+        <div class="addcont" v-else>
+          <div>
+            <input  type="text" value="{{contacts.contName}}" bindinput="oncontName" placeholder="请输入联系人姓名" placeholder-class="name"/>
+          </div>
+          <div>
+            <input maxlength="11" type="number" value="{{contacts.contPhone}}" bindinput="oncontPhone"  placeholder="请输入联系方式"/>
+          </div>
+          <div>
+            <input type="text" value="{{contacts.contNumber}}" bindinput="oncontNumber"  placeholder="请输入联系人工号"/>
+          </div>
+          <div class="btn">
+            <div class="confirm" @click="confirm(1)">确定</div>
+            <div class="confirm cancel" @click="cancel(0)">删除</div>
+          </div>
+        </div>
+      </div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item"
+           @click="onSelect(item)"
+           v-for="item in searchData ? searchList : dataList">
+        <div class="prop_up_item_t">
+          <text class="font-32 text">{{ item.contName }}</text>
+          <text class="font-28 text">{{ item.contNumber }}</text>
+        </div>
+        <div class="prop_up_item_b">
+          <text class="text">{{ item.contDeptName }}</text>
+          <text> | </text>
+          <text class="text">{{ item.contPhone }}</text>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import { mapState, mapMutations } from '@wepy/x';
+import store from '@/store';
+wepy.component({
+    store,
+    props:{
+      Type:{
+        type:String,
+      }
+    },
+    data: {
+        searchData: '',
+        dataList: [],
+        searchList: [],
+        dataKey: 'contactsId',
+        addshow:true,
+        contacts:{
+          contName:'',
+          contPhone:'',
+          contNumber:'',
+          contId:''
+        } //contName
+    },
+    created() {
+        this.contacts.type = 3
+        this.contacts.contId = this.detailApplyDo.contId
+        this.getUpdateContact()
+        // this.init()
+        if(this.detailApplyDo.isSelect == 0){
+          this.init()
+        }
+    },
+    computed: {
+        ...mapState(['detailApplyDo']),
+        userId() {
+            return wepy.$auth.getUserId();
+        }
+    },
+    attached(){
+      console.log(this.Type)
+      this.getAppDepartment(this.Type)
+    },
+    methods: {
+        ...mapMutations(['setDetailApplyDo']),
+        init(){
+          if(this.detailApplyDo.contId){
+           this.addshow = false
+          }else{
+            console.log('id不存在')
+          }
+          this.contacts.contName = this.detailApplyDo.contastsName
+          this.contacts.contPhone = this.detailApplyDo.contPhone
+          this.contacts.contNumber = this.detailApplyDo.contastsNumber
+          console.log(this.contacts)
+        },
+        //用户点击选择联系人
+        onSelect(data) {
+              this.$emit('onSelect', data);
+              this.detailApplyDo.contactsId = data.contId;
+              this.detailApplyDo.contPhone = data.contPhone;
+              this.detailApplyDo.contastsName = data.contName;
+              this.$set(this.detailApplyDo , 'isSelect' , 1)
+              this.setDetailApplyDo(this.detailApplyDo);
+            
+        },
+        // 点击选中的联系人, /app/platform/contasts/selectContactStatus
+        selectContactStatus(contId){
+          wepy.$api('/app/platform/contasts/selectContactStatus',{
+            contId:contId
+          }).then((res)=>{
+            this.detailApplyDo.isSelect = res.isSelect;
+          })
+        },
+        //搜索联系人
+        onChage(e) {
+            this.searchData = e.$wx.detail.value;
+            // let reg = new RegExp(this.searchData);
+            // this.searchList = this.dataList.filter((item) => reg.test(item.contName));
+            this.getAppDepartment(this.Type)
+        },
+        // 获取联系人
+        getAppDepartment(type) {
+            wepy.$api('app/platform/contasts/getApplyContasts', {
+              applyCarType:type,
+              contactScreening:this.searchData || null
+            }).then((res) => {
+                this.dataList = res;
+                this.searchList = res
+                console.log(this.dataList)
+            });
+        },
+        // 点击添加联系人按钮
+        add(){
+          this.addshow = false
+        },
+        // 输入联系人姓名
+        oncontName(e){ 
+          console.log(e.$wx.detail.value)
+          this.contacts.contName = e.$wx.detail.value
+        },
+        // 输入联系人工号
+        oncontNumber(e){
+          console.log(e.$wx.detail.value)
+          this.contacts.contNumber = e.$wx.detail.value
+        },
+        // 输入联系人手机号
+        oncontPhone(e){
+          console.log(e.$wx.detail.value)
+          this.contacts.contPhone = e.$wx.detail.value
+        },
+        //输入的联系人内容发送到数据库
+        getUpdateContact(){
+          let data = this.contacts
+            wepy.$api('app/platform/contasts/getUpdateContact',data).then((res)=>{
+              this.detailApplyDo.contId = res.contId;
+              this.contacts.contId = res.contId
+              this.detailApplyDo.contPhone = res.contPhone;
+              this.detailApplyDo.contastsName = res.contName;
+              this.detailApplyDo.contastsNumber = res.contNumber
+              this.setDetailApplyDo(this.detailApplyDo);
+              this.getAppDepartment(this.Type)
+            })
+        },
+        //点击确定
+        confirm(val){
+          if(!this.contacts.contName){
+            wepy.$showToast('请输入联系人名称')
+          }else if(!this.contacts.contPhone){
+            wepy.$showToast('请输入联系电话')
+          }else if(!this.contacts.contNumber){
+            wepy.$showToast('请输入联系人工号')
+          }else{
+            console.log(this.contacts)
+            this.contacts.type = val
+            this.$set(this.detailApplyDo , 'isSelect' , 0)
+            this.getUpdateContact()
+          }
+        },
+        //点击取消
+        cancel(val){
+          this.contacts.type = val
+          this.contacts.contName = ''
+          this.contacts.contNumber = ''
+          this.contacts.contPhone = ''
+          this.getUpdateContact()
+        }
+    }
+});
+</script>
+
+<config>
+{
+    usingComponents: {
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+    }
+}
+</config>
+
+<style lang="less" scoped>
+@import './index.less';
+.prop_up_item {
+    &_group {
+        height: 1100rpx;
+    }
+    &_t {
+        .text {
+            padding-right: 32rpx;
+        }
+    }
+    &_b {
+        .text {
+            font-size: 24rpx;
+            color: #8e9298;
+        }
+    }
+}
+.search{
+  background:#fff;
+  display:flex;
+  align-items: center;
+  position: relative;
+  padding: 20rpx;
+  .icon{
+    position:absolute;
+    font-size: 32rpx;
+    left:35rpx;
+    top:35rpx;
+  }
+  input{
+    background: #f7f8fa;
+    width: 100%;
+    padding: 12rpx 0 12rpx 60rpx;
+  }
+  .placeholder{
+    font-size: 28rpx;
+  }
+}
+.addcontacts{
+  border: 1rpx dashed #bfbfbf;
+  display: flex;
+  align-items: center;
+  justify-content:center;
+  padding: 10rpx 0 5rpx;
+  color: #7f7f7f;
+   .icon{
+     font-size: 50rpx;
+  }
+  .txt{
+    font-size: 28rpx;
+    margin-left: 20rpx;
+    margin-top: -10rpx;
+  }
+}
+.addcont{
+  display: flex;
+  padding: 0 20rpx;
+  input{
+    border: 1rpx solid #ccc;
+    font-size: 20rpx;
+    margin-right: 10rpx;
+    width: 180rpx;
+    height:90rpx ;
+    border-radius:20rpx; 
+    padding: 0 6rpx;
+  } 
+  .btn{
+    font-size: 24rpx;
+    .confirm{
+      border: 1rpx solid #ccc;
+      padding: 5rpx 20rpx;
+      margin-bottom:10rpx;
+    }
+    .cancel{
+      margin: 0;
+    } 
+  }
+  
+}
+</style>

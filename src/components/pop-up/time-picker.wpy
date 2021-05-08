@@ -1,0 +1,138 @@
+<template>
+  <van-datetime-picker type="datetime" value="{{ currentDate }}" @confirm="onConfirm" @cancel="onCancel" formatter="{{ formatter }}" />
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import formatTimeTwo from '@/utils/moment.js';
+  import {
+    mapState,
+    mapMutations
+  } from '@wepy/x';
+  import store from '@/store';
+  wepy.component({
+    store,
+    props: {
+      isDefaultTime: {
+        type: Boolean,
+        default: false
+      },
+      time: {
+        type: Number
+      },
+      startKey: {
+        type: String
+      },
+      endKey: {
+        type: String
+      },
+      startStrKey: {
+        type: String
+      },
+      endStrKey: {
+        type: String
+      },
+      dataKey: {
+        type: String,
+        required: true
+      },
+      strKey: {
+        type: String,
+        required: true
+      }
+    },
+    data: {
+      formatter(type, value) {
+        if (type === 'year') {
+          return `${value}年`;
+        } else if (type === 'month') {
+          return `${value}月`;
+        } else if (type === 'day') {
+          return `${value}日`;
+        } else if (type === 'hour') {
+          return `${value}时`;
+        } else if (type === 'minute') {
+          return `${value}分`;
+        } else if (type === 'second') {
+          return `${value}秒`;
+        }
+        return value;
+      }
+    },
+    computed: {
+      currentDate() {
+        if (this.time) {
+          return Math.floor(this.time * 1000);
+        } else {
+          return new Date().getTime();
+        }
+      },
+      ...mapState(['detailApplyDo']),
+      userId() {
+        return wepy.$auth.getUserId();
+      }
+    },
+    methods: {
+      ...mapMutations(['setDetailApplyDo']),
+      onConfirm(data) {
+        let _data = data.$wx.detail;
+        if (this.startKey && this.endKey) {
+          this.setRegionTime(_data);
+        }
+        if (this.isDefaultTime) {
+          this.setDefaultTime(_data);
+        }
+      },
+      setDefaultTime(time) {
+        let str = formatTimeTwo(time, 'Y-M-D h:m:s');
+        let dataTime = Math.floor(time / 1000);
+        this.detailApplyDo[this.dataKey] = dataTime;
+        this.detailApplyDo[this.strKey] = str;
+        this.setDetailApplyDo(this.detailApplyDo);
+        this.$emit('onSelect', {
+          dataTime,
+          str
+        });
+      },
+      setRegionTime(time) {
+        let dataTime = Math.floor(time / 1000);
+        let endDefaultTime = 1800000;
+        let startData = this.detailApplyDo[this.startKey] || 0;
+        let endData = this.detailApplyDo[this.endKey] || 0;
+        if (this.startKey === this.dataKey) {
+          let endT = time + endDefaultTime;
+          let endTimeData = Math.floor(endT / 1000);
+          this.detailApplyDo[this.startKey] = dataTime;
+          this.detailApplyDo[this.startStrKey] = formatTimeTwo(time, 'Y-M-D h:m:s');
+          this.detailApplyDo[this.endKey] = endTimeData;
+          this.detailApplyDo[this.endStrKey] = formatTimeTwo(endT, 'Y-M-D h:m:s');
+        } else if (this.endKey === this.dataKey) {
+          if (startData > dataTime && startData) {
+            wepy.$showToast('结束时间不能早于开始时间');
+          } else {
+            this.detailApplyDo[this.endKey] = dataTime;
+            this.detailApplyDo[this.endStrKey] = formatTimeTwo(time, 'Y-M-D h:m:s');
+          }
+        }
+        this.$emit('onSelect');
+        console.log(this.detailApplyDo)
+        this.setDetailApplyDo(this.detailApplyDo);
+      },
+      onCancel() {
+        this.$emit('onCancel');
+      }
+    }
+  });
+</script>
+
+<config>
+{
+    usingComponents: {
+          "van-datetime-picker": "~@/static/vant/datetime-picker/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+  @import './index.less';
+</style>

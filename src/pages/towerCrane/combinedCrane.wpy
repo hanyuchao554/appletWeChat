@@ -1,0 +1,264 @@
+
+<template>
+  <div class="addTask_page">
+    <div class="content">
+      <van-cell-group v-if="isLinkage === 3 || isLinkage === 1" custom-class="item">
+        <van-cell title="区域" :value="detailApplyDo.craneAddressName"></van-cell>
+        <van-cell required v-if="detailApplyDo.craneAddressName" @click="hasPopUp('isCraneApplyCar')" title="选择车辆" :value="detailApplyDo.carNumber || '请选择'"></van-cell>
+      </van-cell-group>
+      <van-cell-group v-if="isLinkage === 2" custom-class="item">
+        <van-cell required @click="goToPosition('startPositionId')" title="起始地" :value="detailApplyDo.startPositionName || '请选择'" />
+        <van-cell required @click="goToPosition('endPositionId')" title="目的地" :value="detailApplyDo.endPositionName || '请选择'" />
+      </van-cell-group>
+      <van-cell-group v-if="isLinkage === 2" custom-class="item">
+        <van-cell required @click="hasPopUp('isStartTime')" title="起始时间" :value="detailApplyDo._startTime || '请选择'" />
+        <van-cell required @click="hasPopUp('isEndTime')" title="到达时间" :value="detailApplyDo._endTime || '请选择'" />
+      </van-cell-group>
+    </div>
+    <div class="footer">
+      <van-button custom-class="btn" color="#005BAC" @click="submit" type="default">提交</van-button>
+    </div>
+    <van-popup v-if="popUpTypes.isStartTime" round position="bottom" :show="popUpTypes.isStartTime" @close="colseTime">
+      <time-picker startKey="startTime" endKey="endTime" startStrKey="_startTime" endStrKey="_endTime" :time="detailApplyDo.startTime" dataKey="startTime" @onSelect="colseTime" @onCancel="colseTime"></time-picker>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isEndTime" round position="bottom" :show="popUpTypes.isEndTime" @close="colseTime">
+      <time-picker startKey="startTime" endKey="endTime" startStrKey="_startTime" endStrKey="_endTime" :time="detailApplyDo.endTime" dataKey="endTime" @onSelect="colseTime" @onCancel="colseTime"></time-picker>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isCraneApplyCar" round position="bottom" :show="popUpTypes.isCraneApplyCar" @close="initPopUp">
+      <craneApplyCar :applyType="2" @onSelect="onSelectCraneApplyCar"></craneApplyCar>
+    </van-popup>
+    <!-- <van-popup v-if="popUpTypes.isCraneApplyAddress" round position="bottom" :show="popUpTypes.isCraneApplyAddress" @close="initPopUp">
+          <craneApplyAddress :applyType="2" @onSelect="onSelectCraneApplyAddress"></craneApplyAddress>
+        </van-popup> -->
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import addTaskMixin from '@/mixins/addTaskMixin.js';
+  import store from '@/store';
+  import {
+    mapState,
+    mapMutations
+  } from '@wepy/x';
+  const rules = {
+    startPositionId: {
+      message: '请选择起始地'
+    },
+    endPositionId: {
+      message: '请选择目的地'
+    },
+    startTime: {
+      message: '请选择起始时间'
+    },
+    endTime: {
+      message: '请选择到达时间'
+    }
+  };
+  wepy.page({
+    store,
+    mixins: [addTaskMixin],
+    data: {
+      isDisabled: false,
+      isLinkage: 0
+    },
+    onLoad({
+      isLinkage
+    }) {
+      this.isLinkage = Number(isLinkage);
+      this.init();
+    },
+    computed: {
+      ...mapState(['detailApplyDo'])
+    },
+    methods: {
+      init() {
+        let title = '';
+        if (this.isLinkage === 1) {
+          title = '塔吊-新增联吊任务';
+          this.$set(this.detailApplyDo, 'carId', 0);
+          this.$set(this.detailApplyDo, 'carNumber', '');
+        } else if (this.isLinkage === 2) {
+          title = '塔吊-编制申请任务';
+        } else if (this.isLinkage === 3) {
+          title = "塔吊-更换车辆"
+        }
+        wx.setNavigationBarTitle({
+          title
+        });
+      },
+      valid(tagerData) {
+        return wepy.$valid.handleValid(rules, tagerData);
+      },
+      onSelectCraneApplyCar(data) {
+        this.$set(this.detailApplyDo, 'carId', data.carId);
+        this.$set(this.detailApplyDo, 'carNumber', data.carNumber);
+        this.initPopUp();
+      },
+      onSelectCraneApplyAddress({
+        id,
+        addressName
+      }) {
+        this.$set(this.detailApplyDo, 'carId', 0);
+        this.$set(this.detailApplyDo, 'carNumber', '');
+        this.$set(this.detailApplyDo, 'craneAddress', id);
+        this.$set(this.detailApplyDo, 'craneAddressName', addressName);
+        this.initPopUp();
+      },
+      initPopUp() {
+        this.hasInput = false;
+        for (let key of Object.keys(this.popUpTypes)) this.popUpTypes[key] = false;
+      },
+      colseTime() {
+        this.popUpTypes.isEndTime = false;
+        this.popUpTypes.isStartTime = false;
+      },
+      submit() {
+        if (this.isLinkage === 1) {
+          this.sendAddTask();
+        } else if (this.isLinkage === 2) {
+          this.sendEditTask();
+        } else if (this.isLinkage === 3) {
+          this.updateTaskCarId()
+        }
+      },
+      updateTaskCarId() {
+        if (this.isDisabled) return;
+        let {
+          carId,
+          prsId
+        } = this.detailApplyDo;
+        if (!carId) {
+          wepy.$showToast('请选择车辆');
+        } else {
+          let data = {
+            carId,
+            applyId: prsId,
+          };
+          wepy.$api('app/craneEdit/updateTaskCarId', data)
+            .then(() => {
+              wx.setStorageSync('isSuccessCallBack', true);
+              this.$back();
+            })
+            .finally(() => {
+              this.isDisabled = false;
+            });
+        }
+      },
+      sendAddTask() {
+        if (this.isDisabled) return;
+        let {
+          craneAddress,
+          carId,
+          prsId
+        } = this.detailApplyDo;
+        if (!carId) {
+          wepy.$showToast('请选择联吊车辆信息');
+        } else {
+          let data = {
+            addressId: craneAddress,
+            carId,
+            applyId: prsId,
+            isLinkage: this.isLinkage
+          };
+          wepy.$api('app/craneEdit/editCraneUpdateTimeCar', data)
+            .then(() => {
+              wx.setStorageSync('isSuccessCallBack', true);
+              this.$back();
+            })
+            .finally(() => {
+              this.isDisabled = false;
+            });
+        }
+      },
+      sendEditTask() {
+        if (this.isDisabled) return;
+        let {
+          startPositionId,
+          endPositionId,
+          startTime,
+          endTime,
+          prsId
+        } = this.detailApplyDo;
+        let data = {
+          startPositionId,
+          endPositionId,
+          startTime,
+          endTime,
+          applyId: prsId,
+          isLinkage: this.isLinkage
+        };
+        if (this.valid(data)) {
+          this.isDisabled = true;
+          wepy.$api('app/craneEdit/editCraneUpdateTimeCar', data)
+            .then(() => {
+              wx.setStorageSync('isSuccessCallBack', true);
+              this.$back();
+            })
+            .finally(() => {
+              this.isDisabled = false;
+            });
+        }
+      },
+      goToPosition(target) {
+        wx.navigateTo({
+          url: `/pages/position/position?code=${target}&applyType=3`
+        });
+      }
+    }
+  });
+</script>
+
+<config>
+{
+      navigationBarTitleText:'塔吊-计划任务申请',
+      usingComponents: {
+          "van-cell": "module:@vant/weapp/dist/cell/index",
+          "van-cell-group": "module:@vant/weapp/dist/cell-group/index",
+          "van-field": "module:@vant/weapp/dist/field/index",
+          "van-popup": "module:@vant/weapp/dist/popup/index",
+          "van-button": "module:@vant/weapp/dist/button/index",
+          "app-department": "~@/components/pop-up/app-department",
+          "craneApplyCar": "~@/components/pop-up/craneApplyCar",
+          "craneApplyAddress": "~@/components/pop-up/craneApplyAddress",
+          "forkPullDown": "~@/components/pop-up/forkPullDown",
+          "apply-contasts": "~@/components/pop-up/apply-contasts",
+          "time-picker": "~@/components/pop-up/time-picker",
+          "m-textarea": "~@/components/control/m-textarea"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+  .addTask_page {
+    position: relative;
+    height: 100vh;
+    background: #f0f3f6;
+    .item {
+      margin-bottom: 22rpx;
+    }
+  }
+  .content {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 150rpx;
+    overflow-y: scroll; // zoom: 1;
+  }
+  .footer {
+    position: fixed;
+    width: 100%;
+    height: 150rpx;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    .btn {
+      width: 702rpx;
+    }
+  }
+  .input_wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+</style>

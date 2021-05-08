@@ -1,0 +1,155 @@
+<template>
+  <div class="taskList_page">
+    <div class="content">
+      <div class="item" v-for="item in forkliftTaskPlanList">
+        <div>
+          <div class="item_header">
+            {{ item.jobName }} {{item.proCode}} {{item.goodsType}}-{{ item.goodName }}
+          </div>
+          <div class="item_header_c">
+            {{ item.applyDeptName }}/{{ item.goodWeight }}/{{ item.startTime }}至{{ item.endTime }}
+          </div>
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ item.startAddressName }}</div>
+                <div class="ellipsis">目的地：{{ item.endAddressName }}</div>
+              </div>
+            </div>
+            <div class="flex" style="margin-top:8rpx;">
+              <div>
+                {{item.carTypeName}}: {{item.carNumber || ''}}
+              </div>
+              <div class="text-r" @click="driverRobForkliftTask(item)">
+                <text style="color:#037D3D;">立即开始 </text>
+                <text>></text>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  wepy.page({
+    data: {
+      location: '',
+      disable: false,
+      forkliftTaskPlanList: [],
+    },
+    onShow() {
+      this.queryForkliftTaskPlan()
+    },
+    methods: {
+      driverRobForkliftTask(item) {
+        if (this.isDisabled) return
+        this.isDisabled = true
+        wepy.$loading()
+        wepy.$api('app/craneDriver/driverReceiveForkliftTask', {
+            taskId: item.taskId
+          })
+          .then(() => {
+            wx.hideLoading()
+            this.$back();
+          })
+          .finally(() => {
+            this.isDisabled = false;
+          });
+        // wx.navigateTo({
+        //   url: `/pages/craneApply/driverReceiveForkliftTask?taskId=${item.taskId}`
+        // })
+      },
+      queryForkliftTaskPlan() {
+        wepy.$loading()
+        return wepy.$api('app/craneDriver/queryForkliftTaskPlan', {
+          applyType: 2
+        }).then(res => {
+          this.forkliftTaskPlanList = []
+          if (res && res.length) {
+            this.forkliftTaskPlanList = res
+            wx.hideToast();
+          } else {
+            wepy.$showToast('未查询到数据')
+          }
+        })
+      }
+    }
+  });
+</script>
+
+<config>
+{
+  navigationBarTitleText:'龙门吊-任务列表'
+}
+</config>
+
+<style lang="less" scoped>
+  .taskList_page {
+    background: #f3f4f6;
+    .content {
+      padding-top: 24rpx;
+    }
+  }
+  .item {
+    width: 702rpx;
+    margin: 0 auto 20rpx;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+    &_header {
+      display: flex;
+      align-items: center;
+      font-size: 28rpx;
+      line-height: 40rpx;
+      margin-bottom: 10rpx;
+    }
+    &_header_c {
+      font-size: 22rpx;
+      color: #8e9298;
+      line-height: 32rpx;
+    }
+    &_content {
+      display: flex;
+      justify-content: space-between;
+      font-size: 24rpx;
+      &_left {
+        width: 65%;
+        flex: auto;
+      }
+      &_right {
+        display: flex;
+        align-items: flex-end;
+        text-align: right;
+        align-self: stretch;
+        font-size: 24rpx;
+        padding-bottom: 7rpx;
+        word-break: normal;
+        margin-left: 30rpx;
+        text {
+          flex: auto;
+          color: #005bac;
+        }
+      }
+    }
+  }
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    &>view {
+      flex: 1;
+    }
+  }
+</style>

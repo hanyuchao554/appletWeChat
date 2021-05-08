@@ -1,0 +1,174 @@
+<template>
+  <div class="pop_up_wrap">
+    <div class="prop_up_title">选择申请的叉车数量</div>
+    <div class="prop_up_item_group">
+      <div class="prop_up_item"
+           v-for="(item,index) in dataList">
+        <div class="cell">
+          <text>{{item.label}}</text>
+          <van-stepper input-class="van_stepper_control"
+                       plus-class="van_stepper_control van_plus"
+                       minus-class="van_stepper_control van_minus"
+                       value="{{item.count}}"
+                       van-stepper
+                       @change="onChange($event,index)"
+                       min="0"></van-stepper>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <van-button custom-class="btn"
+                  color="#005BAC"
+                  @click="onClick"
+                  type="default">确定</van-button>
+    </div>
+  </div>
+</template>
+
+<config>
+{
+    usingComponents: {
+          "van-button": "module:@vant/weapp/dist/button/index",
+          "van-stepper": "module:@vant/weapp/dist/stepper/index"
+    }
+}
+</config>
+
+<script>
+import wepy from '@wepy/core';
+import store from '@/store';
+import {
+  mapState,
+  mapMutations
+} from '@wepy/x';
+wepy.component({
+  store,
+  props: {
+    isAdd: {
+      type: Boolean,
+      default: true
+    }
+  },
+  data: {
+    dataList: [],
+    requestData: {
+      followConfId: '',
+      parentId: '3'
+    }
+  },
+  attached() {
+    this.sendApi();
+  },
+  computed: mapState(['detailApplyDo']),
+  methods: {
+    onClick() {
+      let listData = [];
+      let listStr = [];
+      let totalCartWeigh = 0
+      this.dataList.forEach((item) => {
+        if (item.count > 0) {
+          totalCartWeigh += Math.floor(item.count * item.paramValue)
+          listData.push(`${item.confId}*${item.count}`);
+          listStr.push(`${item.label}*${item.count}`);
+        }
+      });
+      let data = listData.join(',');
+      let str = listStr.join('; ');
+      this.$set(this.detailApplyDo, 'carTypeCount', data);
+      this.$set(this.detailApplyDo, 'cartDataStr', str);
+      this.$set(this.detailApplyDo, '_carTypeCountList', listStr);
+      this.$set(this.detailApplyDo, 'totalCartWeigh', totalCartWeigh);
+      this.isAdd && this.setJobQuantity()
+      this.$emit('onConfirm', data, this.dataList);
+    },
+    setJobQuantity() {
+      let {
+        totalCartWeigh,
+        goodsWeightStr
+      } = this.detailApplyDo
+      if (totalCartWeigh && goodsWeightStr) {
+        let num = Math.ceil(goodsWeightStr / totalCartWeigh)
+        this.$set(this.detailApplyDo, 'jobQuantity', num);
+      }
+    },
+    onChange(e, i) {
+      this.dataList[i].count = e.$wx.detail;
+    },
+    sendApi() {
+      let req = {
+        deptId: this.detailApplyDo.tranDeptId || undefined,
+        areaId: this.detailApplyDo.craneAddress || undefined,
+        applyType: 1
+      }
+      wepy.$api('app/forkPullDown/selForkCarType', req).then((res) => {
+        let _carTypeCount = [];
+        if (this.detailApplyDo.carTypeCount && this.isAdd) {
+          if (Object.prototype.toString.call(this.detailApplyDo.carTypeCount) === "[object Array]") {
+            this.detailApplyDo.carTypeCount.forEach((child) => {
+              _carTypeCount.push({
+                id: child.carTypeId,
+                num: child.carCount
+              });
+            });
+          } else if (Object.prototype.toString.call(this.detailApplyDo.carTypeCount) === "[object String]") {
+            let arry = this.detailApplyDo.carTypeCount.split(',');
+            arry.forEach((child) => {
+              let [id, num] = child.split('*');
+              _carTypeCount.push({
+                id: Number(id),
+                num
+              });
+            });
+          }
+
+        }
+        this.dataList = res.map((item) => {
+          let count = 0;
+          let flag = _carTypeCount.find((c) => c.id === item.confId);
+          count = flag ? flag.num : 0;
+          return {
+            confId: item.confId,
+            label: item.remark,
+            count,
+            paramValue: item.paramValue
+          };
+        });
+      });
+    }
+  }
+});
+</script>
+
+<style lang="less" scoped>
+@import './index.less';
+.prop_up_item_group {
+  min-height: 400rpx;
+}
+.footer {
+  width: 702rpx;
+  margin: 0 auto;
+  .btn {
+    width: 100% !important;
+    margin-bottom: 30rpx;
+  }
+}
+.cell {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text {
+    font-size: 28rpx;
+    line-height: 40rpx;
+  }
+  .van_stepper_control {
+    width: 56rpx !important;
+    height: 56rpx !important;
+    margin: 0 15rpx;
+  }
+  .van_plus,
+  .van_minus {
+    background: #005bac;
+    color: #fff;
+  }
+}
+</style>

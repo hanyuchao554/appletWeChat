@@ -1,0 +1,294 @@
+<template>
+    <div class="manageCarList_page">
+        <div class="header">
+            <van-dropdown-menu style="margin-left: 20rpx;"
+                               :z-index="9999">
+                <van-dropdown-item id="dept"
+                                   :title="currSelectDowName"
+                                   @open="getAreaByDeptIdList">
+                    <div class="dropdown_item_cell"
+                         @click="onClickAreaByDept(undefined)">
+                        全部围栏
+                    </div>
+                    <div class="dropdown_item_cell"
+                         v-for="item in downList"
+                         @click="onClickAreaByDept(item)">
+                        {{ item.areaName }}
+                    </div>
+                </van-dropdown-item>
+            </van-dropdown-menu>
+        </div>
+        <div class="content">
+            <div v-for="item in list"
+                 class="item">
+                <div class="item_flex">
+                    <div class="tag_drop">
+                        <div class="drop"></div>
+                        {{ item.carNumber }}
+                    </div>
+                    <div class="font-28 font-bold">{{ item.typeName }}</div>
+                </div>
+                <div class="flex">
+                    <div class="areaName_item">
+                        <div class="ellipsis font-bold"
+                             v-for="sub in item.areaName">{{sub}}</div>
+                    </div>
+                    <div class="item_right"
+                         @click="hasPopUp(item)">
+                        <div class="drop"></div>
+                        <div class="drop"></div>
+                        <div class="drop"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <van-popup v-if="hasAreaByDeptIdPop"
+                   round
+                   position="bottom"
+                   :show="hasAreaByDeptIdPop"
+                   @close="closePop">
+            <areaByDeptIdPop :row="currRowData"
+                             @close="closePop"
+                             @onSuccess="getList"></areaByDeptIdPop>
+        </van-popup>
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import store from '@/store';
+import { mapState, mapMutations } from '@wepy/x';
+wepy.page({
+    store,
+    data: {
+        currSelectDowName: '全部围栏',
+        downList: [],
+        list: [],
+        listReqData: {
+            areaId: undefined,
+            applyType: 1
+        },
+        downReqData: {
+            applyType: 1,
+            type: 1
+        },
+        currRowData: null,
+        hasAreaByDeptIdPop: false,
+    },
+    onLoad() {
+        this.getList();
+    },
+    computed: {
+        ...mapState(['detailApplyDo']),
+    },
+    methods: {
+        init() {
+            this.getList();
+        },
+        closePop() {
+            this.hasAreaByDeptIdPop = false
+        },
+        hasPopUp(item) {
+            this.hasAreaByDeptIdPop = true;
+            this.currRowData = item;
+        },
+        onClickHide() {
+            this.show = false;
+        },
+        submit() {
+            if (this.isLinkage === 1) {
+                this.sendAddTask();
+            } else if (this.isLinkage === 3) {
+                this.updateTaskCarId();
+            }
+        },
+        updateTaskCarId() {
+            if (this.isDisabled) return;
+            let { prsId } = this.detailApplyDo;
+            let data = {
+                carId: this.currCartData.carId,
+                applyId: prsId,
+            };
+            wepy
+                .$api('app/craneEdit/updateTaskCarId', data)
+                .then(() => {
+                    wx.setStorageSync('isSuccessCallBack', true);
+                    this.$back();
+                })
+                .finally(() => {
+                    this.isDisabled = false;
+                });
+        },
+        onClickAreaByDept(item) {
+            this.listReqData.areaId = item ? item.id : undefined;
+            this.currSelectDowName = item ? item.areaName : '全部围栏';
+            this.$wx.selectComponent('#dept').toggle();
+            this.getList();
+        },
+        getAreaByDeptIdList() {
+            wepy.$api('app/forkPullDown/areaByDeptIdList', this.downReqData).then((res) => {
+                this.downList = [
+                    {
+                        id: 0,
+                        areaName: '无围栏'
+                    }
+                ]
+                if (res && res.length) {
+                    this.downList = this.downList.concat(res)
+                }
+            });
+        },
+        getList() {
+            wepy.$loading();
+            wepy.$api('app/car/manageCarListUserId', this.listReqData).then((res) => {
+                this.list = []
+                if (!res || !res.length) {
+                    wx.showToast({
+                        icon: 'none',
+                        title: '暂无数据',
+                    });
+                } else {
+                    this.list = res
+                    wx.hideToast();
+                }
+            });
+        },
+    },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText: '围栏车辆管理',
+  usingComponents:{
+    "van-image": "module:@vant/weapp/dist/image/index",
+    "van-overlay": "module:@vant/weapp/dist/overlay/index",
+    "van-button": "module:@vant/weapp/dist/button/index",
+    "van-icon": "module:@vant/weapp/dist/icon/index",
+    "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
+    "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
+    "van-popup": "module:@vant/weapp/dist/popup/index",
+    "areaByDeptIdPop": "~@/components/pop-up/areaByDeptIdPop",
+  }
+}
+</config>
+
+<style lang="less" scoped>
+.manageCarList_page {
+  position: relative;
+  height: 100vh;
+}
+.flex {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  overflow: hidden;
+}
+.areaName_item {
+  flex: 1;
+  font-size: 24rpx;
+  overflow: hidden;
+  text-align: right;
+}
+.dropdown_item_cell {
+  display: flex;
+  align-items: center;
+  font-size: 28rpx;
+  border-bottom: 2rpx solid #ececec;
+  padding: 20rpx 30rpx;
+}
+
+.header {
+  position: fixed;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  height: 98rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  background: #fff;
+  z-index: 999;
+}
+.content {
+  position: absolute;
+  width: 100%;
+  overflow-y: scroll;
+  top: 120rpx;
+  bottom: 20rpx;
+}
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 28rpx 26rpx;
+  box-sizing: border-box;
+  &_flex {
+    display: flex;
+    align-items: center;
+  }
+  &_right {
+    display: flex;
+    align-items: flex-end;
+    width: 50rpx;
+    height: 40rpx;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-right: 26rpx;
+    .drop {
+      width: 8rpx;
+      height: 8rpx;
+      border-radius: 8rpx;
+      background: #d8d8d8;
+      text-align: right;
+    }
+  }
+  &_header {
+    display: flex;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+      margin-right: 10rpx;
+    }
+  }
+  &_header_c {
+    font-size: 22rpx;
+    color: #8e9298;
+    line-height: 32rpx;
+  }
+  &_content {
+    display: flex;
+    justify-content: space-between;
+    font-size: 24rpx;
+    &_left {
+      width: 65%;
+      flex: auto;
+    }
+    &_right {
+      display: flex;
+      align-items: flex-end;
+      text-align: right;
+      align-self: stretch;
+      font-size: 24rpx;
+      padding-bottom: 7rpx;
+      word-break: normal;
+      margin-left: 30rpx;
+      text {
+        flex: auto;
+        color: #005bac;
+      }
+    }
+  }
+}
+</style>

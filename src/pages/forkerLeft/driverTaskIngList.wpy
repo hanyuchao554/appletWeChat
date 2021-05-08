@@ -1,0 +1,361 @@
+<template>
+  <div class="taskList_page">
+      <div class="header_menus flex" >
+      <div class="header_menus_left" style="margin-top:-40rpx">
+        <van-checkbox v-if="hasCheck" custom-class="v_checkBox" checked-color="#005bac" value="{{ allCheck }}"
+                      @change="onChangeAllCheck"></van-checkbox>
+        <van-dropdown-menu style="margin-left: 20rpx; " :z-index="9999">
+          <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList">
+            <div class="dropdown_item_cell" @click="onClickDept(undefined)">所有部门</div>
+            <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
+          </van-dropdown-item>
+        </van-dropdown-menu>
+      </div>
+      <!-- <div class="header_center text-c">任务审核列表</div> -->
+      <!-- <div class="headers_menu_right text-r">
+        <div class="btn_d"
+             @click="hasSelect">审核</div>
+      </div> -->
+    </div>
+    <div class="header flex">
+      <div class="flex">
+        <div class="tag_drop">
+          <div class="drop"></div>
+          {{ cartAndTaskData.carNumber }}
+        </div>
+        <div>{{cartAndTaskData.carTypeName}}</div>
+      </div>
+      <div class="flex text-r">
+        <van-icon color="#8E9298" name="notes-o" size="26rpx" />
+        <div style="margin-left: 10rpx">
+          任务:{{ cartAndTaskData.count}}个
+        </div>
+      </div>
+    </div>
+    <div class="driverneme">司机:{{list[0].operatorName}}</div>
+    <div class="content">
+      <div class="item" v-for="item in list"  @click="goTo(item)">
+        <div>
+          <div class="item_header">
+            <div class="item_header_left"> 
+              <div v-if="item.tranState === 4" class="tag tag_blue">
+                计
+              </div>
+              <div v-if="item.tranState === 5" class="tag tag_gray">
+                自
+              </div>
+              <div>{{item.shipNumber || item.jobName }} {{item.goodsTypeName}}-{{ item.goodName }}</div>
+            </div>
+            <div class="contName"  @tap.stop="contName(item.contPhone)" >{{item.contName}}</div>
+          </div>
+         
+          <div class="memo">备注：{{item.memo || ''}}</div>
+          <div class="item_header_c">
+            {{ item.applyDeptName }}/{{ item.goodWeight }}/{{ item.startTime }}至{{ item.endTime }}
+          </div>
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ item.startAddressName }}</div>
+                <div class="ellipsis">目的地：{{ item.endAddressName }}</div>
+              </div>
+            </div>
+            <div class="flex">
+              <div>{{item.carTypeName}}</div>
+              <div class="text-r">
+                <text class="font-color-red">{{item.taskPlanStateName}}</text>
+                <text> ></text>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import formatTimeTwo from '@/utils/moment.js';
+  import {
+    taskPlanStateEnum
+  } from '@/enums';
+  wepy.page({
+    data: {
+      cartAndTaskData: {},
+      list: [],
+      realTime:null,
+      currDeptName: '所有部门',
+      deptList:undefined,
+      hasCheck: false,
+      allCheck: false
+    },
+    onShow() {
+      this.init()
+      let that = this
+      this.realTime = setInterval(function(){
+        that.init()
+        wx.showToast({
+          title:'数据已更新'
+        })
+      },30000)
+      // this.cartAndTaskData.operatorName = this.list[0].operatorName
+    },
+    onHide(){
+      clearInterval(this.realTime)
+    },
+    onUnload(){
+       clearInterval(this.realTime)
+    },
+    onPullDownRefresh(){
+      this.init()
+      wx.showToast({
+        title:'数据已更新'
+      })
+    },
+    methods: {
+      init() {
+        wx.showLoading()
+        let arry = [this.driverPerformHead(), this.driverPerformTaskList()]
+        Promise.all(arry).then(() => {
+          if (!this.list.length) {
+            wepy.$showToast('没有正在执行的任务')
+          } else {
+            wx.hideLoading();
+            wx.stopPullDownRefresh()
+          }
+        })
+      },
+      goTo(item) {
+        wx.navigateTo({
+          url: `/pages/forkerLeft/driverTaskState?taskId=${item.taskId}`
+        })
+      },
+      driverPerformHead() {
+        return wepy.$api('app/forkliftDriver/driverPerformHead', {}).then((res) => {
+          this.cartAndTaskData = res
+        });
+      },
+      // 获取部门分级列表
+      getDeptList() {
+        wepy.$api('/app/forkPullDown/listDeptDownList', {
+          applyType: 1,
+          type:5,
+        }).then(res => {
+          this.deptList = res
+        })
+      },
+      // 获取任务列表
+      driverPerformTaskList() {
+        return wepy.$api('app/forkliftDriver/driverPerformTaskList', {
+          applyType:1, 
+          deptId:this.deptId || undefined,
+          selectTimeStamp:null
+          }).then((res) => {
+          this.list = []
+          if (res && res.length) {
+            this.list = res.map(item => {
+              item.taskPlanStateName = taskPlanStateEnum(item.taskPlanState)
+              return item
+            })
+          }
+        });
+      },
+      // 根据筛选条件查找任务列表
+      onClickDept(item) {
+        this.deptId = item ? item.deptId : undefined;
+        this.currDeptName = item ? item.deptName : '所有部门';
+        this.$wx.selectComponent('#dept').toggle(false)
+        this.driverPerformTaskList();
+      },
+      // 操作列表按钮
+      hasSelect() {
+        if (this.list.length) {
+          this.hasCheck = true;
+        }
+      },
+      contName(val){
+        wx.makePhoneCall({ 
+          phoneNumber: val
+        });
+      }
+    }
+  });
+</script>
+
+<config>
+{
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark" ,
+  navigationBarTitleText:'叉车-执行中任务列表',
+  usingComponents: {
+    "van-icon": "module:@vant/weapp/dist/icon/index",
+    "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
+    "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
+    "van-button": "module:@vant/weapp/dist/button/index",
+    "van-image": "module:@vant/weapp/dist/image/index",
+    "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
+    "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index",
+    "van-popup": "module:@vant/weapp/dist/popup/index",
+    "approve": "~@/pages/forkerLeft/approve"
+  }
+}
+</config>
+
+<style lang="less" scoped>
+  view.van-dropdown-menu{
+    height:80rpx;
+  }
+  .taskList_page {
+    position: relative;
+    height: 100vh;
+    background: #EDF1F4;
+  }
+  .dropdown_item_cell {
+  display: flex;
+  align-items: center;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  border-bottom: 2rpx solid #ececec;
+  padding: 20rpx;
+}
+ .header_menus {
+    display: flex;
+    position: absolute;
+    width: 100%;
+    height: 100rpx;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 32rpx;
+    padding: 0 24rpx;
+    box-sizing: border-box;
+    background: #fff;
+    z-index: 999;
+    &_menus_left{
+      display: flex;
+      align-items: center;
+    }
+    &_menus_left,
+    &_menus_right {
+      width: 25%;
+    }
+    &_center {
+      width: 50%;
+    }
+    .btn_d {
+      display: inline-block;
+      width: 110rpx;
+      height: 48rpx;
+      line-height: 48rpx;
+      border-radius: 4rpx;
+      font-size: 30rpx;
+      background: #005bac;
+      text-align: center;
+      font-size: 32rpx;
+      color: #ffff;
+    }
+  }
+  .header {
+    position: absolute;
+    width: 100%;
+    height: 80rpx;
+    left: 0;
+    font-size: 28rpx;
+    padding: 0 24rpx;
+    box-sizing: border-box;
+    margin-top:100rpx;
+    // border: 1rpx solid #000;
+   }
+  .content {
+    position: absolute;
+    width: 100%;
+    top: 230rpx;
+    bottom: 0;
+    overflow-y: scroll;
+  }
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .item {
+    width: 702rpx;
+    margin: 0 auto 20rpx;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+    // border: 1rpx solid #000;
+    &_header {
+      display: flex;
+      font-size: 28rpx;
+      line-height: 40rpx;
+      justify-content: space-between;
+      .item_header_left{
+        display:flex;
+      }
+      .tag {
+        color: #fff;
+        font-size: 22rpx;
+        padding: 5rpx 10rpx;
+        line-height: 32rpx;
+        border-radius: 5rpx;
+        font-weight: 500;
+        margin-right: 10rpx;
+      }
+      .tag_blue {
+        background: #005BAC;
+      }
+      .tag_gray {
+        background: #037D3D;
+      }
+    }
+    &_header_c {
+      font-size: 28rpx;
+      line-height: 32rpx;
+    }
+    &_content {
+      display: flex;
+      justify-content: space-between;
+      font-size: 24rpx;
+      &_left {
+        width: 65%;
+        flex: auto;
+      }
+      &_right {
+        display: flex;
+        align-items: flex-end;
+        text-align: right;
+        align-self: stretch;
+        font-size: 24rpx;
+        padding-bottom: 7rpx;
+        word-break: normal;
+        margin-left: 30rpx;
+        border: 1rpx solid #000;
+        text {
+          flex: auto;
+          color: #005bac;
+        }
+      }
+    }
+  }
+  .contName{
+    font-size: 28rpx;
+  }
+  .memo{
+    font-size: 28rpx
+    }
+.driverneme{
+  position:absolute;
+  top: 180rpx;
+  left: 25rpx;
+}    
+</style>

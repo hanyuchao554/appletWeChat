@@ -1,0 +1,211 @@
+<template>
+  <div class="taskList_page">
+    <div v-if="cartAndTaskData" class="header flex">
+      <div class="flex">
+        <div class="tag_drop">
+          <div class="drop"></div>
+          {{ cartAndTaskData.carNumber }}
+        </div>
+        <div>{{ cartAndTaskData.carTypeName }}</div>
+      </div>
+      <div class="flex text-r">
+        <van-icon color="#8E9298" name="notes-o" size="26rpx" />
+        <div style="margin-left: 10rpx">任务:{{ cartAndTaskData.count }}个</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="item" v-for="item in list">
+        <div>
+          <div class="item_header">
+            <div v-if="item.orderId === 1" class="tag tag_blue">计划任务</div>
+            <div v-if="item.orderId === 2" class="tag tag_gray">联吊任务</div>
+            <div>
+              {{ item.jobName }} {{ item.proCode }} {{ item.goodsType }}-{{
+                item.goodName
+              }}
+            </div>
+          </div>
+          <div class="item_header_c">
+            {{ item.applyDeptName }}/{{ item.goodWeight }}/{{
+              item.startTime
+            }}至{{ item.endTime }}
+          </div>
+        </div>
+        <div class="item_content">
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ item.startAddressName }}</div>
+                <div class="ellipsis">目的地：{{ item.endAddressName }}</div>
+              </div>
+            </div>
+            <div class="flex" style="margin-top: 8rpx">
+              <div>{{ item.carTypeName }}: {{ item.carNumber || '' }}</div>
+              <div class="text-r" @click="goTo(item)">
+                <text class="font-color-red">{{ item.taskPlanStateName }}</text>
+                <text> ></text>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import formatTimeTwo from '@/utils/moment.js';
+import { taskPlanStateEnum } from '@/enums';
+wepy.page({
+  data: {
+    cartAndTaskData: null,
+    list: [],
+  },
+  onShow() {
+    this.init();
+  },
+  methods: {
+    init() {
+      wepy.$loading();
+      let arry = [this.driverPerformHead(), this.driverPerformTaskList()];
+      Promise.all(arry).then(() => {
+        if (!this.list.length) {
+          wepy.$showToast('没有正在执行的任务');
+        } else {
+          wx.hideToast();
+        }
+      });
+    },
+    goTo({ taskId }) {
+      wx.navigateTo({
+        url: `/pages/towerCrane/driverTaskState?taskId=${taskId}`,
+      });
+    },
+    driverPerformHead() {
+      return wepy
+        .$api('app/craneDriver/driverPerformHead', { applyType: 3 })
+        .then((res) => {
+          this.cartAndTaskData = res;
+        })
+        .catch(() => {
+          this.cartAndTaskData = null;
+        });
+    },
+    driverPerformTaskList() {
+      return wepy
+        .$api('app/craneDriver/driverPerformTaskList', { applyType: 3 })
+        .then((res) => {
+          this.list = [];
+          if (res && res.length) {
+            this.list = res.map((item) => {
+              item.taskPlanStateName = taskPlanStateEnum(item.taskPlanState);
+              return item;
+            });
+          }
+        });
+    },
+  },
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'塔吊-执行中任务列表',
+  usingComponents: {
+    "van-icon": "module:@vant/weapp/dist/icon/index"
+  }
+}
+</config>
+
+<style lang="less" scoped>
+.taskList_page {
+  position: relative;
+  height: 100vh;
+  background: #edf1f4;
+}
+.header {
+  position: fixed;
+  width: 100%;
+  height: 80rpx;
+  top: 0;
+  left: 0;
+  font-size: 28rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+}
+.content {
+  position: absolute;
+  width: 100%;
+  top: 80rpx;
+  bottom: 0;
+  overflow-y: scroll;
+}
+.flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.item {
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 28rpx 26rpx;
+  box-sizing: border-box;
+  &_header {
+    display: flex;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    .tag {
+      color: #fff;
+      font-size: 22rpx;
+      padding: 5rpx 10rpx;
+      line-height: 32rpx;
+      border-radius: 5rpx;
+      font-weight: 500;
+      margin-right: 10rpx;
+    }
+    .tag_blue {
+      background: #005bac;
+    }
+    .tag_gray {
+      background: #efa600;
+    }
+  }
+  &_header_c {
+    font-size: 22rpx;
+    color: #8e9298;
+    line-height: 32rpx;
+  }
+  &_content {
+    display: flex;
+    justify-content: space-between;
+    font-size: 24rpx;
+    &_left {
+      width: 65%;
+      flex: auto;
+    }
+    &_right {
+      display: flex;
+      align-items: flex-end;
+      text-align: right;
+      align-self: stretch;
+      font-size: 24rpx;
+      padding-bottom: 7rpx;
+      word-break: normal;
+      margin-left: 30rpx;
+      text {
+        flex: auto;
+        color: #005bac;
+      }
+    }
+  }
+}
+</style>

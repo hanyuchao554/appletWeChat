@@ -1,0 +1,178 @@
+<template>
+  <div class="distributionCars_page">
+    <div class="header">
+      <div>当前可用{{ list.length }}车辆</div>
+      <van-icon name="/static/images/icon_filter.png" size="48rpx" />
+    </div>
+    <div class="content">
+      <div class="item_wrap" v-for="(item, index) in list" @click="onClick(item)">
+        <div class="item">
+          <div class="item_content">
+            <div class="tag_drop">
+              <text> {{ item.carNumber }}</text>
+            </div>
+            <div class="drop"></div>
+            <div class="font-28 font-bold">{{item.fullWeight / 1000}}吨平板车</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import { mapState, mapMutations } from '@wepy/x';
+  import store from '@/store';
+  wepy.page({
+    store,
+    data: {
+      list: [],
+      areaId: undefined
+    },
+    onLoad() {
+      this.selByCarStateUserAndDept();
+    },
+    computed:{
+       ...mapState(['detailApplyDo']),
+    },
+    methods: {
+      ...mapMutations(['setDetailApplyDo']),
+      onClick(item) {
+        console.log(item.carId,item.carNumber)
+        this.$set(this.detailApplyDo, 'carId',item.carId)
+        this.$set(this.detailApplyDo, 'carNumber',item.carNumber)
+        wx.navigateBack()
+
+      },
+      selByCarStateUserAndDept() {
+        wepy.$api('/app/platformApply/getCarListByTranDept',{
+          deptId:this.detailApplyDo.tranDeptId
+        }).then((res)=>{
+          if(res.length){
+            this.list = res
+          }else{
+            wepy.$showToast('暂无可用车辆')
+          }
+        })
+      }
+    }
+  });
+</script>
+
+<style lang="less" scoped>
+
+  .distributionCars_page {
+    position: relative;
+    height: 100vh;
+  }
+  .wrapper {
+    width: 702rpx;
+    padding: 24rpx;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 10rpx;
+    background: #fff;
+    text-align: center;
+    .tag_drop {
+      margin: 0 10rpx;
+    }
+    .top_tips {
+      margin-bottom: 20rpx;
+    }
+  }
+  .overlay_footer {
+    position: static;
+    .btn {
+      font-size: 28rpx !important;
+      height: 64rpx !important;
+      line-height: 64rpx !important;
+    }
+  }
+  .overlay_header {
+    font-size: 36rpx;
+    font-weight: bold;
+  }
+  .overlay_content {
+    display: flex;
+    margin-top: 60rpx;
+    justify-content: center;
+    align-items: center;
+    &_center {
+      position: relative;
+      .tips {
+        width: 100%;
+        position: absolute;
+        top: -32rpx;
+        left: -6rpx;
+        font-size: 24rpx;
+      }
+    }
+  }
+  .header {
+    position: fixed;
+    display: flex;
+    justify-content: space-between;
+    width: 702rpx;
+    align-items: center;
+    height: 98rpx;
+    padding: 0 24rpx;
+    font-size: 28rpx;
+    font-weight: bold;
+    background: #fff;
+  }
+  .content {
+    position: absolute;
+    width: 100%;
+    overflow-y: scroll;
+    top: 98rpx;
+    bottom: 20rpx;
+  }
+  .padding-l-8 {
+    padding-left: 8rpx;
+  }
+  .item_wrap {
+    width: 702rpx;
+    margin: 20rpx auto 0;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+    background: #fff;
+  }
+  .item_content {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    .tag_drop {
+      width: 165rpx;
+      font-size: 24rpx;
+      margin-right: 10rpx;
+      color: #fff;
+      padding: 5rpx 8rpx;
+      border-radius: 8rpx;
+      background: #037d3d;
+      text-align: center;
+    }
+    .drop{
+      position:absolute;
+      top:15rpx;
+      left: 8rpx;
+      width: 10rpx;
+      height: 10rpx;
+      background: #fff;
+      border-radius:100%; 
+    }
+  }
+</style>
+
+<config>
+{ 
+      navigationBarTitleText:'选择可用车辆 — 平板车',
+      usingComponents: {
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+    }
+}
+</config>

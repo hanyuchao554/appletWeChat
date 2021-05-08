@@ -1,0 +1,181 @@
+<template>
+  <div class="drafts_page">
+    <div class="content">
+      <div class="item" v-for="item in list">
+        <div class="item_header">
+          <div>{{ item.listName }}</div>
+          <van-icon @click="onDelect(item.applyId)" name="/static/images/icon_delete.png" size="40rpx"></van-icon>
+        </div>
+        <div @click="goToPage(item.applyId)" class="item_header_c">
+          {{ item.deptName }}/{{ item.goodsWeight }}吨/{{ item.startTimeStamp }}至{{ item.endTimeStamp }}
+        </div>
+        <div @click="goToPage(item.applyId)" class="common_step">
+          <div class="common_step_left">
+            <div class="common_step_left_t"></div>
+            <div class="common_step_left_c"></div>
+            <div class="common_step_left_b"></div>
+          </div>
+          <div class="common_step_center">
+            <div class="ellipsis">起始地：{{ item.startPositionName }}</div>
+            <div class="ellipsis">目的地：{{ item.endPositionName }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <van-overlay show="{{ show }}" @click="onClickHide">
+      <view class="wrapper">
+        <div class="title">确认是否删除任务？</div>
+        <div class="btn-box">
+          <van-button custom-class="btn" @click="onClickHide" type="default">取消</van-button>
+          <van-button custom-class="btn" color="#005BAC" type="default" @click="submitConfirm">确认</van-button>
+        </div>
+      </view>
+    </van-overlay>
+  </div>
+</template>
+
+<script>
+  import {
+    BaseDataKey
+  } from '@/constant';
+  import wepy from '@wepy/core';
+  import formatTimeTwo from '@/utils/moment.js';
+  import CommonMixin from '@/mixins/commonMixin.js'
+  wepy.page({
+    mixins: [CommonMixin],
+    data: {
+      isDisable: false,
+      currApplyId: 0,
+      list: [],
+      show: false,
+    },
+    onShow() {
+      this.getDraftsTaskList();
+    },
+    methods: {
+      submitConfirm() {
+        if (this.isDisable) return
+        this.isDisable = true
+        wepy.$loading()
+        wepy
+          .$api('app/platformApply/deleteDraftsTaskList', {
+            applyIds: [this.currApplyId]
+          })
+          .then(() => {
+            this.onClickHide()
+            wx.hideToast()
+            this.getDraftsTaskList()
+            this.isDisable = false
+          }).catch(() => {
+            this.isDisable = false
+          })
+      },
+      onClickHide() {
+        this.show = false;
+      },
+      onDelect(id) {
+        this.currApplyId = id
+        this.show = true;
+      },
+      getDraftsTaskList() {
+        wepy.$loading()
+        wepy
+          .$api('app/platformApply/appGetDraftsTaskList', {
+            userId: wepy.$auth.getUserId(),
+          })
+          .then((res) => {
+            if (res.length) {
+              this.list = res.map((item) => {
+                item.startTimeStamp = this.getTime(item.startTimeStamp);
+                item.endTimeStamp = this.getTime(item.endTimeStamp);
+                item.goodsWeight = this.getWeight(item.goodsWeight)
+                return item;
+              });
+              wx.hideToast()
+            } else {
+              this.list = []
+              wepy.$showToast('未查询到数据')
+            }
+          });
+      },
+      goToPage(businessKey) {
+        wx.navigateTo({
+          url: `/pages/taskDetail/taskDetail?businessKey=${businessKey}&fromType=草稿箱`,
+        });
+      },
+      getTime(time) {
+        return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+      },
+    },
+  });
+</script>
+
+<config>
+{
+  navigationBarTitleText:'草稿箱',
+    usingComponents: {
+      "van-icon": "module:@vant/weapp/dist/icon/index",
+      "van-overlay": "module:@vant/weapp/dist/overlay/index",
+      "van-button": "module:@vant/weapp/dist/button/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+  .drafts_page {
+    height: 100vh;
+    background: #f3f4f6;
+    .content {
+      padding-top: 24rpx;
+    }
+  }
+  .item {
+    width: 702rpx;
+    margin: 0 auto 20rpx;
+    background: #fff;
+    box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+    border-radius: 8rpx;
+    padding: 28rpx 26rpx;
+    box-sizing: border-box;
+    &_header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 28rpx;
+      line-height: 40rpx;
+    }
+    &_header_c {
+      font-size: 22rpx;
+      color: #8e9298;
+      line-height: 32rpx;
+    }
+  }
+  .wrapper {
+    width: 650rpx;
+    padding: 24rpx;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 10rpx;
+    background: #fff;
+    text-align: center;
+    box-sizing: border-box;
+    .title {
+      margin-bottom: 35rpx;
+      font-size: 36rpx;
+      color: #2b2b2b;
+      line-height: 50rpx;
+    }
+    .btn-box {
+      display: flex;
+      justify-content: space-around;
+      .btn {
+        width: 220rpx !important;
+        height: 64rpx !important;
+        line-height: 64rpx !important;
+        border-radius: 8rpx;
+      }
+    }
+  }
+</style>

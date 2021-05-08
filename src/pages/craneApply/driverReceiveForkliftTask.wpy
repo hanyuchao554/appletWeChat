@@ -1,0 +1,169 @@
+<template>
+  <div class="addTask_page">
+    <div class="content">
+      <van-cell-group custom-class="item">
+        <van-cell
+          required
+          @click="hasPop"
+          title="选择职位"
+          :value="driverRoleName || '请选择'"
+        />
+      </van-cell-group>
+    </div>
+    <div class="footer">
+      <van-button
+        custom-class="btn"
+        color="#005BAC"
+        @click="submit"
+        type="default"
+        >扫码绑定</van-button
+      >
+    </div>
+    <van-popup
+      v-if="show"
+      round
+      position="bottom"
+      :show="show"
+      @close="show = false"
+    >
+      <driverRole @onSelect="onSelect"></driverRole>
+    </van-popup>
+  </div>
+</template>
+
+<script>
+import { BaseDataKey } from '@/constant';
+import wepy from '@wepy/core';
+wepy.page({
+  data: {
+    roleId: 0,
+    show: false,
+    driverRoleName: '',
+    isDisabled: false,
+    scanCodeState: 0,
+  },
+  onLoad({ scanCodeState }) {
+    this.scanCodeState = Number(scanCodeState);
+    this.initRoleId();
+  },
+  methods: {
+    hasPop() {
+      if (this.scanCodeState === 2 || this.scanCodeState === 1) return;
+      this.show = true;
+    },
+    initRoleId() {
+      // 叉车默认只能传1
+      if (this.scanCodeState === 2 || this.scanCodeState === 1) {
+        this.roleId = 1;
+        this.driverRoleName = '司机';
+      }
+    },
+    onSelect(data) {
+      this.roleId = data.id;
+      this.driverRoleName = data.name;
+      this.show = false;
+    },
+    submit() {
+      if (!this.roleId) {
+        wepy.$showToast('请选择职位');
+      } else {
+        this.scanCode();
+      }
+    },
+    scanCode() {
+      if (this.isDisabled) return;
+      this.isDisabled = true;
+      wx.scanCode({
+        scanType: 'QR_CODE',
+        success: (data) => {
+          let { errMsg, result } = data;
+          if (errMsg === 'scanCode:ok' && result) {
+            let list = result.split('|');
+            let leng = list.length;
+            if (list[0] === '0' && list[leng - 1] === '0') {
+              this.driverScanQrCodeToBindCar(result);
+            } else {
+              wepy.$showToast('二维码数据信息有误,请确认');
+              this.isDisabled = false;
+            }
+          } else {
+            wepy.$showToast('二维码数据信息有误,请确认');
+            this.isDisabled = false;
+          }
+        },
+        fail: (err) => {
+          // wepy.$showToast('请扫描指定车辆二维码');
+        },
+      });
+    },
+    driverScanQrCodeToBindCar(carCode) {
+      wepy.$loading();
+      let baseData = wx.getStorageSync(BaseDataKey);
+      let req = {
+        carCode,
+        userId: baseData.user.userId,
+        roleId: this.roleId,
+      };
+      wepy
+        .$api('platform/organization/driverScanQrCodeToBindCar', req)
+        .then((res) => {
+          wepy.$showToast(`欢迎驾驶${res.carNumber}车,规范驾驶,注意安全.`);
+          setTimeout(() => {
+            this.isDisabled = false;
+            wx.navigateBack();
+          }, 2000);
+        })
+        .catch(() => {
+          this.isDisabled = false;
+        });
+    },
+  },
+});
+</script>
+
+<config>
+{
+    navigationBarTitleText:'选择职位',
+    usingComponents: {
+          "van-cell": "module:@vant/weapp/dist/cell/index",
+          "van-cell-group": "module:@vant/weapp/dist/cell-group/index",
+          "van-popup": "module:@vant/weapp/dist/popup/index",
+          "driverRole": "~@/components/pop-up/driverRole",
+          "van-button": "module:@vant/weapp/dist/button/index"
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.addTask_page {
+  position: relative;
+  height: 100vh;
+  background: #f0f3f6;
+  .item {
+    margin-bottom: 22rpx;
+  }
+}
+.content {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  bottom: 150rpx;
+  overflow-y: scroll; // zoom: 1;
+}
+.footer {
+  position: fixed;
+  width: 100%;
+  height: 150rpx;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  .btn {
+    width: 702rpx;
+  }
+}
+.input_wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>

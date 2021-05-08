@@ -1,0 +1,423 @@
+<template>
+  <div class="platformTaskQuery_page">
+    <div class="content">
+      <div class="item">
+        <div class="item_header required">查询时间方式</div>
+        <div class="check_group">
+          <div :class="{ check_active: upData.queryDateType === 1 }" class="check" @click="onClickCheck('queryDateType', 1)">
+            申请时间
+          </div>
+          <div :class="{ check_active: upData.queryDateType === 2 }" class="check" @click="onClickCheck('queryDateType', 2)">
+            驳运时间
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item_header">选择时间</div>
+        <div class="cell">
+          <div class="cell_item" @click="hasTimePop('startDate','startDateStr')">
+            <text>{{ upDataStr.startDateStr || '请选择起始时间' }}</text>
+            <van-icon color="#8E9298" name="arrow-down" size="23rpx" />
+          </div>
+          <div class="split"></div>
+          <div class="cell_item" @click="hasTimePop('endDate','endDateStr')">
+            <text>{{ upDataStr.endDateStr || '请选择结束时间' }}</text>
+            <van-icon color="#8E9298" name="arrow-down" size="23rpx" />
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item_header">当前所在地</div>
+        <div class="cell_item" @click="goToPosition">
+          <text>{{ upDataStr.addressName || '请选择所在地' }}</text>
+          <van-icon color="#8E9298" name="arrow-down" size="23rpx" />
+        </div>
+      </div>
+      <div class="item">
+        <div class="item_header required">选择部门</div>
+        <div class="check_group margin_b_30">
+          <div class="check" :class="{ check_active: upData.deptType === 1 }" @click="onClickCheck('deptType', 1)">
+            申请部门
+          </div>
+          <div :class="{ check_active: upData.deptType === 2 }" class="check" @click="onClickCheck('deptType', 2)">
+            驳运部门
+          </div>
+        </div>
+        <div class="cell_item" @click="showDepartment">
+          <text>{{upDataStr.transDeptName || '请选择部门'}}</text>
+          <van-icon color="#8E9298" name="arrow-down" size="23rpx" />
+        </div>
+      </div>
+      <div class="item">
+        <div class="item_header required">任务状态</div>
+        <div class="check_group">
+          <div :class="{ check_active: isWait}" class="check" @click="onClickCheck('taskState', 1)">
+            待执行
+          </div>
+          <div :class="{ check_active: isIng }" class="check" @click="onClickCheck('taskState', 2)">
+            执行中
+          </div>
+          <div :class="{ check_active: isComplete }" class="check" @click="onClickCheck('taskState', 3)">
+            已完成
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item_header">选择驳运对象</div>
+        <div class="cell_item" @click="goToPage('/pages/lighterage/lighterage?type=query')">
+          <text>{{upDataStr.goodsStr || '请选择驳运对象'}}</text>
+          <van-icon color="#8E9298" name="arrow-down" size="23rpx" />
+        </div>
+      </div>
+      <div class="item">
+        <div class="item_header required">查询方式</div>
+        <div class="check_group">
+          <div :class="{ check_active: upData.isLastTask === 2 }" class="check" @click="onClickCheck('isLastTask', 2)">
+            驳运历史
+          </div>
+          <div :class="{ check_active: upData.isLastTask === 1 }" class="check" @click="onClickCheck('isLastTask', 1)">
+            只显示最后一次
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer_btn_o footer">
+      <van-button custom-class="btn" type="default" @click="init">重置搜索</van-button>
+      <van-button custom-class="btn" color="#005BAC" type="default" @click="submit">确定</van-button>
+    </div>
+    <van-popup v-if="hasTimePicker" round position="bottom" :show="hasTimePicker" @close="closeTimePop">
+      <time-picker isDefaultTime :strKey="currTimeStr" :dataKey="currTimeKey" @onCancel="closeTimePop" @onSelect="onSelectTime"></time-picker>
+    </van-popup>
+    <van-popup v-if="hasDepartment" round position="bottom" :show="hasDepartment" @close="closeDepartment">
+      <app-department :api="'app/dept/getAppOrTranDeptMessage'" :title="deptTypePop === 0?'请选择申请部门':'请选择驳运部门'" :deptType="deptTypePop" @onSelect="onSelectDepartement"></app-department>
+    </van-popup>
+  </div>
+</template>
+<script>
+  import wepy from '@wepy/core';
+  import store from '@/store';
+  import formatTimeTwo from '@/utils/moment.js';
+  import {
+    mapState,
+    mapMutations
+  } from '@wepy/x';
+  import CommonMixin from '@/mixins/commonMixin.js';
+  const rules = {
+    startDate: {
+      message: '请选择起始时间'
+    },
+    // endDate: {
+    //   message: '请选择到达时间'
+    // },
+    deptId: {
+      message: '请选择部门'
+    }
+  };
+  wepy.page({
+    store,
+    mixins: [CommonMixin],
+    data: {
+      hasTimePicker: false,
+      hasDepartment: false,
+      currTimeKey: '',
+      currTimeStr: '',
+      upDataStr: {},
+      upData: {
+        queryDateType: 1,
+        deptType: 1,
+        taskState: [1],
+        isLastTask: 2,
+        startDate: 0,
+        endDate: 0,
+        addressId: 0,
+        deptId: 0,
+        goodsType: '',
+        goodsCode: '',
+        proCode: ''
+      }
+    },
+    computed: {
+      ...mapState(['detailApplyDo']),
+      isWait() {
+        return !!this.upData.taskState.find((item) => item === 1);
+      },
+      isIng() {
+        return !!this.upData.taskState.find((item) => item === 2);
+      },
+      isComplete() {
+        return !!this.upData.taskState.find((item) => item === 3);
+      },
+      deptTypePop() {
+        return this.upData.deptType === 1 ? 0 : 1;
+      }
+    },
+    onShow() {
+      this.getUpdata();
+    },
+    onUnload() {
+      this.setStorageData();
+    },
+    methods: {
+      ...mapMutations(['setDetailApplyDo', 'setDetailApplyDoInit']),
+      init() {
+        this.setDetailApplyDoInit();
+        this.upDataStr = {};
+        this.upData = {
+          queryDateType: 1,
+          deptType: 1,
+          taskState: [1],
+          isLastTask: 2,
+          startDate: 0,
+          endDate: 0,
+          addressId: 0,
+          deptId: 0,
+          goodsType: '',
+          goodsCode: '',
+          proCode: ''
+        };
+      },
+      setStorageData() {
+        wx.setStorageSync('platformTaskQueryData', this.upData);
+        wx.setStorageSync('platformTaskDetailApplyDo', this.detailApplyDo);
+      },
+      valid() {
+        return wepy.$valid.handleValid(rules, this.upData);
+      },
+      submit() {
+        if (this.valid()) this.sendApi();
+      },
+      fliterData() {
+        let data = {};
+        let upData = JSON.parse(JSON.stringify(this.upData));
+        for (let key in upData) {
+          if (upData[key]) data[key] = upData[key];
+        }
+        if (!data.endDate) {
+          let t = new Date().getTime()
+          data.endDate = Math.floor(t / 1000);
+        }
+        return data;
+      },
+      sendApi() {
+        if (this.isDisabled) return;
+        wepy.$loading();
+        this.isDisabled = true;
+        let req = this.fliterData();
+        wepy.$api('app/query/platformTaskQuery', req)
+          .then((res) => {
+            let leng = getCurrentPages().length;
+            let prePage = getCurrentPages()[leng - 2];
+            prePage.$wepy.list = res.map((item) => {
+              item.startTimeStamp = this.getTime(item.startTimeStamp);
+              item.endTimeStamp = this.getTime(item.endTimeStamp);
+              item.goodsWeight = this.getWeight(item.goodsWeight);
+              this.setRequestType(item);
+              return item;
+            });
+            wx.hideToast();
+            wx.navigateBack({
+              success: () => {
+                if (!res.length) {
+                  wepy.$showToast('未查询到任务');
+                }
+              }
+            });
+          })
+          .finally(() => (this.isDisabled = false));
+      },
+      getTime(time) {
+        return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
+      },
+      getUpdata() {
+        let goodsStr = '请选择'
+        let _upData = wx.getStorageSync('platformTaskQueryData') || {};
+        Object.assign(this.upData, _upData);
+        if (this.detailApplyDo.addressId) {
+          this.$set(this.upDataStr, 'addressName', this.detailApplyDo.addressName);
+        }
+        if (this.detailApplyDo.tranDeptId) {
+          this.$set(this.upDataStr, 'transDeptName', this.detailApplyDo.transDeptName);
+        }
+        if (this.detailApplyDo && this.detailApplyDo.proCode) {
+          this.upData.proCode = this.detailApplyDo.proCode
+          goodsStr = this.detailApplyDo.proCode
+        }
+        if (this.detailApplyDo && this.detailApplyDo.goodsType) {
+          this.upData.goodsType = this.detailApplyDo.goodsType
+          goodsStr += `-${this.detailApplyDo.goodsType}`
+        }
+        if (this.detailApplyDo && this.detailApplyDo.goodsCode) {
+          this.upData.goodsCode = this.detailApplyDo.goodsCode
+          goodsStr += `-${this.detailApplyDo.goodsCode}`
+        }
+        let {
+          startDate = 0, endDate = 0, startDateStr = '', endDateStr = ''
+        } = this.detailApplyDo;
+        this.upData.startDate = startDate;
+        this.upData.endDate = endDate;
+        this.$set(this.upDataStr, 'startDateStr', startDateStr);
+        this.$set(this.upDataStr, 'endDateStr', endDateStr);
+        this.$set(this.upDataStr, 'goodsStr', goodsStr);
+      },
+      goToPosition() {
+        wx.navigateTo({
+          url: `/pages/position/position?code=platformTaskQuery&applyType=0&type=${4}`
+        });
+      },
+      goToPage(url) {
+        wx.navigateTo({
+          url
+        });
+      },
+      closeDepartment() {
+        this.hasDepartment = false;
+      },
+      showDepartment() {
+        this.hasDepartment = true;
+      },
+      hasTimePop(currKey, currTimeStr) {
+        this.currTimeKey = currKey;
+        this.currTimeStr = currTimeStr;
+        this.hasTimePicker = true;
+      },
+      onSelectTime(d) {
+        this.upData[this.currTimeKey] = d.dataTime;
+        this.$set(this.upDataStr, this.currTimeStr, d.str);
+        this.closeTimePop();
+      },
+      closeTimePop() {
+        this.hasTimePicker = false;
+      },
+      onSelectDepartement() {
+        let {
+          tranDeptId,
+          transDeptName
+        } = this.detailApplyDo;
+        if (tranDeptId && transDeptName) {
+          this.upData.deptId = tranDeptId;
+          this.upDataStr;
+          this.$set(this.upDataStr, 'transDeptName', transDeptName);
+        }
+        this.closeDepartment();
+      },
+      onClickCheck(key, data) {
+        if (key === 'taskState') {
+          let index = this.upData.taskState.findIndex((item) => item === data);
+          if (index >= 0) {
+            this.upData.taskState.splice(index, 1);
+          } else {
+            this.upData.taskState.push(data);
+          }
+        } else {
+          if (key === 'deptType' && this.upData.deptType !== data) {
+            this.$set(this.upData, 'deptId', 0);
+            this.$set(this.upDataStr, 'transDeptName', '');
+          }
+          this.$set(this.upData, key, data);
+        }
+      }
+    }
+  });
+</script>
+
+<config>
+{
+  navigationBarTitleText:'任务查询',
+  usingComponents: {
+    "van-icon": "module:@vant/weapp/dist/icon/index",
+    "van-popup": "module:@vant/weapp/dist/popup/index",
+    "van-button": "module:@vant/weapp/dist/button/index",
+    "time-picker": "~@/components/pop-up/time-picker",
+    "app-department": "~@/components/pop-up/app-department",
+  }
+}
+</config>
+
+<style lang="less" scoped>
+  .platformTaskQuery_page {
+    position: relative;
+    height: 100vh;
+    background: #fff;
+  }
+  .content {
+    position: absolute;
+    padding: 0 24rpx;
+    width: 100%;
+    left: 0;
+    top: 0;
+    bottom: 120rpx;
+    overflow-y: scroll;
+    box-sizing: border-box;
+  }
+  .footer {
+    position: fixed;
+    width: 100%;
+    left: 0;
+    bottom: 0;
+  }
+  .margin_b_30 {
+    margin-bottom: 30rpx;
+  }
+  .item {
+    font-size: 24rpx;
+    margin-bottom: 45rpx;
+    .item_header {
+      position: relative;
+      font-size: 28rpx;
+      font-weight: bold;
+      color: #2b2b2b;
+      line-height: 40rpx;
+      margin-bottom: 32rpx;
+    }
+    .item_header.required {
+      padding-left: 20rpx;
+    }
+    .required:after {
+      content: '*';
+      position: absolute;
+      top: 0;
+      left: 0;
+      font-size: 24rpx;
+      color: #e32c10;
+    }
+    .check_group {
+      display: flex;
+      .check {
+        min-width: 160rpx;
+        height: 68rpx;
+        margin-right: 40rpx;
+        border-radius: 8rpx;
+        line-height: 68rpx;
+        text-align: center;
+        background: #edf1f4;
+        padding: 0 20rpx;
+        box-sizing: border-box;
+      }
+    }
+    .cell {
+      display: flex;
+      align-items: center;
+      .split {
+        width: 24rpx;
+        height: 2rpx;
+        margin: 0 20rpx;
+        background: #d8d8d8;
+      }
+    }
+    .cell_item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-width: 280rpx;
+      height: 68rpx;
+      background: #edf1f4;
+      border-radius: 8rpx;
+      padding: 15rpx;
+      box-sizing: border-box;
+    }
+  }
+  .check_active {
+    background: #005bac !important;
+    color: #fff !important;
+  }
+</style>

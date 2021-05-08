@@ -1,0 +1,250 @@
+<template>
+    <div class="pop_up_wrap">
+        <div v-if="!show">
+            <div class="prop_up_title">
+                <div @click="">选择操作</div>
+                <!-- <div class="font-32 prop_up_title_r"
+                     @click="close">x</div> -->
+            </div>
+            <div class="prop_up_item_group">
+                <div class="prop_up_item"
+                     @click="onSelect(item)"
+                     v-for="item in actionList">
+                    <van-icon :name="item.icon"
+                              size="48rpx"></van-icon>
+                    <div class="text">{{ item.text }}</div>
+                </div>
+            </div>
+        </div>
+        <van-overlay show="{{ show }}">
+            <view class="wrapper">
+                <div v-if=" tranState!==5"
+                     class="title">{{title}}</div>
+                <div v-if=" tranState==5"
+                     class="title"
+                     style="color:#e0291e;">{{title}}</div>
+                <div class="btn-box">
+                    <van-button custom-class="btn"
+                                @click="show=false"
+                                type="default">取消</van-button>
+                    <van-button custom-class="btn"
+                                color="#005BAC"
+                                type="default"
+                                @click="action">确认</van-button>
+                </div>
+            </view>
+        </van-overlay>
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+wepy.component({
+    props: {
+        applyId: {
+            type: Number,
+            required: true
+        },
+        areaId: {},
+        tranState: {
+            type: Number,
+            required: true
+        },
+        taskId: {
+            type: Number,
+            required: true
+        },
+        cartData: {
+            type: Object
+        }
+    },
+    data: {
+        actionId: 0,
+        title: '',
+        show: false,
+        disable: false,
+        actionList: []
+    },
+    attached() {
+        this.actionList = [
+            {
+                id: 1,
+                icon: '/static/images/icon_z.png',
+                text: '自由任务'
+            },
+            {
+                id: 2,
+                icon: '/static/images/icon_x.png',
+                text: '取消分配'
+            },
+            {
+                id: 3,
+                icon: '/static/images/icon_x.png',
+                text: '删除车辆'
+            },
+            {
+                id: 4,
+                icon: '/static/images/icon_d.png',
+                text: `${this.cartData.carTypeName}列表`
+            }
+        ];
+    },
+    methods: {
+        // 自由任务
+        forkliftTaskConversion() {
+            return wepy
+                .$api('app/forkDriverTask/forkliftTaskConversion', {
+                    applyId: this.applyId,
+                    freeTaskIdList: [this.taskId]
+                })
+                .then(() => this.onSuccess())
+                .catch(() => this.onCatch());
+        },
+        editCancelAllotForkTask() {
+            return wepy
+                .$api('app/forkDriverTask/editCancelAllotForkTask', { taskId: this.taskId })
+                .then(() => this.onSuccess())
+                .catch(() => this.onCatch());
+        },
+        editCancelForkTask() {
+            return wepy
+                .$api('app/forkDriverTask/editCancelForkTask', { taskId: this.taskId })
+                .then(() => this.onSuccess())
+                .catch(() => this.onCatch());
+        },
+        onSuccess() {
+            this.show = false;
+            this.disable = false;
+            this.$emit('onSuccess');
+        },
+        onCatch() {
+            this.show = false;
+            this.disable = false;
+        },
+        onSelect(item) {
+            this.actionId = item.id;
+            switch (item.id) {
+                case 1:
+                    this.title = '是否切换为自由任务?';
+                    this.show = true;
+                    break;
+                case 2:
+                    this.title = '确认取消分配此车任务?';
+                    this.show = true;
+                    break;
+                case 3:
+                    this.title = this.tranState == 5 ? '该车辆正在执行中,请确认是否将其删除?' : '确认删除此车任务?';
+                    this.show = true;
+                    break;
+                case 4:
+                    let { carTypeName, carType } = this.cartData;
+                    wx.navigateTo({
+                        url: `/pages/forkerLeft/selByCarStateUserAndDept?cartName=${carTypeName}&carType=${carType}&applyId=${
+                            this.applyId
+                        }&planTaskId=${this.taskId}&areaId=${this.areaId}`
+                    });
+                    break;
+
+                default:
+                    break;
+            }
+        },
+        close() {
+            this.$emit('close');
+        },
+        action() {
+            if (this.disable) return;
+            this.disable = true;
+            wepy.$loading();
+            switch (this.actionId) {
+                case 1:
+                    this.forkliftTaskConversion();
+                    break;
+                case 2:
+                    this.editCancelAllotForkTask();
+                    break;
+                case 3:
+                    this.editCancelForkTask();
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+});
+</script>
+
+<config>
+{
+  usingComponents:{
+    "van-icon": "module:@vant/weapp/dist/icon/index",
+    "van-overlay": "module:@vant/weapp/dist/overlay/index",
+    "van-button": "module:@vant/weapp/dist/button/index"
+  }
+}
+</config>
+
+<style lang="less" scoped>
+.pop_up_wrap {
+    .prop_up_title {
+        font-size: 36rpx;
+        padding: 30rpx 24rpx;
+    }
+    .prop_up_item_group {
+        max-height: 744rpx;
+        overflow-y: scroll;
+    }
+    .prop_up_item {
+        font-size: 28rpx;
+        padding: 25rpx 24rpx;
+    }
+    .prop_up_item,
+    .prop_up_title {
+        border-bottom: 2rpx solid #ececec;
+    }
+}
+.prop_up_title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    &_r {
+        width: 50rpx;
+        height: 50rpx;
+        text-align: center;
+    }
+}
+.prop_up_item {
+    display: flex;
+    align-items: center;
+    .text {
+        margin-left: 10rpx;
+    }
+}
+
+.wrapper {
+    width: 702rpx;
+    padding: 24rpx;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 10rpx;
+    background: #fff;
+    text-align: center;
+    box-sizing: border-box;
+    .title {
+        margin-bottom: 25rpx;
+        font-size: 36rpx;
+        line-height: 50rpx;
+    }
+    .btn-box {
+        display: flex;
+        justify-content: space-between;
+        .btn {
+            width: 320rpx;
+            height: 64rpx;
+            border-radius: 8rpx;
+        }
+    }
+}
+</style>

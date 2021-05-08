@@ -1,0 +1,445 @@
+<template>
+  <div class="driverTaskState_page">
+    <div class="wrap">
+      <!-- <van-image width="100%" height="400rpx" src="/static/images/home_bg_img3.png" /> -->
+      <div class="car_info">
+        <div class="car_info_left">
+          <div class="tag_drop">
+            <div class="drop"></div>
+            {{ driverData.carNumber }}
+          </div>
+          <div>
+            {{ driverData.carTypeName }}
+          </div>
+        </div>
+        <div @click="makePhoneCall(driverData.contPhone)" class="car_info_right">
+          <van-image width="36rpx" height="40rpx" src="/static/images/icon_phone.png" />
+          <text class="car_info_right_t">{{driverData.contName}}</text>
+        </div>
+      </div>
+      <div class="tast_info">
+        <div class="tast_info_listName flex">
+          <div>{{ driverData.jobName }}{{ driverData.goodName }}</div>
+          <div class="font-color-red font-28">
+            {{ driverData.taskPlanStateName }}
+          </div>
+        </div>
+        <div class="tast_info_deptName">
+          {{ driverData.tranDeptName }}/{{ driverData.goodWeight }}/{{ driverData.startTime }}至{{ driverData.endTime }}
+        </div>
+        <div class="font-24">
+          {{ driverData.goodName }};重量: {{ driverData.goodWeight }}
+        </div>
+      </div>
+      <div class="steps">
+        <div class="steps_item">
+          <van-image width="40rpx" height="40rpx" src="{{driverData.taskPlanState > 22? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}" />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData.driverToStartPositionTime || '' }}</text>
+              <text>开始</text>
+            </div>
+          </div>
+        </div>
+        <div class="line"></div>
+        <div class="steps_item">
+          <van-image width="40rpx" height="40rpx" src="{{driverData.taskPlanState > 23? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}" />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData.driverToLoadTime || '' }}</text>
+              <text>到达起始点</text>
+            </div>
+          </div>
+        </div>
+        <div class="line"></div>
+        <div class="steps_item">
+          <van-image width="40rpx" height="40rpx" src="{{driverData.taskPlanState > 24? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}" />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData.driverToEndPositionTime || '' }}</text>
+              <text>作业开始</text>
+            </div>
+          </div>
+        </div>
+        <div class="line"></div>
+        <div class="steps_item">
+          <van-image width="40rpx" height="40rpx" src="{{driverData.taskPlanState > 25? '/static/images/icon_step_solid.png': '/static/images/icon_step_void.png'}}" />
+          <div class="steps_item_content">
+            <div class="steps_item_content_left">
+              <text>{{ driverData.driverToCompleteTime || '' }}</text>
+              <text>作业结束</text>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- <movable-area class="slider" style="width:{{area_width}}%">
+      <div class="text">{{ textStr }}</div>
+      <div class="side" :style="{ width: sideWeight + 120 + 'rpx' }"></div>
+      <movable-view class="box" inertia :friction="1" style="width:{{box_width}}rpx" direction="horizontal" :x="x" bindchange="drag" bindtouchend="dragOver">
+        <van-image width="44rpx" height="38rpx" src="/static/images/icon_slider.png" />
+      </movable-view>
+    </movable-area> -->
+      <div class="slider" @click="dragOver">
+        <div class="text">{{ textStr }}</div>
+      </div>
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core';
+  import {
+    taskPlanStateEnum
+  } from '@/enums';
+  import store from '@/store';
+  import {
+    mapMutations
+  } from '@wepy/x';
+  var coord = 0;
+  wepy.page({
+    store,
+    data: {
+      taskId: 0,
+      timer: null,
+      countdownStr: '',
+      isOvertime: false,
+      birpx: 0,
+      driverData: {},
+      sideWeight: 0,
+      x: 0,
+      area_width: 96, //可滑动区域的宽，单位是百分比，设置好后自动居中
+      box_width: 140, //滑块的宽,单位是 rpx
+      maxNum: 0, //验证成功时的坐标，不需要设置，代码自动计算；
+    },
+    onUnload() {
+      clearInterval(this.timer);
+      this.setDetailApplyDo();
+      this.timer = null;
+    },
+    onLoad({
+      taskId
+    }) {
+      this.taskId = taskId;
+      var that = this;
+      wx.getSystemInfo({
+        success: function(res) {
+          // 像素比
+          that.birpx = res.windowWidth / 375;
+          var n = Math.floor(
+            (res.windowWidth * that.area_width) / 100 -
+            (that.box_width / 2) * that.birpx
+          );
+          that.maxNum = Math.floor(n * that.birpx);
+        },
+      });
+      this.init();
+    },
+    onShow() {
+      this.$wx.setData({
+        x: 0,
+        maxNum: 0,
+      });
+    },
+    computed: {
+      textStr() {
+        let state = this.driverData.taskPlanState;
+        let str = '开始执行';
+        if (state === 22) {
+          str = '开始执行';
+        } else if (state === 23) {
+          str = '前往起始地';
+        } else if (state === 24) {
+          str = '作业开始';
+        } else if (state === 25) {
+          str = '作业结束';
+        } else if (state === 26) {
+          str = '完成任务';
+        }
+        return str;
+      },
+    },
+    methods: {
+      ...mapMutations(['setDetailApplyDo']),
+      makePhoneCall(phone) {
+        phone && wx.makePhoneCall({
+          phoneNumber: phone
+        })
+      },
+      init() {
+        this.$wx.setData({
+          x: 0,
+          maxNum: 0,
+        });
+        this.getDriverTaskState();
+        this.driverLocationRecord();
+        this.timer = setInterval(() => {
+          this.driverLocationRecord();
+        }, 30000);
+      },
+      driverLocationRecord() {
+        let that = this
+        wx.getLocation({
+          type: 'wgs84',
+          success: (res) => {
+            let {
+              longitude,
+              latitude
+            } = res;
+            let location = `${longitude},${latitude}`;
+            wepy.$api('app/forkliftDriver/driverLocationRecord', {
+              location,
+              taskId: this.taskId,
+            });
+          },
+          fail(err) {
+            // wepy.$showToast('获取当前地理位置失败')
+            clearInterval(that.timer);
+            that.timer = null;
+          },
+        });
+      },
+      getDriverTaskState() {
+        wepy.$loading();
+        wepy
+          .$api('app/forkliftDriver/getDriverTaskState', {
+            taskId: this.taskId,
+          })
+          .then((res) => {
+            this.driverData = res;
+            this.driverData.taskPlanStateName = taskPlanStateEnum(
+              this.driverData.taskPlanState
+            );
+            wx.hideToast();
+          });
+      },
+      setDriverTaskRecord() {
+        wepy.$loading();
+        let req = {
+          destinationGpsId: 0,
+          id: this.taskId,
+          taskType: this.driverData.taskPlanState + 1,
+        };
+        wepy.$api('app/forkliftDriver/setDriverTaskRecord', req).then((res) => {
+          this.$wx.setData({
+            x: 0,
+            maxNum: 0,
+          });
+          this.getDriverTaskState();
+        });
+      },
+      drag(e) {
+        coord = Math.floor(e.x * this.birpx);
+        this.$wx.setData({
+          sideWeight: (e.x * 2) / this.birpx,
+        });
+      },
+      dragOver(e) {
+        // if (coord >= this.maxNum) {
+          if (this.driverData.taskPlanState === 26) {
+            this.setDetailApplyDo({
+              addressName: this.driverData.endAddressName,
+              destinationGpsId: this.driverData.endAddressId
+            });
+            wx.navigateTo({
+              url: `/pages/forkerLeft/driverAddressMassage?id=${this.taskId}&realJobQuantity=${this.driverData.jobQuantity}`,
+            });
+          } else {
+            this.setDriverTaskRecord();
+          }
+        // } else {
+        //   this.$wx.setData({
+        //     x: 0,
+        //   });
+        // }
+      },
+    },
+  });
+</script>
+
+<config>
+{
+  navigationBarTitleText:'执行任务',
+      usingComponents: {
+          "van-icon": "module:@vant/weapp/dist/icon/index",
+          "van-image": "module:@vant/weapp/dist/image/index",
+          "van-button": "module:@vant/weapp/dist/button/index"
+
+    }
+}
+</config>
+
+<style lang="less" scoped>
+  .driverTaskState_page {
+    position: relative;
+    height: 100%;
+    background: #fff;
+  }
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .wrap {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 180rpx;
+    overflow-y: scroll;
+    padding-bottom: 20rpx;
+  }
+  .car_info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 98rpx;
+    font-size: 22rpx;
+    background: #fff;
+    padding: 0 24rpx;
+    border-top:1rpx solid #e1e5ee; 
+    box-shadow: 0px 2px 10px 0px #e1e5ee;
+    .car_info_sw {
+      display: flex;
+      align-items: center;
+    }
+    .car_info_s {
+      display: flex;
+      align-items: stretch;
+      font-size: 22rpx;
+      margin-left: 15rpx;
+    }
+  }
+  .car_info_left,
+  .car_info_right {
+    display: flex;
+    align-items: center;
+  }
+  .car_info_right {
+    margin-left: 20rpx;
+    padding-left: 20rpx;
+    border-left: 2rpx solid #ececec;
+    &_t {
+      font-size: 24rpx;
+      font-weight: 400;
+      color: #83899a;
+      line-height: 34rpx;
+      padding-left: 10rpx;
+    }
+  }
+  .tast_info {
+    padding: 10rpx 24rpx 0;
+    &_listName {
+      font-size: 44rpx;
+      font-weight: bold;
+      color: #2b2b2b;
+      margin-bottom: 10rpx;
+      line-height: 60rpx;
+    }
+    &_deptName {
+      margin-bottom: 10rpx;
+      font-size: 24rpx;
+      color: #8e9298;
+      line-height: 34rpx;
+    }
+    &_footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 30rpx 0;
+      font-size: 24rpx;
+      .btn {
+        width: 174rpx;
+        height: 70rpx !important;
+        padding: 0 10rpx;
+        font-size: 24rpx;
+        line-height: 70rpx !important;
+        border-radius: 8rpx;
+      }
+    }
+  }
+  .steps {
+    margin-top: 30rpx;
+    padding: 0 24rpx;
+    &_item {
+      display: flex;
+      align-items: center;
+      &_content {
+        flex: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-left: 12rpx;
+        padding-bottom: 10rpx;
+        &_left {
+          flex: auto;
+          font-weight: bold;
+          font-size: 38rpx;
+          &>text {
+            padding-right: 10rpx;
+          }
+          text:nth-of-type(1) {
+            display: inline-block;
+            width: 200rpx;
+          }
+        }
+        &_right {
+          flex: auto;
+          font-size: 24rpx;
+          text-align: right;
+          color: #8e9298;
+        }
+      }
+    }
+  }
+  .line {
+    width: 4rpx;
+    height: 64rpx;
+    background: #ececec;
+    margin-left: 16rpx;
+  }
+  .slider {
+    position: absolute;
+    width: 100%;
+    left: 0;
+    right: 0;
+    height: 96rpx;
+    bottom: 20rpx;
+    margin: 0 auto;
+    background: #252b3b;
+    border-radius: 8rpx;
+    .text {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 96rpx;
+      text-align: center;
+      line-height: 96rpx;
+      z-index: 4;
+      color: #fff;
+    }
+    .side {
+      top: 0;
+      left: 0;
+      position: absolute;
+      height: 100%;
+      background: #005bac;
+      color: #fff;
+      z-index: 3;
+      border-radius: 8rpx;
+    }
+  }
+  .box {
+    width: 140rpx;
+    height: 96rpx;
+    background: #005bac;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+    border-radius: 8rpx;
+  }
+  .slider{
+    background-color: #005bac;
+    width: 700rpx;
+  }
+</style>

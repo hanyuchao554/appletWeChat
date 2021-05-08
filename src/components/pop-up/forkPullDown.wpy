@@ -1,0 +1,129 @@
+<template>
+  <div class="pop_up_wrap">
+    <div>
+      <div class="prop_up_title">{{title}}</div>
+      <div class="search" v-if="hasSearch">
+        <div class="icon">
+          <van-icon name="search" />
+        </div>
+        <input type="text" value="{{searchData}}" placeholder="{{placeholder}}" placeholder-class="placeholder" bindinput="onChage" />
+      </div>
+      <!-- <van-search v-if="hasSearch" background="#fff" @change="onChage" placeholder="{{placeholder}}" /> -->
+    </div>
+    <div class="prop_up_item_group" v-if="requestData">
+      <div class="prop_up_item" @click="onSelect(item)" v-for="item in searchData ? searchList : dataList" >
+          {{ item.paramValue }}
+          <!-- <div class="prop_up_item" @click="onSelect(item)" v-for="item in searchData ? searchList : dataList" >
+            {{ item.paramValue }}
+      </div> -->
+      </div>
+    </div>
+    <div class="prop_up_item_group" v-else>
+      <div class="prop_up_item" @click="onSelect(item)" v-for="item in searchData ? searchList : dataList">
+        {{item}}
+      </div>
+    </div>
+  </div>
+</template>
+
+<config>
+{
+    usingComponents: {
+           "van-icon": "module:@vant/weapp/dist/icon/index"
+    }
+}
+</config>
+
+<script>
+  import wepy from '@wepy/core';
+  wepy.component({
+    props: {
+      hasSearch: {
+        type: Boolean,
+        default: false
+      },
+      placeholder: {
+        type: String,
+        default: '查找'
+      },
+      title: {
+        type: String
+      },
+      requestData: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      }
+    },
+    data: {
+      searchData: '',
+      dataList: [],
+      searchList: [],
+    },
+    attached() {
+      if(this.requestData){
+        this.getTaskCancelReason()
+      }else{
+        this.getGoodsProCode()
+      }
+    },
+    methods: {
+      onSelect(data) {
+        this.$emit('onSelect', data);
+      },
+      onChage(e) {
+        console.log(e)
+        this.searchData = e.$wx.detail.value;
+        let reg = new RegExp(this.searchData);
+        if(this.requestData){
+          this.searchList = this.dataList.filter((item) => reg.test(item.paramValue));
+        }else{
+          console.log('选择工程编号')
+          this.searchList = this.dataList.filter((item) => reg.test(item))
+        }
+        
+      },
+      getGoodsProCode(){
+        wepy.$api('/appPlatform/goods/getGoodsProCodeAndGoodsCode',{}).then((res) =>{
+          this.dataList = res.proCode
+          console.log(this.dataList)
+        })
+      },
+      getTaskCancelReason() {
+        wepy.$api('app/forkPullDown/selByParamKeyOperatorType', this.requestData).then((res) => {
+          this.dataList = res;
+        });
+      }
+    }
+  });
+</script>
+
+<style lang="less" scoped>
+  @import './index.less';
+  .prop_up_item_group {
+    min-height: 400rpx;
+  }
+  
+.search{
+  background:#fff;
+  display:flex;
+  align-items: center;
+  position: relative;
+  padding: 20rpx;
+  .icon{
+    position:absolute;
+    font-size: 32rpx;
+    left:35rpx;
+    top:35rpx;
+  }
+  input{
+    background: #f7f8fa;
+    width: 100%;
+    padding: 12rpx 0 12rpx 60rpx;
+  }
+  .placeholder{
+    font-size: 28rpx;
+  }
+}
+</style>

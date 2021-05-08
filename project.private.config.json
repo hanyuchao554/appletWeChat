@@ -1,0 +1,53 @@
+{
+  "setting": {},
+  "condition": {
+    "plugin": {
+      "list": []
+    },
+    "game": {
+      "list": []
+    },
+    "gamePlugin": {
+      "list": []
+    },
+    "miniprogram": {
+      "list": [
+        {
+          "name": "叉车围栏管理",
+          "pathName": "pages/fencing/fencingList",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "围栏管理",
+          "pathName": "pages/fencing/managementFence",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "关联地点管理",
+          "pathName": "pages/fencing/addres",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "平板车—计划任务",
+          "pathName": "pages/addTask",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "叉车申请",
+          "pathName": "pages/forkerLeft/addTask",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "平板车申请",
+          "pathName": "pages/addTask",
+          "scene": null
+        }
+      ]
+    }
+  }
+}

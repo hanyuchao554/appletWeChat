@@ -1,0 +1,67 @@
+<template>
+    <div class="cancelTaskSuccess_page">
+        <div class="content">
+            <van-image custom-class="icon"
+                       width="150rpx"
+                       height="150rpx"
+                       src="/static/images/icon_success_red.png" />
+            <div class="text">任务已取消</div>
+        </div>
+        <div class="footer footer_btn_d">
+            <van-button custom-class="btn"
+                        color="#005BAC"
+                        @click="submit">我知道了</van-button>
+        </div>
+    </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+
+wepy.page({
+    data: {
+        list: []
+    },
+    methods: {
+        submit() {
+            wx.navigateBack({ delta: getCurrentPages().length - 2 });
+        }
+    }
+});
+</script>
+
+<config>
+{
+  navigationBarTitleText:'任务取消完成',
+      usingComponents: {
+          "van-image": "module:@vant/weapp/dist/image/index",
+          "van-button": "module:@vant/weapp/dist/button/index"
+
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.cancelTaskSuccess_page {
+    background: #fff;
+    height: 100vh;
+}
+
+.content {
+    text-align: center;
+}
+
+.icon {
+    margin-top: 56rpx;
+}
+.text {
+    font-weight: bold;
+    font-size: 40rpx;
+    color: #2b2b2b;
+    line-height: 56rpx;
+    margin-top: 42rpx;
+}
+.footer {
+    margin-top: 72rpx;
+}
+</style>

@@ -1,0 +1,287 @@
+<template>
+  <div class="confirm_page">
+    <div class="content">
+      <div class="wrap">
+        <div class="title margin_bottom_8">
+          <div class="tag">
+            计划任务
+          </div>
+          <div class="title_content">
+            {{ detailApplyDo.jobContentStr }} {{ detailApplyDo.goodsTypeName }}-{{ detailApplyDo.goodsCode }}
+          </div>
+        </div>
+        <div class="font-24 font-color-gray">
+          申请部门: {{ detailApplyDo.applyDeptName }} / {{detailApplyDo.departmentOrAreaDetailStr}}
+        </div>
+      </div>
+      <div class="wrap not-top-padding">
+        <div class="cell">
+          <div>起始时间</div>
+          <div>{{ detailApplyDo._startTime }}</div>
+        </div>
+        <div class="cell">
+          <div>到达时间</div>
+          <div>{{ detailApplyDo._endTime }}</div>
+        </div>
+      </div>
+      <div class="wrap">
+        <div class="wrap_content">
+          <div class="wrap_content_left">
+            <div class="wrap_content_left_t"></div>
+            <div class="wrap_content_left_c"></div>
+            <div class="wrap_content_left_b"></div>
+          </div>
+          <div class="wrap_content_right">
+            <div class="ellipsis">
+              {{ detailApplyDo.startPositionName || '' }}
+            </div>
+            <div class="ellipsis">
+              {{ detailApplyDo.endPositionName || '' }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wrap not-top-padding">
+        <div class="cell">
+          <div class="label">车辆类型</div>
+          <div>
+            <div v-for="item in detailApplyDo._carTypeCountList">
+              {{item}}
+            </div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="label">铲次</div>
+          <div>{{ detailApplyDo.jobQuantity || 0 }} 次</div>
+        </div>
+        <div class="cell">
+          <div class="label">工作内容</div>
+          <div>{{ detailApplyDo.jobContentStr || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">重要程度</div>
+          <div style="color: #bea365">{{ detailApplyDo.importanceStr || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">申请备注</div>
+          <div style="min-height: 150rpx">{{ detailApplyDo.memo }}</div>
+        </div>
+      </div>
+      <div class="wrap not-top-padding">
+        <div class="cell">
+          <div>联系人</div>
+          <div @click="makePhoneCall(detailApplyDo.contactsPhone)">
+            {{ detailApplyDo.contactsName || '' }} {{ detailApplyDo.contactsPhone || '' }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <van-button custom-class="btn"
+                  @click="submitDrafts"
+                  type="default">保存</van-button>
+      <van-button custom-class="btn"
+                  color="#005BAC"
+                  type="default"
+                  @click="submit">提交</van-button>
+    </div>
+  </div>
+</template>
+
+<script>
+import {
+  BaseDataKey
+} from '@/constant';
+import wepy from '@wepy/core';
+import store from '@/store';
+import formatTimeTwo from '@/utils/moment.js';
+import {
+  mapState
+} from '@wepy/x';
+import CommonMixin from '@/mixins/commonMixin.js';
+wepy.page({
+  store,
+  mixins: [CommonMixin],
+  data: {
+    isDisabled: false
+  },
+  computed: mapState(['detailApplyDo']),
+  methods: {
+    submitDrafts() {
+      if (this.isDisabled) return;
+      this.isDisabled = true;
+      wepy.$loading();
+      this.detailApplyDo.applyState = 0;
+      if (this.detailApplyDo.departmentOrArea === 2) {
+        this.$set(this.detailApplyDo, 'tranDeptId', null);
+      } else if (this.detailApplyDo.departmentOrArea === 1) {
+        this.$set(this.detailApplyDo, 'craneAddress', null);
+      }
+      wepy.$api('app/forkliftApply/saveOrSubmitForkApply', this.detailApplyDo)
+        .then((res) => {
+          wx.hideToast();
+          wx.navigateBack({
+            delta: 2
+          });
+        })
+        .finally(() => (this.isDisabled = false));
+    },
+    makePhoneCall(phone) {
+      phone &&
+        wx.makePhoneCall({
+          phoneNumber: phone
+        });
+    },
+    submit() {
+      if (this.isDisabled) return;
+      wepy.$loading();
+      this.isDisabled = true;
+      this.sendForkerLeft();
+    },
+    sendForkerLeft() {
+      this.detailApplyDo.applyState = 1;
+      if (this.detailApplyDo.departmentOrArea === 2) {
+        this.$set(this.detailApplyDo, 'tranDeptId', null);
+      } else if (this.detailApplyDo.departmentOrArea === 1) {
+        this.$set(this.detailApplyDo, 'craneAddress', null);
+      }
+      wepy.$api('app/forkliftApply/saveOrSubmitForkApply', this.detailApplyDo).then((res) => {
+        this.onSuccess(res);
+      });
+    },
+    onSuccess(res) {
+      wx.hideToast();
+      wx.redirectTo({
+        url: `/pages/forkerLeft/taskSuccess?jobNum=${res.requestOddNumber}`
+      });
+    }
+  }
+});
+</script>
+
+<config>
+{
+      navigationBarTitleText:'叉车-计划任务确认',
+      usingComponents: {
+          "van-button": "module:@vant/weapp/dist/button/index"
+
+    }
+}
+</config>
+
+<style lang="less" scoped>
+.confirm_page {
+  padding-top: 20rpx;
+  background: #f3f4f6;
+  .content {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 150rpx;
+    overflow-y: scroll;
+  }
+}
+.footer {
+  display: flex;
+  position: fixed;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  height: 150rpx;
+  padding: 15rpx 24rpx;
+  bottom: 0;
+  box-sizing: border-box;
+  .btn {
+    width: 320rpx;
+    height: 64rpx;
+  }
+}
+.margin_bottom_8 {
+  margin-bottom: 8rpx;
+}
+.not-top-padding {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.title {
+  display: flex;
+  align-items: center;
+  .tag {
+    color: #fff;
+    font-size: 22rpx;
+    padding: 5rpx 10rpx;
+    line-height: 32rpx;
+    border-radius: 5rpx;
+    font-weight: 500;
+    background: #005bac;
+  }
+  &_content {
+    margin-left: 10rpx;
+    font-size: 28rpx;
+    font-weight: 500;
+    color: #2b2b2b;
+    line-height: 40rpx;
+  }
+}
+.wrap {
+  width: 702rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  box-shadow: 0rpx 0rpx 20rpx 0rpx #e1e5ee;
+  border-radius: 8rpx;
+  padding: 26rpx;
+  line-height: 34rpx;
+  box-sizing: border-box;
+  .cell {
+    display: flex;
+    justify-content: space-between;
+    padding: 26rpx 0;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    border-bottom: 2rpx solid #ececec;
+    .label {
+      flex: none;
+      padding-right: 25rpx;
+    }
+  }
+  .cell:last-child {
+    border: transparent;
+  }
+  &_content {
+    display: flex;
+    align-items: center;
+    font-size: 24rpx;
+    &_left {
+      flex: none;
+      &_t {
+        width: 4rpx;
+        height: 4rpx;
+        border: 2rpx solid #005bac;
+        border-radius: 2rpx;
+      }
+      &_c {
+        width: 4rpx;
+        height: 28rpx;
+        background: #005bac;
+        margin: 4rpx 0 4rpx 2rpx;
+      }
+      &_b {
+        width: 4rpx;
+        height: 4rpx;
+        background: #005bac;
+        border: 2rpx solid #005bac;
+        border-radius: 2rpx;
+      }
+    }
+    &_right {
+      width: 75%;
+      padding-left: 20rpx;
+      font-size: 24rpx;
+      line-height: 34rpx;
+      & > view {
+        padding: 5rpx 0;
+      }
+    }
+  }
+}
+</style>
