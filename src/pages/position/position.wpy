@@ -18,7 +18,7 @@
         <div class="icon">
           <van-icon name="search" />
         </div>
-        <input type="text" value="{{searchData}}" placeholder="请输入工程编号" placeholder-class="placeholder" bindinput="onChage" />
+        <input type="text" value="{{searchData}}" placeholder="查找地点" placeholder-class="placeholder" bindinput="onChage" />
       </div>
       <!-- <van-search background="#fff" @change="onChage" placeholder="查找地点" /> -->
     </div>
@@ -54,15 +54,20 @@ wepy.page({
     list: [],
     searchList: [],
     keyMaps: {},
+    index:''//子任务的下标
   },
   onLoad({
     code,
     applyType,
-    type
+    type,
+    index
   }) {
     this.type = Number(type)
     this.applyType = Number(applyType)
+    this.index = index
+    console.log(index)
     this.initPage(code);
+    console.log(index + '副任务的索引')
     this.getAppPlatAddressMassage();
   },
   computed: {
@@ -73,6 +78,9 @@ wepy.page({
   },
   methods: {
     ...mapMutations(['setDetailApplyDo']),
+    /**
+     * 判断类型
+     */
     initPage(data) {
       let title = '';
       switch (data) {
@@ -131,11 +139,17 @@ wepy.page({
       this.mode = mode
       this.getAppPlatAddressMassage()
     },
+    /**
+     * 搜索框当前输入内容
+     */
     onChage(e) {
       this.searchData = e.$wx.detail.value;
       let reg = new RegExp(this.searchData);
       this.searchList = this.list.filter((item) => reg.test(item.addressName));
     },
+    /**
+     * 获取地点列表
+     */
     getAppPlatAddressMassage() {
       let areaId = undefined
       if (this.applyType === 1 && this.detailApplyDo.departmentOrArea === 2) {
@@ -152,9 +166,20 @@ wepy.page({
           this.list = res;
         });
     },
+    /**
+     * 选中列表中的地点
+     */
     onSelect(item) {
-      for (let [k, v] of Object.entries(this.keyMaps)) {
-        this.detailApplyDo[v] = item[k];
+      let index = this.index
+      if(index == 'undefined'){
+        console.log("主任务")
+        for (let [k, v] of Object.entries(this.keyMaps)) {
+            this.detailApplyDo[v] = item[k];
+        }
+      }else{
+        for (let [k, v] of Object.entries(this.keyMaps)) {
+            this.detailApplyDo.intermodalist[index][v] = item[k];
+        }
       }
       this.setDetailApplyDo(this.detailApplyDo);
       wx.navigateBack();

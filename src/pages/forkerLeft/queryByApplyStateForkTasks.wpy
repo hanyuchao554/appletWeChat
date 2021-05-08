@@ -2,31 +2,46 @@
   <div class="taskList_page">
     <!-- 下拉筛选列表 -->
     <div class="header">
-      <div class="header_left">
-        <van-dropdown-menu style="margin-left: 20rpx;" :z-index="9999">
-          <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList">
-            <div class="dropdown_item_cell" @click="onClickDept(undefined)"> 所有部门</div>
-            <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
-          </van-dropdown-item>
-        </van-dropdown-menu>
+      <div class="header_top">
+        <div class="txt">驳运时间</div>
+        <text @click="hasPopUp('isStartTime')">{{detailApplyDo._startTime || '请选择'}}</text> ~ 
+        <text @click="hasPopUp('isEndTime')" class="nth">{{detailApplyDo._endTime || '请选择'}}</text>
+      </div>
+      <div class="header_cont">
+        <div class="header_left">
+          <van-dropdown-menu  :z-index="9999">
+            <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList(4)">
+              <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
+            </van-dropdown-item>
+          </van-dropdown-menu>
+          <van-dropdown-menu  :z-index="9999" class="category">
+            <van-dropdown-item id="deptt" :title="goodsTypeName" @open="getDeptList(3)">
+              <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.goodsTypeName}}</div>
+            </van-dropdown-item>
+          </van-dropdown-menu>
+        </div>
+        <div class="header_right">
+          任务排序
+        </div>
       </div>
     </div>
-    <div class="content"> 
+    <div class="content" :class="{'top': detailApplyDo._startTime}"> 
       <div class="item" v-for="item in list" @click="goToEditForkliftTasks(item)">
         <div>
-          <div class="item_header">
+          <div class="item_header flex">
             <div class="flex">
               <div class="tag" v-if="item.applyStateType === 11 || item.applyStateType === 13" style="background:#005BAC">计</div>
               <div class="tag" v-if="item.applyStateType === 12 || item.applyStateType === 13" style="background:#EFA600">自</div>
-                {{ item.jobContent }} {{item.goodsTypeName}}
+              <div class="txt">{{item.applyDeptName}}</div>
+              <div class="txt">{{item.goodsWeight}}吨</div> 
+              <div class="txt">{{item.importance}}</div>
+              <div @tap.stop="conName(item.contactsPhone)">{{item.contactsName}}</div>
             </div>
-            <div class="" @tap.stop="conName(item.contactsPhone)" :class="{'disabled' : disabled}">{{item.contactsName}}</div>
+            <div class="staffing" v-if="item.tranState === 2">待编制</div>
           </div>
-          <!-- <div class="contName" @click="conName(item.contactsPhone)" :class="{'disabled' : disabled}">联系人：{{item.contactsName}}</div> -->
-          <div class="remark">备注：{{item.memo==null ? '': item.memo}}</div>
-          <div class="item_header_c">
-            {{ item.applyDeptName }}/{{ item.goodsWeight }}吨123/{{ item.startTime }}至{{ item.endTime }}
-          </div> 
+          <div>驳运 {{ item.jobContent }} {{item.goodsTypeName}}</div>
+          <div class="remark">申请备注：{{item.memo==null ? '': item.memo}}</div>
+          <div class="item_header_c">驳运时间：{{ item.startTime }}至{{ item.endTime }}</div> 
         </div>
         <div class="item_content">
           <div class="item_content_left">
@@ -48,15 +63,35 @@
           </div>
           <!-- v-if="item.tranState === 2" -->
           <div class="item_content_right">
-            <div v-if="item.tranState === 2" class="font-color-red">待编制 ></div>
-            <div v-else>
-              <text>编制       ></text>
+            <div> <text>编制       > </text>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <van-popup v-if="popUpTypes.isStartTime" round position="bottom" :show="popUpTypes.isStartTime" @close="colseTime">
+    <time-picker startKey="startTime"
+                  endKey="endTime"
+                  startStrKey="_startTime"
+                  endStrKey="_endTime"
+                  :time="detailApplyDo.startTime"
+                  dataKey="startTime"
+                  @onSelect="colseTime"
+                  @onCancel="colseTime">
+      </time-picker>
+  </van-popup>
+  <van-popup v-if="popUpTypes.isEndTime" round position="bottom" :show="popUpTypes.isEndTime" @close="colseTime">
+    <time-picker startKey="startTime"
+            endKey="endTime"
+            startStrKey="_startTime"
+            endStrKey="_endTime"
+            :time="detailApplyDo.endTime"
+            dataKey="endTime"
+            @onSelect="colseTime"
+            @onCancel="colseTime">
+    </time-picker>
+  </van-popup>
 </template>
 
 <script>
@@ -65,27 +100,34 @@ import wepy from '@wepy/core';
 import formatTimeTwo from '@/utils/moment.js';
 import CommonMixin from '@/mixins/commonMixin.js';
 import store from '@/store';
-import { mapMutations } from '@wepy/x';
+import { mapMutations ,mapState} from '@wepy/x';
 import { applyStateEnum } from '@/enums';
+import addTaskMixin from '@/mixins/addTaskMixin.js';
 wepy.page({
   store,
-  mixins: [CommonMixin],
+  mixins: [CommonMixin ,addTaskMixin],
   data: {
     list: [],
     show: false,
     realTime:null,
-    currDeptName:'所有部门',
-    deptList:undefined
+    currDeptName:'申请部门',
+    goodsTypeName:'驳运类别',
+    deptList:undefined,
+    deptId:undefined,
+    goodsTypeId:undefined,
+  },
+  computed:{
+    ...mapState(['detailApplyDo']),
   },
   onShow() {
     this.getTaskList();
     let that = this
-      this.realTime= setInterval(function(){
-        that.getTaskList()
-        wx.showToast({
-          title: '数据已更新！'
-        })
-      },30000)
+      // this.realTime= setInterval(function(){
+      //   that.getTaskList()
+      //   wx.showToast({
+      //     title: '数据已更新！'
+      //   })
+      // },30000)
   },
   onUnload() {
     this.setDetailApplyDo();
@@ -112,7 +154,11 @@ wepy.page({
       wx.showLoading()
       wepy.$api('app/forkDriverTask/queryByApplyStateForkTasks', {
         applyStateList: [2, 11, 12, 13, 21],
-        deptId: this.deptId || undefined
+        deptId: this.deptId || undefined ,//申请部门id
+        goodsTypeId:this.goodsTypeId || undefined,
+        startTimeStamp:this.detailApplyDo.startTime || undefined,
+        endTimeStamp:this.detailApplyDo.endTime || undefined,
+
       }).then((res) => {
         this.list = [];
         if (res && res.length) {
@@ -141,25 +187,40 @@ wepy.page({
       });
     },
     // 获取到筛选条件列表
-      getDeptList() {
-      wepy.$api('/app/forkPullDown/listDeptDownList', {
-        applyType: 1,
-        type:1
+    getDeptList(applyType) {
+      wepy.$api('/app/forkPullDown/getAllDrawUpBox', {
+        type:2,
+        applyType: applyType,
+        applyCarType:1,
       }).then(res => {
         this.deptList = res
       })
+
     },
     onClickDept(item) {
-      this.deptId = item ? item.deptId : undefined;
-      this.currDeptName = item ? item.deptName : '所有部门';
+      console.log(item)
+      this.deptId = item.id ? item.id : undefined;
+      this.goodsTypeId = item.goodsTypeId ? item.goodsTypeId : undefined
+      this.goodsTypeName = item.goodsTypeName ? item.goodsTypeName : '驳运类别'
+      this.currDeptName = item.deptName ? item.deptName : '申请部门';
       this.$wx.selectComponent('#dept').toggle(false)
+      this.$wx.selectComponent('#deptt').toggle(false)
       this.getTaskList();
     },
     conName(val){
       wx.makePhoneCall({
         phoneNumber:val
       })
-    }
+    },
+    //指定弹出层展示
+    colseTime() {
+      this.hasInput = false;
+      this.popUpTypes.isEndTime = false;
+      this.popUpTypes.isStartTime = false;
+      if(this.detailApplyDo.startTime && this.detailApplyDo.endTime){
+        this.getTaskList()
+      }
+    },
   }
 });
 </script>
@@ -172,7 +233,10 @@ wepy.page({
   usingComponents:{
     "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
     "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
-     "van-button": "module:@vant/weapp/dist/button/index",
+    "van-button": "module:@vant/weapp/dist/button/index",
+    "time-picker": "~@/components/pop-up/time-picker",
+    "van-popup": "module:@vant/weapp/dist/popup/index"
+
   }
 }
 </config>
@@ -190,25 +254,46 @@ view.van-dropdown-menu{
   padding: 20rpx;
 }
 .header {
-  display: flex;
   position: fixed;
   width: 100%;
-  height: 100rpx;
-  justify-content: space-between;
-  align-items: center;
   font-size: 32rpx;
   background: #fff;
-  padding: 0 24rpx;
+  padding: 0 50rpx;
   box-sizing: border-box;
-  &_left {
+    &_top{
     display: flex;
-    align-items: center;
+    margin-left: 20rpx;
+    text{
+      display:block;
+      margin: 0 15rpx;
+      padding: 0 20rpx;
+      background: #f2f2f2;
+      color: #aaa;
+      font-size: 22rpx;
+      line-height: 1.5rem;
+      border-radius:10rpx; 
+    }
+  }
+  .header_cont{
+    display:flex;
+    justify-content: space-between;
   }
   &_left {
-    width: 25%;
-  }
-  &_center {
-    width: 50%;
+      width:67%;
+      display: flex;
+      justify-content:space-between;
+      .category{
+        margin-right: 30rpx;
+      }
+  }    
+  &_right{
+    background: #005cad;
+    color: #fff;
+    font-size:26rpx;
+    border-radius:10rpx; 
+    height: 40rpx;
+    padding: 8rpx 20rpx 5rpx;
+    margin-top: 15rpx;
   }
 }
 .flex {
@@ -217,7 +302,10 @@ view.van-dropdown-menu{
 .taskList_page {
   background: #f3f4f6;
   .content {
-    padding-top: 120rpx;
+    padding-top: 150rpx;
+  }
+  .top{
+    padding-top: 190rpx;
   }
 }
 .item {
@@ -228,12 +316,17 @@ view.van-dropdown-menu{
   border-radius: 8rpx;
   padding: 28rpx 26rpx;
   box-sizing: border-box;
+  font-size: 28rpx;
   &_header {
     display: flex;
     justify-content: space-between;
     margin-bottom: 8rpx;
     font-size: 28rpx;
     line-height: 40rpx;
+    .staffing{
+      font-size: 24rpx;
+      color: #d9001b;
+    }
     .tag {
       color: #fff;
       font-size: 22rpx;
@@ -243,9 +336,12 @@ view.van-dropdown-menu{
       font-weight: 500;
       margin-right: 10rpx;
     }
+    .txt{
+      margin-right: 35rpx;
+    }
   }
   &_header_c {
-    font-size: 26rpx;
+    font-size: 28rpx;
     color: #000;
     line-height: 1.2rem;
   }

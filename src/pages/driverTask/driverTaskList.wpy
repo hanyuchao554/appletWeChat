@@ -23,7 +23,7 @@
         <div>
           <div class="car_info_s">
             <van-icon color="#8E9298" name="clock-o" size="26rpx" />
-            <div style="margin-left: 10rpx">耗时123:{{ item.totalTime }}小时</div>
+            <div style="margin-left: 10rpx">耗时:{{ item.totalTime }}小时</div>
           </div>
           <div class="car_info_s car_info_r">
             <van-icon color="#8E9298" name="notes-o" size="26rpx" />
@@ -40,15 +40,21 @@
           <div class="item_header">
             <div class="item_header_left">
               <div class="tag" style="background:{{subItem.requestTypeBg}}">{{ subItem.reqStr }}</div>
-              <div>{{ subItem.listName  }}</div>
+              <div class="tag tags" v-if="subItem.isIntermodal == 1">联</div>
+              <div class="item_header_left_cont">
+                <div class="txt">{{subItem.deptName}}</div>
+                <div class="txt">{{subItem.goodsTotalWeight / 1000}}吨</div>
+                <div class="txt">{{subItem.important || ''}}</div>
+              </div>
             </div>
-            <div class="contName" catchtap="conName(subItem.contPhon,2)"> {{subItem.contName}} </div>
+            <div class="contName" catchtap="conName(subItem.contPhon,2)">
+              <van-image width="26rpx" height="30rpx" src="/static/images/icon_phone.png" />
+              <text>{{subItem.contName}}</text>
+            </div>
           </div>
-          <!-- <div class="contName" catchtap="conName(subItem.contPhon,2)">联系人：{{subItem.contName}}</div> -->
+          <div>{{ subItem.listName  }}</div>
           <div class="remark">备注：{{subItem.memo==null ? '': subItem.memo}}</div>
-          <div class="item_header_c">
-            {{ subItem.deptName }}/{{ subItem.goodsWeight / 1000 }}吨/{{ subItem._startTimeStamp }}至{{ subItem._endTimeStamp }}
-          </div>
+          <div class="item_header_c">驳运时间：{{ subItem._startTimeStamp }}至{{ subItem._endTimeStamp }}</div>
         </div>
         <div class="item_content">
           <div class="item_content_left">
@@ -59,12 +65,8 @@
                 <div class="common_step_left_b"></div>
               </div>
               <div class="common_step_center">
-                <div class="ellipsis">
-                  起始地：{{ subItem.startPositionName }}
-                </div>
-                <div class="ellipsis">
-                  目的地：{{ subItem.endPositionName }}
-                </div>
+                <div class="ellipsis">起始地：{{ subItem.startPositionName }}</div>
+                <div class="ellipsis">目的地：{{ subItem.endPositionName }}</div>
               </div>
             </div>
           </div>
@@ -72,6 +74,26 @@
             <text class="font-color-deep-red">{{ subItem.taskStateValue }}</text>
             <text style="margin-left: 8rpx; color: #2b2b2b">></text>
           </div>
+        </div>
+        <div class="item_content child" v-for="(k,j) in subItem.intermodalTaskVoList">
+          <div class="itme_content_hde">{{k.listName}}</div>
+          <div class="item_content_left">
+            <div class="common_step">
+              <div class="common_step_left">
+                <div class="common_step_left_t"></div>
+                <div class="common_step_left_c"></div>
+                <div class="common_step_left_b"></div>
+              </div>
+              <div class="common_step_center">
+                <div class="ellipsis">起始地：{{ k.startPositionName }}</div>
+                <div class="ellipsis">目的地：{{ k.endPositionName }}</div>
+              </div>
+            </div>
+          </div>
+          <!-- <div class="item_content_right">
+            <text class="font-color-deep-red">{{ subItem.taskStateValue }}</text>
+            <text style="margin-left: 8rpx; color: #2b2b2b">></text>
+          </div> -->
         </div>
       </div>
     </div>
@@ -169,6 +191,7 @@
       value:[],
       // isDaytime: true,
       timestamp:'',// 时间戳
+      location:''//位置信息
     },
     onHide(){
       clearInterval(this.realTime)
@@ -176,8 +199,11 @@
     onUnload(){
       clearInterval(this.realTime)
     },
+    onLoad(){
+       this.getLocation()
+    },
     onShow() {
-      this.getDriverTaskList();
+      this.getLocation()
       let that = this
       this.realTime = setInterval(function(){
         that.getDriverTaskList()
@@ -198,12 +224,34 @@
     },
     //监听用户下拉事件
     onPullDownRefresh(){
-      this.getDriverTaskList();
-      wx.showToast({
-        title:'数据已更新',
-      })
+      if(this.location){
+        this.getDriverTaskList();
+        wx.showToast({
+          title:'数据已更新',
+        })
+      }else{
+        wepy.$showToast('获取当前地理位置失败')
+        wx.stopPullDownRefresh()
+      }
     },
     methods: {
+      getLocation(){
+        let that = this
+        wx.getLocation({
+          type: 'wgs84', // 默认为 wgs84 返回 gps 坐标，gcj02 返回可用于 wx.openLocation 的坐标
+          success: function(res){
+              let {
+                longitude,
+                latitude
+              } = res
+              that.location = `${longitude},${latitude}`
+              that.getDriverTaskList();
+          },
+          fail: function() {
+             wepy.$showToast('获取当前地理位置失败')
+          },
+        })
+      },
       setRequestTypeList(item) {
         let type = item.requestType;
         switch (type) {
@@ -356,7 +404,8 @@
     "van-icon": "module:@vant/weapp/dist/icon/index",
     "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
     "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
-    "van-popup": "module:@vant/weapp/dist/popup/index"
+    "van-popup": "module:@vant/weapp/dist/popup/index",
+    "van-image": "module:@vant/weapp/dist/image/index",
   }
 }
 </config>
@@ -430,23 +479,36 @@ view.van-dropdown-menu{
     display: flex;
     justify-content:space-between;
     font-size: 28rpx;
-    .item_header_left{
-      display: flex
-    }
-    .tag {
-      color: #fff;
-      font-size: 22rpx;
-      padding: 5rpx 10rpx;
-      line-height: 32rpx;
-      border-radius: 5rpx;
-      font-weight: 500;
-      margin-right: 10rpx;
+    &_left{
+      display: flex;
+      .tag {
+        color: #fff;
+        font-size: 22rpx;
+        padding: 5rpx 10rpx;
+        line-height: 32rpx;
+        border-radius: 5rpx;
+        font-weight: 500;
+        margin-right: 10rpx;
+      }
+      .tags{
+        background: #70b603;
+      }
+      &_cont{
+        display: flex;
+        .txt{
+          margin-right:30rpx;
+        }
+      }
     }
   }
   .contName{
     font-size: 28rpx;
     display: flex;
+    align-items: center;
     justify-content: right;
+    text{
+      margin-left: 20rpx;
+    }
   }
   .remark{
     font-size: 28rpx;
@@ -490,8 +552,16 @@ view.van-dropdown-menu{
 }
 .relevance{
   font-size: 26rpx;
+  display: flex;
+  justify-content:space-between;
+  padding: 0 80rpx;
   .driverName{
     margin-right: 100rpx;
   }
+}
+.child{
+  display:inline-block;
+  width: 100%;
+  border-top: 1rpx solid #e1e1e1;
 }
 </style>

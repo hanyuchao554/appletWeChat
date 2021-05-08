@@ -61,6 +61,7 @@ wepy.app({});
         'pages/driverTask/driverAddressMassage',
         'pages/driverTask/driverStartPlatformOtherTask',
         'pages/driverTask/driverTaskState',
+        'pages/driverTask/selectCarnumber',
         'pages/taskList/organizationTaskList',
         'pages/taskList/platformApplyDriverTaskList',
         'pages/manualOrganizationTime/manualOrganizationTime',
@@ -76,6 +77,7 @@ wepy.app({});
         'pages/addTask',
         'pages/draftsTaskList/draftsTaskList',
         'pages/taskList/completeTaskList',
+        "pages/taskList/trackplayback",
         'pages/platformApply/confirm',
         'pages/lighterage/lighterage',
         'pages/taskSuccess/taskSuccess',
@@ -84,6 +86,7 @@ wepy.app({});
         'pages/fencing/fencingList',
         'pages/fencing/managementFence',
         'pages/fencing/addres',
+        'pages/taskList/new_task',
         'pages/login/login'
     ],
     subpackages: [

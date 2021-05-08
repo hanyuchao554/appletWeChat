@@ -41,7 +41,8 @@
         "destinationGpsId": 0,
         "id": 0,
         "realJobQuantity": null,
-        "taskType": 27
+        "taskType": 27,
+        
       },
     },
     onLoad({

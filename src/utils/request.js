@@ -4,7 +4,7 @@ import {
 } from '@/constant'
   const Host = 'http://39.100.7.84:8090/'
 
-// const Host = 'https://cssc.100mhb.com/'
+  // const Host = 'https://cssc.100mhb.com/'
 
 function getBaeData() {
   let baseData = wx.getStorageSync(BaseDataKey) || {}

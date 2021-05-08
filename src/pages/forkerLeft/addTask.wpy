@@ -33,6 +33,12 @@
       </van-cell-group>
       <van-cell-group custom-class="item">
         <van-cell required
+                  @click="hasPopUp('isJobContent')"
+                  title="船号"
+                  :value="detailApplyDo.shipNumber || '请选择'" />
+      </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell required
                   @click="goToLighterage"
                   title="驳运对象"
                   :value="detailApplyDo.lighterageStr || '请选择'" />
@@ -81,8 +87,7 @@
                   :value="detailApplyDo._endTime || '请选择'" />
       </van-cell-group>
       <van-cell-group custom-class="item">
-        <van-cell @click="hasPopUp('isJobContent')"
-                  required
+        <van-cell required
                   title="工作内容"
                   :value="detailApplyDo.jobContentStr || '请选择'" />
       </van-cell-group>
@@ -90,7 +95,7 @@
         <van-cell @click="hasPopUp('isContacts')"
                   required
                   title="联系人"
-                  :value="detailApplyDo.contactsName || '请选择'" />
+                  :value="detailApplyDo.contastsName || '请选择'" />
       </van-cell-group>
       <van-cell-group custom-class="item">
         <van-cell @click="hasPopUp('isImportance')"
@@ -178,8 +183,9 @@
                position="bottom"
                :show="popUpTypes.isJobContent"
                @close="initPopUp">
-      <forkPullDown title="选择工作内容"
-                    :requestData="jobContentReq"
+      <forkPullDown title="选择船号"
+                    :requestData=""
+                    :hasSearch="true"
                     @onSelect="onSelectJobContent"></forkPullDown>
     </van-popup>
     <van-popup v-if="popUpTypes.isImportance"
@@ -199,7 +205,7 @@
                position="bottom"
                :show="popUpTypes.isContacts"
                @close="initPopUp">
-      <apply-contasts @onSelect="onSelectContasts"></apply-contasts>
+      <apply-contasts @onSelect="onSelectContasts" :Type="1"></apply-contasts>
     </van-popup>
     <!-- 申请数量 -->
     <van-popup v-if="popUpTypes.isCarTypeCount"
@@ -229,9 +235,9 @@ const rules = {
   goodsType: {
     message: '请选择驳运对象',
   },
-  // goodsCode: {
-  //   message: '请选择物品品类',
-  // },
+  shipNumber: {
+    message: '请选择船号',
+  },
   carTypeCount: {
     message: '请选择申请数量',
   },
@@ -280,6 +286,7 @@ const defaultUpData = {
   startPositionId: '',
   startTime: '',
   tranDeptId: '',
+  shipNumber:'',
 };
 wepy.page({
   store,
@@ -303,8 +310,14 @@ wepy.page({
     }
   },
   onShow() {
-    this.getApplyContasts();
+    // this.getApplyContasts();
     this.initdetailApplyDo();
+    // this.$set(this.detailApplyDo, 'jobContentStr', '驳运');
+    this.getjobcontent()
+
+    this.getDefaultContact()
+
+    // this.popUpTypes.isContacts = true
   },
   onUnload() {
     this.isOpenAdd = false
@@ -313,6 +326,13 @@ wepy.page({
   computed: mapState(['detailApplyDo']),
   methods: {
     ...mapMutations(['setDetailApplyDo']),
+    getjobcontent(){
+      wepy.$api('app/forkPullDown/selByParamKeyOperatorType',this.jobContentReq).then((res)=>{
+        console.log(res[0].paramValue)
+        this.$set(this.detailApplyDo, 'jobContent', res[0].confId);
+        this.$set(this.detailApplyDo, 'jobContentStr', res[0].paramValue);
+      })
+    }, 
     valid() {
       return wepy.$valid.handleValid(rules, this.detailApplyDo);
     },
@@ -330,8 +350,10 @@ wepy.page({
       this.$set(this.detailApplyDo, 'jobQuantity', e.$wx.detail.value);
     },
     onSelectJobContent(data) {
-      this.$set(this.detailApplyDo, 'jobContent', data.confId);
-      this.$set(this.detailApplyDo, 'jobContentStr', data.paramValue);
+      console.log(data)
+      this.$set(this.detailApplyDo , 'shipNumber',data)
+      // this.$set(this.detailApplyDo, 'jobContent', data.confId);
+      // this.$set(this.detailApplyDo, 'jobContentStr', data.paramValue);
       this.initPopUp();
     },
     onSelectimportance(data) {
@@ -365,17 +387,32 @@ wepy.page({
       this.popUpTypes.isEndTime = false;
       this.popUpTypes.isStartTime = false;
     },
-    getApplyContasts() {
-      if (this.detailApplyDo.contactsId) return;
-      wepy.$api('app/platform/contasts/getApplyContasts', {}).then((res) => {
-        let baseData = wepy.$auth.getBaseUser();
-        let flag = res.find((item) => item.contNumber === baseData.username);
-        if (flag) {
-          this.detailApplyDo.contactsId = flag.contId;
-          this.$set(this.detailApplyDo, 'contactsName', flag.contName);
-        }
-      });
+    //app/platform/contasts/getDefaultContact
+    // 获取上一单的联系人
+    getDefaultContact(){
+      wepy.$api('app/platform/contasts/getDefaultContact',{
+        applyCarType:1,
+      }).then((res)=>{
+        console.log(res)
+        this.$set(this.detailApplyDo, 'contactsId', res.contId);
+        this.$set(this.detailApplyDo, 'contPhone', res.contPhone);
+        this.$set(this.detailApplyDo, 'contastsName', res.contName);
+        this.$set(this.detailApplyDo, 'contastsNumber',res.contNumber)
+      })
     },
+    // 获取默认联系人
+    // getApplyContasts() {
+    //   if (this.detailApplyDo.contactsId) return;
+    //   wepy.$api('app/platform/contasts/getApplyContasts', {}).then((res) => {
+    //     let baseData = wepy.$auth.getBaseUser();
+    //     console.log(res)
+    //     let flag = res.find((item) => item.contNumber === baseData.username);
+    //     if (flag) {
+    //       this.detailApplyDo.contactsId = flag.contId;
+    //       this.$set(this.detailApplyDo, 'contactsName', flag.contName);
+    //     }
+    //   });
+    // },
     getDepartment() {
       if (this.detailApplyDo.tranDeptId) return;
       wepy.$api('app/forkPullDown/forkApplyDeptDetail', {}).then((res) => {
@@ -436,9 +473,9 @@ wepy.page({
         })
         .finally(() => (this.isDisabled = false));
     },
-    goToPosition(target, type) {
+    goToPosition(target, type,index) {
       wx.navigateTo({
-        url: `/pages/position/position?code=${target}&applyType=1&type=${type}`,
+        url: `/pages/position/position?code=${target}&applyType=1&type=${type}&index=${index}`,
       });
     },
     goToLighterage() {

@@ -5,7 +5,30 @@
             <div class="icon">
             <van-icon name="search" />
             </div>
-            <input type="text" value="{{searchData}}" placeholder="请输入工程编号" placeholder-class="placeholder" bindinput="onChage" />
+            <input type="text" value="{{searchData}}" placeholder="请输入联系人姓名" placeholder-class="placeholder" bindinput="onChage" />
+      </div>
+      <div v-if="Type == 1">
+        <div class="addcontacts" v-if="addshow" @click="add">
+          <div class="icon">
+            <van-icon name="add-o" />
+          </div>
+          <div class="txt">新建联系人</div>
+        </div>
+        <div class="addcont" v-else>
+          <div>
+            <input  type="text" value="{{contacts.contName}}" bindinput="oncontName" placeholder="请输入联系人姓名" placeholder-class="name"/>
+          </div>
+          <div>
+            <input maxlength="11" type="number" value="{{contacts.contPhone}}" bindinput="oncontPhone"  placeholder="请输入联系方式"/>
+          </div>
+          <div>
+            <input type="text" value="{{contacts.contNumber}}" bindinput="oncontNumber"  placeholder="请输入联系人工号"/>
+          </div>
+          <div class="btn">
+            <div class="confirm" @click="confirm(1)">确定</div>
+            <div class="confirm cancel" @click="cancel(0)">删除</div>
+          </div>
+        </div>
       </div>
     <div class="prop_up_item_group">
       <div class="prop_up_item"
@@ -31,14 +54,32 @@ import { mapState, mapMutations } from '@wepy/x';
 import store from '@/store';
 wepy.component({
     store,
+    props:{
+      Type:{
+        type:String,
+      }
+    },
     data: {
         searchData: '',
         dataList: [],
         searchList: [],
-        dataKey: 'contactsId'
+        dataKey: 'contactsId',
+        addshow:true,
+        contacts:{
+          contName:'',
+          contPhone:'',
+          contNumber:'',
+          contId:''
+        } //contName
     },
     created() {
-        this.getAppDepartment();
+        this.contacts.type = 3
+        this.contacts.contId = this.detailApplyDo.contId
+        this.getUpdateContact()
+        // this.init()
+        if(this.detailApplyDo.isSelect == 0){
+          this.init()
+        }
     },
     computed: {
         ...mapState(['detailApplyDo']),
@@ -46,25 +87,109 @@ wepy.component({
             return wepy.$auth.getUserId();
         }
     },
+    attached(){
+      console.log(this.Type)
+      this.getAppDepartment(this.Type)
+    },
     methods: {
         ...mapMutations(['setDetailApplyDo']),
-        onSelect(data) {
-            this.detailApplyDo.contactsId = data.contId;
-            this.detailApplyDo.contPhone = data.contPhone;
-            this.detailApplyDo.contastsName = data.contName;
-            this.setDetailApplyDo(this.detailApplyDo);
-            this.$emit('onSelect', data);
+        init(){
+          if(this.detailApplyDo.contId){
+           this.addshow = false
+          }else{
+            console.log('id不存在')
+          }
+          this.contacts.contName = this.detailApplyDo.contastsName
+          this.contacts.contPhone = this.detailApplyDo.contPhone
+          this.contacts.contNumber = this.detailApplyDo.contastsNumber
+          console.log(this.contacts)
         },
+        //用户点击选择联系人
+        onSelect(data) {
+              this.$emit('onSelect', data);
+              this.detailApplyDo.contactsId = data.contId;
+              this.detailApplyDo.contPhone = data.contPhone;
+              this.detailApplyDo.contastsName = data.contName;
+              this.$set(this.detailApplyDo , 'isSelect' , 1)
+              this.setDetailApplyDo(this.detailApplyDo);
+            
+        },
+        // 点击选中的联系人, /app/platform/contasts/selectContactStatus
+        selectContactStatus(contId){
+          wepy.$api('/app/platform/contasts/selectContactStatus',{
+            contId:contId
+          }).then((res)=>{
+            this.detailApplyDo.isSelect = res.isSelect;
+          })
+        },
+        //搜索联系人
         onChage(e) {
             this.searchData = e.$wx.detail.value;
             let reg = new RegExp(this.searchData);
             this.searchList = this.dataList.filter((item) => reg.test(item.contName));
         },
         // 获取联系人
-        getAppDepartment() {
-            wepy.$api('app/platform/contasts/getApplyContasts', {}).then((res) => {
+        getAppDepartment(type) {
+            wepy.$api('app/platform/contasts/getApplyContasts', {
+              applyCarType:type,
+            }).then((res) => {
                 this.dataList = res;
             });
+        },
+        // 点击添加联系人按钮
+        add(){
+          this.addshow = false
+        },
+        // 输入联系人姓名
+        oncontName(e){ 
+          console.log(e.$wx.detail.value)
+          this.contacts.contName = e.$wx.detail.value
+        },
+        // 输入联系人工号
+        oncontNumber(e){
+          console.log(e.$wx.detail.value)
+          this.contacts.contNumber = e.$wx.detail.value
+        },
+        // 输入联系人手机号
+        oncontPhone(e){
+          console.log(e.$wx.detail.value)
+          this.contacts.contPhone = e.$wx.detail.value
+        },
+        //输入的联系人内容发送到数据库
+        getUpdateContact(){
+          let data = this.contacts
+            wepy.$api('app/platform/contasts/getUpdateContact',data).then((res)=>{
+              this.detailApplyDo.contId = res.contId;
+              this.contacts.contId = res.contId
+              this.detailApplyDo.contPhone = res.contPhone;
+              this.detailApplyDo.contastsName = res.contName;
+              this.detailApplyDo.contastsNumber = res.contNumber
+              this.setDetailApplyDo(this.detailApplyDo);
+              this.getAppDepartment(this.Type)
+            })
+        },
+        //点击确定
+        confirm(val){
+          if(!this.contacts.contName){
+            wepy.$showToast('请输入联系人名称')
+          }else if(!this.contacts.contPhone){
+            wepy.$showToast('请输入联系电话')
+          }else if(!this.contacts.contNumber){
+            wepy.$showToast('请输入联系人工号')
+          }else{
+            console.log(this.contacts)
+            this.contacts.type = val
+            this.$set(this.detailApplyDo , 'isSelect' , 0)
+            this.getUpdateContact()
+          }
+        },
+        //点击取消
+        cancel(val){
+          this.contacts.type = val
+          this.contacts.contName = ''
+          this.contacts.contNumber = ''
+          this.contacts.contPhone = ''
+          this.getUpdateContact()
         }
     }
 });
@@ -116,5 +241,46 @@ wepy.component({
   .placeholder{
     font-size: 28rpx;
   }
+}
+.addcontacts{
+  border: 1rpx dashed #bfbfbf;
+  display: flex;
+  align-items: center;
+  justify-content:center;
+  padding: 10rpx 0 5rpx;
+  color: #7f7f7f;
+   .icon{
+     font-size: 50rpx;
+  }
+  .txt{
+    font-size: 28rpx;
+    margin-left: 20rpx;
+    margin-top: -10rpx;
+  }
+}
+.addcont{
+  display: flex;
+  padding: 0 20rpx;
+  input{
+    border: 1rpx solid #ccc;
+    font-size: 20rpx;
+    margin-right: 10rpx;
+    width: 180rpx;
+    height:90rpx ;
+    border-radius:20rpx; 
+    padding: 0 6rpx;
+  } 
+  .btn{
+    font-size: 24rpx;
+    .confirm{
+      border: 1rpx solid #ccc;
+      padding: 5rpx 20rpx;
+      margin-bottom:10rpx;
+    }
+    .cancel{
+      margin: 0;
+    } 
+  }
+  
 }
 </style>

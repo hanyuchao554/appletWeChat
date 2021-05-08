@@ -18,6 +18,11 @@ import wepy from '@wepy/core';
 import { mapState, mapMutations } from '@wepy/x';
 import store from '@/store';
 wepy.component({
+  props:{
+    index:{
+      type:String,
+    }
+  },
   store,
   data: {
     dataList: []
@@ -34,7 +39,13 @@ wepy.component({
   methods: {
     ...mapMutations(['setDetailApplyDo']),
     onSelect(data) {
-      this.detailApplyDo.jobContent = data;
+      if(this.index == ''){
+        console.log("添加进主任务")
+        this.detailApplyDo.jobContent = data;
+      }else{
+        console.log("添加进子任务")
+        this.detailApplyDo.intermodalist[this.index].jobContent = data
+      }
       this.setDetailApplyDo(this.detailApplyDo);
       this.$emit('onSelect');
     },

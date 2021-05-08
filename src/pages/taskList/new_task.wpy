@@ -1,0 +1,377 @@
+<template>
+    <div class="task_page">
+        <div class="item" v-if="type == 2">
+            <van-cell-group >
+                <van-cell required @click="goToLighterage" title="驳运对象" :value="lighterageStr || '请选择'" />
+                <van-cell @click="goToPosition('startPositionId',1)" required title="起始地" :value="detailApplyDo.startPositionName || '请选择'" />
+                <van-cell @click="goToPosition('endPositionId',2)" required title="目的地" :value="detailApplyDo.endPositionName || '请选择'" />
+                <van-cell @click="JobContentPopUp" required title="工作内容" :value="detailApplyDo.jobContent || '请选择'" />
+            </van-cell-group>
+        </div>
+        <div class="item" v-if="type == 1">
+            <div class="title">{{listName}}</div>
+            <van-cell-group >
+                <van-cell @click="onshowCar" required  title="选择车辆" :value="detailApplyDo.carNumber || '请选择'" />
+                <van-cell @click="goToPosition('startPositionId',1)" required title="起始地" :value="detailApplyDo.startPositionName || '请选择'" />
+                <van-cell @click="goToPosition('endPositionId',2)" required title="目的地" :value="detailApplyDo.endPositionName || '请选择'" />
+                <van-cell @click="hasPopUp('isStartTime')" required title="起始时间" :value="detailApplyDo._startTime || '请选择'" />
+                <van-cell @click="hasPopUp('isEndTime')" required title="结束时间" :value="detailApplyDo._endTime || '请选择'" />
+            </van-cell-group>
+        </div>
+      <div class="button" @click="submit">
+          <text>确定</text>
+      </div>
+      <!-- 选择工作内容 -->
+      <van-popup :show="showPopup" round position="bottom" @close="showPopup = false">
+          <div class="conter">
+                <div class="title">选择工作内容</div>
+                <div class="item">
+                    <div class="job-content" v-for="item in dataList" @click="jobContent(item)">{{item}}</div>
+                </div>
+          </div>
+      </van-popup>
+      <!-- 选择起始时间 结束时间 -->
+      <van-popup round position="bottom" :show="popUpTypes.isStartTime" @close="colseTime">
+            <time-picker startKey="startTime"
+                        endKey="endTime" 
+                        startStrKey="_startTime" 
+                        endStrKey="_endTime" 
+                        :time="detailApplyDo.startTime" 
+                        dataKey="startTime" 
+                        @onSelect="colseTime" 
+                        @onCancel="colseTime">
+            </time-picker>
+      </van-popup>
+      <!-- 选择结束时间 -->
+      <van-popup v-if="popUpTypes.isEndTime" round position="bottom" :show="popUpTypes.isEndTime" @close="colseTime">
+            <time-picker startKey="startTime"
+                    endKey="endTime"
+                    startStrKey="_startTime"
+                    endStrKey="_endTime"
+                    :time="detailApplyDo.endTime"
+                    dataKey="endTime"
+                    @onSelect="colseTime"
+                    @onCancel="colseTime">
+            </time-picker>
+      </van-popup>
+      <!-- 选择车辆列表 -->
+      <van-popup round position="bottom" :show="showCar" @colse="showCar = false">
+            <div class="conter">
+                <div class="title">选择车辆</div>
+                <div class="item">
+                    <div class="job-content" v-for="item in dataList" @click="selstCar(item)">{{item.carNumber}}</div>
+                </div>
+            </div>
+      </van-popup>
+    </div>
+</template>
+<script> 
+  import wepy from '@wepy/core'; 
+  import addTaskMixin from '@/mixins/addTaskMixin.js';
+//   import eventHub from '../common/eventHub'; 
+  import store from '@/store';
+  import { mapState, mapMutations } from '@wepy/x';  
+  wepy.page({
+      store,
+      mixins: [addTaskMixin],
+      data:{
+          showPopup:false,
+          showCar:false,
+          dataList:[],
+          type:'',
+          listName:'',
+      },
+      onLoad({type,index,listName,applyId,id}){
+          console.log(type,index,listName,applyId,id)
+          this.type = type
+          this.listName = listName
+          this.applyId = applyId
+          this.id = id
+          if( type == 1 ){
+              this.appMergeTaskEcho()
+              this.selectCarlist()
+          }
+      },
+      computed:{
+        ...mapState(['detailApplyDo']),
+        lighterageStr() {
+            if (this.detailApplyDo) {
+                let {
+                goodsProCode,
+                goodsGoodsCode,
+                goodsType,
+                goodsId,
+                } = this.detailApplyDo;
+                return goodsId ? `${goodsProCode}-${goodsType}-${goodsGoodsCode}` : '';
+            }
+            return '';
+        },
+        userId() {
+            return wepy.$auth.getUserId();
+        },
+      },
+      methods:{
+          ...mapMutations(['setDetailApplyDo', 'setDetailApplyDoInit']), 
+        /**
+         * 获取工作内容列表
+        */  
+        getAppDepartment() {
+            wepy.$api('app/enum/getJobContent', {
+                userId: this.userId,
+                })
+                .then((res) => {
+                this.dataList = res;
+                });
+        },
+        /** 
+         *获取拆分回显列表
+        */
+       appMergeTaskEcho(){
+           wepy.$api('/platform/distribution/appMergeTaskEcho',{
+               applyId:this.applyId,
+               intermodalId:this.id
+           }).then((res)=>{
+                for (let [k, v] of Object.entries(res)) {
+                    this.detailApplyDo[k] = res[k];
+                    this.setDetailApplyDo(this.detailApplyDo);
+                }
+                let _startTime = this.formatTimes(res.startTimeStamp, 'Y-M-D h:m:s')
+                let _endTime = this.formatTimes(res.endTimeStamp, 'Y-M-D h:m:s')
+                this.$set(this.detailApplyDo , '_startTime' , _startTime)
+                this.$set(this.detailApplyDo , '_endTime' , _endTime)
+                this.$set(this.detailApplyDo , 'startTime' , res.startTimeStamp)
+                this.$set(this.detailApplyDo , 'endTime' , res.endTimeStamp)
+           })
+       },
+       /**
+        *  获取车辆列表
+        */
+       selectCarlist(){
+            wepy.$api('app/car/getDistributionCars', {}).then((res) => {
+            this.dataList = res.carDetailList;
+            this.dataList.forEach(itme =>{
+                if(this.detailApplyDo.carId === itme.carId){
+                    this.$set(this.detailApplyDo, 'carNumber', itme.carNumber);
+                    // console.log(itme)
+                }
+            })
+            });
+       },
+       //从列表中选中车辆
+       selstCar(item){
+           this.$set(this.detailApplyDo ,'carNumber',item.carNumber)
+           this.$set(this.detailApplyDo ,'carId',item.carId)
+           this.showCar = false
+       },
+        /**
+         * 提交
+         */
+        submit(){
+            if(this.type==1){
+                this.requiredSplittask()
+            }
+            if(this.type==2){
+                this.requiredNewtask()
+            }
+        },
+        //验证表单__拆分任务
+        requiredSplittask(){
+            let data = this.detailApplyDo
+            console.log(data.startTimeStamp)
+            if(!data.carId){
+                wepy.$showToast('请选择车辆');
+            }else if(!data.startPositionId){
+                 wepy.$showToast('请选择起始地');
+            }else if(!data.endPositionId){
+                wepy.$showToast('请选择目的地');
+            }else if(!data.startTime){
+                wepy.$showToast('请选择开始时间');
+            }else if(!data.endTime){
+                wepy.$showToast('请选择结束时间');
+            }
+            else{
+                this.appSplitTask()
+            }
+        },
+        //验证表单__新增任务
+        requiredNewtask(){
+            let data = this.detailApplyDo
+            if(!data.goodsId){
+                wepy.$showToast('请选驳运对象');
+            }else if(!data.startPositionId){
+                 wepy.$showToast('请选择起始地');
+            }else if(!data.endPositionId){
+                wepy.$showToast('请选择目的地');
+            }else if(!data.jobContent){
+                wepy.$showToast('请选择工作内容');
+            }else{
+                this.appMergeTask(data)
+            }
+        },
+        //拆分任务
+        appSplitTask(){
+            let data = this.detailApplyDo
+            wepy.$api('/platform/distribution/appSplitTask',{
+                applyId:this.applyId,
+                intermodalId:this.id,
+                carId:data.carId,
+                startPositionId:data.startPositionId,
+                endPositionId:data.endPositionId,
+                startTime:data.startTime,
+                endTime:data.endTime,
+                splitType:1,
+            }).then(res=>{
+                // if(res.succeed == true){
+                wx.showToast({
+                     title:'拆分成功',
+                     icon:'none'
+                 })
+                 wx.navigateBack();
+                // }
+            })
+        },
+        /**
+         * 新增联运任务
+         */
+        appMergeTask(data){
+            wepy.$api('/platform/distribution/appMergeTask',{
+                targetApplyId:this.applyId,
+                goodsId:data.goodsId,
+                startPositionId:data.startPositionId,
+                endPositionId:data.endPositionId,
+                jobContent:data.jobContent,
+            }).then((res)=>{
+                 wx.showToast({
+                     title:'新增联运任务成功',
+                     icon:'none'
+                 })
+                 wx.navigateBack();
+            })
+        },
+        // 选中工作内容
+        jobContent(item){
+            this.detailApplyDo.jobContent = item
+            this.$set(this.detailApplyDo, 'jobQuantity', item);
+            this.showPopup = false
+        },  
+        /**
+        * 跳转页面(选择驳运对象)
+        */
+        goToLighterage(){
+            let url = `/pages/lighterage/lighterage`
+            wx.navigateTo({
+                url: url,
+            })
+          },
+        /**
+         * 跳转到起始地/目的地列表
+         */
+        goToPosition(target,type,index) { 
+            console.log(target,type)
+            wx.navigateTo({
+                url: `/pages/position/position?code=${target}&applyType=0&type=${type}&index=${index}`,
+            });
+        },
+        /**
+         * 显示弹出层
+         */
+        JobContentPopUp(){
+            this.showPopup = true
+            this.getAppDepartment()
+        },
+        //显示车辆列表弹出层
+        onshowCar(){
+            this.showCar = true
+        },
+        //关闭选择时间弹窗
+        colseTime() {
+            this.popUpTypes.isEndTime = false;
+            this.popUpTypes.isStartTime = false;
+        },
+        //转换日期格式
+        fnb: function (n){
+            n = n.toString()
+            return n[1] ? n : '0' + n
+        },
+        //创建日期对象
+        formatTimes: function(num, fm) {
+            var that = this;
+            var fma = ['Y', 'M', 'D', 'h', 'm', 's'];
+            var rta = [];
+            var date = new Date(num * 1000);
+            rta.push(date.getFullYear());
+            rta.push(that.fnb(date.getMonth() + 1));
+            rta.push(that.fnb(date.getDate()));
+            rta.push(that.fnb(date.getHours()));
+            rta.push(that.fnb(date.getMinutes()));
+            rta.push(that.fnb(date.getSeconds()));
+            for (var i in rta) {
+            fm = fm.replace(fma[i], rta[i]);
+            }
+            return fm;
+        },
+      }
+  })
+</script>
+<style lang='less' scoped>
+.task_page{
+    height: 100vh;
+    background: #fff;
+}
+.button{
+    padding: 0 20rpx;
+    position:fixed;
+    bottom: 30rpx;
+    left: 0;
+    right: 0;
+    text{
+        display:block;
+        background: #005bac;
+        color: #fff;
+        text-align: center;
+        padding: 20rpx; 
+        border-radius:15rpx; 
+    }
+}
+.conter{
+    height: 600rpx;
+    padding: 30rpx 0 20rpx;
+    position: relative;
+    .title{
+        font-size: 36rpx;
+        padding:35rpx 30rpx 20rpx;
+        border-bottom:1rpx solid #e1e1e1;
+        position: fixed;; 
+        bottom:550rpx;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-radius:15rpx 15rpx 0 0; 
+    }
+    .item{
+        padding-top: 40px;
+        .job-content{
+            padding: 20rpx;
+            border-bottom:1rpx solid #e1e1e1; 
+        }
+    }
+    
+}
+.item{
+    .title{
+        padding:20rpx;
+    }
+}
+</style>
+<config>
+    {   navigationBarTitleText:'新增联运任务',
+        usingComponents:{
+            "van-cell": "module:@vant/weapp/dist/cell/index",
+            "van-cell-group": "module:@vant/weapp/dist/cell-group/index",
+            "van-popup": "module:@vant/weapp/dist/popup/index",
+             "time-picker": "~@/components/pop-up/time-picker",
+        }
+    }
+</config>
+
+

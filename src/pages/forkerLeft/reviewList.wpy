@@ -1,24 +1,37 @@
 <template>
   <div class="reviewList_page">
-    <div class="header">
-      <div class="header_left">
-        <van-checkbox v-if="hasCheck" custom-class="v_checkBox" checked-color="#005bac" value="{{ allCheck }}"
+    <div class="hed">
+      <van-checkbox v-if="hasCheck" custom-class="v_checkBox" checked-color="#005bac" value="{{ allCheck }}"
                       @change="onChangeAllCheck"></van-checkbox>
-        <van-dropdown-menu style="margin-left: 20rpx;" :z-index="9999">
-          <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList">
-            <div class="dropdown_item_cell" @click="onClickDept(undefined)"> 所有部门</div>
-            <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
-          </van-dropdown-item>
-        </van-dropdown-menu>
-      </div>
-      <!-- <div class="header_center text-c">任务审核列表</div> -->
-      <div class="header_right text-r">
-        <div class="btn_d"
-             @click="hasSelect">审核</div>
+      <div class="header">
+        <div class="header_top">
+          <div>驳运时间</div>
+          <text @click="hasPopUp('isStartTime')">{{detailApplyDo._startTime || '请选择'}}</text>~
+          <text @click="hasPopUp('isEndTime')" class="nth">{{detailApplyDo._endTime || '请选择'}}</text>
+        </div>
+        <div class="header_cont">             
+          <div class="header_left" :class="{'active' : hasCheck}">
+            <van-dropdown-menu :z-index="9999">
+              <van-dropdown-item id="dept" :title="currDeptName" @open="getDeptList(4)">
+                <div class="dropdown_item_cell" @click="onClickDept(undefined)"> 所有部门</div>
+                <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.deptName}}</div>
+              </van-dropdown-item>
+            </van-dropdown-menu>
+            <van-dropdown-menu :z-index="9999">
+              <van-dropdown-item id="deptt" :title="currDeptTitle" @open="getDeptList(3)">
+                <div class="dropdown_item_cell" @click="onClickDept(undefined)">所有类别</div>
+                <div class="dropdown_item_cell" v-for="item in deptList" @click="onClickDept(item)">{{ item.goodsTypeName}}</div>
+              </van-dropdown-item>
+            </van-dropdown-menu>
+          </div>
+          <div class="header_right text-r">
+            <div class="btn_d"
+                @click="hasSelect">审核</div>
+          </div>
+        </div>   
       </div>
     </div>
-    <div class="content"
-         :class="{'select_wrap': hasCheck}">
+    <div class="content" :class="{'select_wrap': hasCheck , 'top' : detailApplyDo._startTime}">
       <div class="item_wrap"
            v-for="(item,index) in list">
         <div v-if="hasCheck"
@@ -33,20 +46,22 @@
              :class="{'select_item_wrap':hasCheck}">
           <div class="item_header">
             <div class="item_header_left">
-              <div>{{item.jobContent}} {{item.goodsTypeName}}-{{ item.goodsCode }}</div>
+              <div class="txt">{{item.applyDeptName}}</div>
+              <div class="txt">{{item.goodsWeight}}吨</div>
+              <div class="txt">{{item.importance}}</div>
+              <div class="contName item_header_right" catchtap="conName(item.contactsPhone,2)">{{item.contactsName}}</div>
+              <!-- <div>{{item.jobContent}} {{item.goodsTypeName}}-{{ item.goodsCode }}</div> -->
             </div>
-            <div class="contName item_header_right" catchtap="conName(item.contactsPhone,2)">{{item.contactsName}}</div>
           </div>
-           
+          <div>驳运 {{item.goodsTypeName}}-{{item.goodsCode}}</div>
+          <div>申请提交时间:{{item.applyDateTime}}</div>
           <div class="memo">申请备注:{{item.memo || ''}}</div>
           <div class="item_content">
             <!-- <div class="item_content_left">
                                   <van-image width="216rpx" height="148rpx" src="/static/images/home_bg_img3.png" />
                                 </div> -->
             <div class="item_content_right">
-              <div class="item_content_right_t">
-                {{item.applyDeptName}} / {{item.goodsWeight || 0}}吨 /{{item.startTime}}至{{item.endTime}}
-              </div>
+              <div class="item_content_right_t">驳运时间：{{item.startTime}}至{{item.endTime}}</div>
               <div class="common_step">
                 <div class="common_step_left">
                   <div class="common_step_left_t"></div>
@@ -88,6 +103,29 @@
                :applyIds="applyIds"
                @close="triggerPopUp"></approve>
     </van-popup>
+    <!-- 选择起始时间 -->
+    <van-popup v-if="popUpTypes.isStartTime" round position="bottom" :show="popUpTypes.isStartTime" @close="colseTime">
+      <time-picker startKey="startTime"
+                  endKey="endTime"
+                  startStrKey="_startTime"
+                  endStrKey="_endTime"
+                  :time="detailApplyDo.startTime"
+                  dataKey="startTime"
+                  @onSelect="colseTime"
+                  @onCancel="colseTime">
+      </time-picker>
+    </van-popup>
+    <van-popup v-if="popUpTypes.isEndTime" round position="bottom" :show="popUpTypes.isEndTime" @close="colseTime">
+      <time-picker startKey="startTime"
+              endKey="endTime"
+              startStrKey="_startTime"
+              endStrKey="_endTime"
+              :time="detailApplyDo.endTime"
+              dataKey="endTime"
+              @onSelect="colseTime"
+              @onCancel="colseTime">
+      </time-picker>
+  </van-popup>
   </div>
 </template>
 
@@ -97,12 +135,15 @@ import wepy from '@wepy/core';
 import formatTimeTwo from '@/utils/moment.js';
 import CommonMixin from '@/mixins/commonMixin.js';
 import store from '@/store';
-import { mapMutations } from '@wepy/x';
+import { mapMutations , mapState} from '@wepy/x';
+import { applyStateEnum } from '@/enums';
+import addTaskMixin from '@/mixins/addTaskMixin.js';
 wepy.page({
   store,
-  mixins: [CommonMixin],
+  mixins: [CommonMixin , addTaskMixin],
   data: {
-    currDeptName: '所有部门',
+    currDeptName: '申请部门',
+    currDeptTitle:'驳运类别',
     deptList: [],
     list: [],
     hasCheck: false,
@@ -114,9 +155,6 @@ wepy.page({
   },
   onShow() {
     this.appGetApprovalTasksList();
-    this.hasCheck = false
-    this.allCheck = false
-
     let that = this
     this.realTime = setInterval(function(){
       that.appGetApprovalTasksList()
@@ -138,6 +176,7 @@ wepy.page({
      })
   },
   computed: {
+     ...mapState(['detailApplyDo']),
     applyIds() {
       let _applyIds = [];
       this.list.forEach((item) => {
@@ -219,35 +258,45 @@ wepy.page({
     },
     onClickDept(item) {
       this.deptId = item ? item.deptId : undefined;
-      this.currDeptName = item ? item.deptName : '所有部门';
+      this.currDeptName = item.deptName ? item.deptName : '申请部门';
+      this.currDeptTitle = item.goodsTypeName ? item.goodsTypeName : '申请部门';
+      this.goodsTypeId = item.goodsTypeId ? item.goodsTypeId :undefined;
       this.$wx.selectComponent('#dept').toggle(false)
+      this.$wx.selectComponent('#deptt').toggle(false)
       this.appGetApprovalTasksList();
       console.log(item)
 
     },
-    getDeptList() {
-      wepy.$api('app/forkPullDown/auditListDept', {
-        applyType: 1
+    getDeptList(applyType) {
+      wepy.$api('/app/forkPullDown/getAllDrawUpBox', {
+        type:1,
+        applyType:applyType,
+        applyCarType:1,
       }).then(res => {
         this.deptList = res
       })
     },
     appGetApprovalTasksList() {
-      wepy.$api('app/forkliftApply/applyDeptCheckApplyDetail', { deptId: this.deptId || undefined }).then((res) => {
-        this.list = [];
-        if (!res || !res.length) {
-          wx.showToast({
-            title: '暂无审核内容',
-            icon: 'none',
-            duration: 3000
-          });
-        } else {
-          this.list = res.map((item) => {
-            item.checked = false;
-            wx.stopPullDownRefresh()
-            return item;
-          });
-        }
+      wepy.$api('app/forkliftApply/applyDeptCheckApplyDetail', { 
+        deptId: this.deptId || undefined ,
+        goodsTypeId:this.goodsTypeId,
+        startTimeStamp:this.detailApplyDo.startTime || undefined,
+        endTimeStamp:this.detailApplyDo.endTime || undefined,
+        }).then((res) => {
+          this.list = [];
+          if (!res || !res.length) {
+            wx.showToast({
+              title: '暂无审核内容',
+              icon: 'none',
+              duration: 3000
+            });
+          } else {
+            this.list = res.map((item) => {
+              item.checked = false;
+              wx.stopPullDownRefresh()
+              return item;
+            });
+          }
       });
     },
     goToPage(url) {
@@ -263,7 +312,14 @@ wepy.page({
         phoneNumber:tel
       });
       console.log(val)
-    }
+    },
+    colseTime() {
+      this.popUpTypes.isEndTime = false;
+      this.popUpTypes.isStartTime = false;
+      if(this.detailApplyDo.startTime && this.detailApplyDo.endTime){
+        this.appGetApprovalTasksList()
+      }
+    },
   }
 });
 </script>
@@ -281,16 +337,15 @@ wepy.page({
      "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
      "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index",
      "van-popup": "module:@vant/weapp/dist/popup/index",
-     "approve": "~@/pages/forkerLeft/approve"
+     "approve": "~@/pages/forkerLeft/approve",
+     "time-picker": "~@/components/pop-up/time-picker",
   }
 }
 </config>
 
 <style lang="less" scoped>
-/deep/.van-dropdown-menu{
+view .van-dropdown-menu{
   height:80rpx;
-    border: 1rpx solid #000;
-  box-shadow:none;
 }
 .dropdown_item_cell {
   display: flex;
@@ -304,47 +359,68 @@ wepy.page({
   position: relative;
   height: 100vh;
   background: #f3f4f6;
-  .header {
+  .hed{
     display: flex;
     position: absolute;
     width: 100%;
-    height: 100rpx;
-    justify-content: space-between;
     align-items: center;
     font-size: 32rpx;
     background: #fff;
     padding: 0 24rpx;
     box-sizing: border-box;
-    &_left {
-      display: flex;
-      align-items: center;
-    }
-    &_left,
-    &_right {
-      width: 25%;
-    }
-    &_center {
-      width: 50%;
-    }
-    .btn_d {
-      display: inline-block;
-      width: 110rpx;
-      height: 48rpx;
-      line-height: 48rpx;
-      border-radius: 4rpx;
-      font-size: 30rpx;
-      background: #005bac;
-      text-align: center;
-      font-size: 32rpx;
-      color: #ffff;
+    .header{
+      width:100%;
+      &_top{
+        display: flex;
+        margin-left: 20rpx;
+        text{
+          background: #f2f2f2;
+          font-size: 22rpx;
+          color: #aaa;
+          line-height: 1.5rem;
+          padding: 0 20rpx;
+          border-radius: 10rpx;
+          margin:0 20rpx;
+        }
+      }
+      &_cont{
+        display:flex;
+        justify-content: space-between;
+        align-items: center;
+        .header_left{
+          display:flex;
+          justify-content:space-between;
+          width: 60%;
+        }
+        .active{
+          width:65%;
+        }
+        .header_right{
+          .btn_d {
+            display: inline-block;
+            width: 110rpx;
+            height: 48rpx;
+            line-height: 48rpx;
+            border-radius: 4rpx;
+            font-size: 30rpx;
+            background: #005bac;
+            text-align: center;
+            font-size: 32rpx;
+            color: #ffff;
+          }
+        }
+      }
     }
   }
-  .content {
+  .content{
     position: absolute;
     width: 100%;
-    top: 120rpx;
+    top:150rpx;
     bottom: 20rpx;
     overflow-y: scroll; // padding-top: 34rpx;
+  }
+  .top{
+     top:200rpx;
   }
 }
 .contName{
@@ -391,6 +467,9 @@ wepy.page({
       font-weight: 500;
       color: #2b2b2b;
       line-height: 40rpx;
+      .txt{
+        margin-right:35rpx
+      }
       .tag {
         color: #fff;
         font-size: 22rpx;

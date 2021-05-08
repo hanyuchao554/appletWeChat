@@ -43,7 +43,7 @@ wepy.component({
     onChage(e) {
       this.searchData = e.$wx.detail.value;
       let reg = new RegExp(this.searchData);
-      this.searchList = this.list.filter((item) => {eg.test(item)});
+      this.searchList = this.list.filter((item) => {reg.test(item)});
     },
   },
 });

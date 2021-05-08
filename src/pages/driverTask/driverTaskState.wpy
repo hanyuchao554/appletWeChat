@@ -1,20 +1,11 @@
 <template>
   <div class="driverTaskState_page">
     <div class="wrap">
-      <!-- <van-image
-        width="100%"
-        height="400rpx"
-        src="/static/images/home_bg_img3.png"
-      /> -->
+      <!-- 头部信息 -->
       <div class="car_info">
         <div class="car_info_left">
-          <div class="tag_drop">
-            <div class="drop"></div>
-            {{ driverData.carNumber }}
-          </div>
-          <div class="font-color-gray">
-            {{ driverData.carFullWeight / 1000 }}吨
-          </div>
+          <div class="tag_drop">{{ driverData.carNumber }}</div>
+          <div class="font-color-gray">{{ driverData.carFullWeight / 1000 }}吨</div>
           <div class="car_info_sw">
             <div class="car_info_s">
               <van-icon color="#8E9298" name="clock-o" size="26rpx" />
@@ -39,30 +30,64 @@
           <text class="car_info_right_t">{{driverData.contactName}}</text>
         </div>
       </div>
-      <div class="tast_info">
-        <div class="tast_info_listName">{{ driverData.listName }}</div>
-        <div class="tast_info_deptName">
-          {{ driverData.deptName }}/{{ driverData.goodsWeight / 1000 }}吨/{{
-            driverData.startTimeStamp
-          }}至{{ driverData.endTimeStamp }}
+      <!-- 主要内容 -->
+      <div class="content">
+        <div class="tast_info">
+          <div class="tast_info_hed">
+            <div class="text">{{driverData.deptName}}</div>
+            <div class="text">总重量：{{driverData.goodsTotalWeight / 1000}}</div>
+            <div class="text">重要程度：{{driverData.important || ''}}</div>
+          </div>
+          <div class="tast_info_listName">{{driverData.listName }}</div>
+          <div class="tast_info_deptName">驳运时间：{{driverData.startTimeStamp}}至{{ driverData.endTimeStamp }}</div>
+          <div class="item_content">
+            <div class="item_content_left">
+              <div class="common_step">
+                <div class="common_step_left">
+                  <div class="common_step_left_t"></div>
+                  <div class="common_step_left_c"></div>
+                  <div class="common_step_left_b"></div>
+                </div>
+                <div class="common_step_center">
+                  <div class="ellipsis">起始地：{{driverData.startAddressName }}</div>
+                  <div class="ellipsis">目的地：{{driverData.endAddressName }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="item_content_right disable" v-if="driverData.timeTranState < 6 || driverData.isMainComplete == 1">
+              <text class="text">完成任务</text>
+            </div>
+            <div class="item_content_right" v-else @click="getperfor()">
+              <text class="text">完成任务</text>
+            </div>
+          </div>
+          <div class="child" v-for="item in driverData.intermodalTaskVoList">  
+            <div class="itme_content_hde">{{item.listName}}</div>
+            <div class="item_content">
+              <div class="item_content_left">
+                <div class="common_step">
+                  <div class="common_step_left">
+                    <div class="common_step_left_t"></div>
+                    <div class="common_step_left_c"></div>
+                    <div class="common_step_left_b"></div>
+                  </div>
+                  <div class="common_step_center">
+                    <div class="ellipsis">起始地：{{item.startPositionName }}</div>
+                    <div class="ellipsis">目的地：{{item.endPositionName }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="item_content_right disable" v-if="driverData.timeTranState < 6">
+                <text class="text">完成任务</text>
+              </div>
+              <div class="item_content_right" v-else @click="getperfor(item.id)">
+                <text class="text">完成任务</text>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="font-24">
-          选择分段: {{ driverData.proCode }}-{{ driverData.goodsCode }}; 重量:
-          {{ driverData.goodsWeight / 1000 }}吨; 尺寸: ({{
-            driverData.goodsWidth
-          }}*{{ driverData.goodsHigh }}*{{ driverData.goodsLength }}) (米)
-        </div>
-        <div class="tast_info_footer">
-          <van-button
-            custom-class="btn"
-            color="#EFA600"
-            @click="goToLighterage"
-            type="default"
-            >添加衍生任务</van-button
-          >
-          <div class="font-color-deep-red">{{ driverData.realTranState }}</div>
-        </div>
-      </div>
+      </div> 
+      <!-- 执行步骤 -->
       <div class="steps">
         <div class="steps_item">
           <van-image
@@ -147,6 +172,9 @@
             </div>
           </div>
         </div>
+        <div class="slider" @click="dragOver">
+          <div class="text">{{ textStr }}</div>
+        </div>
       </div>
     </div>
     <!-- <movable-area class="slider" style="width:{{area_width}}%">
@@ -165,9 +193,6 @@
         <van-image width="44rpx" height="38rpx" src="/static/images/icon_slider.png"/>
       </movable-view>
     </movable-area> -->
-    <div class="slider" @click="dragOver">
-      <div class="text">{{ textStr }}</div>
-    </div>
   </div>
 </template>
 
@@ -185,21 +210,21 @@ wepy.page({
     isOvertime: false,
     birpx: 0,
     applyId: undefined,
-    driverData: {},
+    driverData:{},
     sideWeight: 0,
     x: 0,
     area_width: 96, //可滑动区域的宽，单位是百分比，设置好后自动居中
     box_width: 140, //滑块的宽,单位是 rpx
     maxNum: 0, //验证成功时的坐标，不需要设置，代码自动计算；
+    realTime:null,
   },
+
   onShow() {
-    this.init();
+    // this.init();
     if (this.detailApplyDo.goodsId) {
       this.driverStartPlatformOtherTask();
     }
-  },
-  onUnload() {
-    this.setDetailApplyDoInit();
+    this.getDriverTaskState()
   },
   onLoad({ applyId }) {
     this.applyId = applyId;
@@ -215,7 +240,13 @@ wepy.page({
         that.maxNum = Math.floor(n * that.birpx);
       },
     });
-    this.getDriverTaskState();
+  },
+  onHide(){
+    clearInterval(this.realTime)
+  },
+  onUnload(){
+    this.setDetailApplyDoInit();
+    clearInterval(this.realTime);
   },
   computed: {
     ...mapState(['detailApplyDo']),
@@ -231,7 +262,7 @@ wepy.page({
       } else if (state === 6) {
         str = '到达目的地';
       } else if (state === 7) {
-        str = '装载完成';
+        str = '卸载完成';
       } else if (state === 8) {
         str = '确认完成任务';
       }
@@ -240,6 +271,40 @@ wepy.page({
   },
   methods: {
     ...mapMutations(['setDetailApplyDoInit','setDetailApplyDo']),
+    // 每隔30秒向后台发送一次当前位置的坐标
+    timereTofresh(state){
+      console.log(state)
+      if(state >= 3){
+        console.log(12334)
+        this.realTime = setInterval(() => {
+          this.driverLocationRecord();
+        }, 30000);
+      }
+    },
+    //获取到的位置信息存到数据库
+    driverLocationRecord() {
+      let that = this
+      wx.getLocation({
+        type: 'wgs84',
+        success: (res) => {
+          let {
+            longitude,
+            latitude
+          } = res;
+          let location = `${longitude},${latitude}`;
+          wepy.$api('app/forkliftDriver/driverLocationRecord', {
+            location,
+            taskId: this.applyId,
+            applyType:0,
+          });
+        },
+        fail(err) {
+          // wepy.$showToast('获取当前地理位置失败')
+          clearInterval(that.timer);
+          that.timer = null;
+        },
+      });
+    },
     driverStartPlatformOtherTask() {
       let req = {
         goodsId: this.detailApplyDo.goodsId,
@@ -247,8 +312,7 @@ wepy.page({
         startTimeStamp: Math.floor(new Date().getTime() / 1000),
         userId: wepy.$auth.getUserId(),
       };
-      wepy
-        .$api('app/platformApply/driverStartPlatformOtherTask', req)
+      wepy.$api('app/platformApply/driverStartPlatformOtherTask', req)
         .then((res) => {
           let params = {
             mainApplyId: this.applyId,
@@ -371,11 +435,6 @@ wepy.page({
         } else {
           this.completeDriverTaskState();
         }
-      // } else {
-      //   this.$wx.setData({
-      //     x: 0,
-      //   });
-      // }
     },
     completeDriverTaskState() {
       wepy.$loading();
@@ -384,8 +443,7 @@ wepy.page({
         completeTimeStamp: Math.floor(new Date().getTime() / 1000),
         completeTimeType: this.driverData.timeTranState + 1,
       };
-      wepy
-        .$api('platform/driver/task/completeDriverTaskState', upData)
+      wepy.$api('platform/driver/task/completeDriverTaskState', upData)
         .then(() => {
           this.init();
         });
@@ -420,6 +478,7 @@ wepy.page({
             ? (this.driverData.totalTime / 60).toFixed(1)
             : '0.0';
           this.setTimeData();
+          this.timereTofresh(this.driverData.timeTranState)
           wx.hideToast();
         });
     },
@@ -429,7 +488,17 @@ wepy.page({
     getTime(time) {
       return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
     },
-  },
+    getperfor(id){
+      this.setDetailApplyDo({
+        addressName: this.driverData.endAddressName,
+        addressId: this.driverData.endAddressId,
+      });
+      wx.navigateTo({
+        url: `/pages/driverTask/driverAddressMassage?applyId=${this.applyId}&id=${id}`,
+      });
+      // clearInterval(this.realTime);
+    }
+  }
 });
 </script>
 
@@ -446,8 +515,64 @@ wepy.page({
 
 <style lang="less" scoped>
 @import './index.less';
+.driverTaskState_page{
+  background: #fff;
+}
+.wrap{
+  background: #f5f6f8;
+  padding: 0;
+}
+.content{
+  padding: 0 15rpx;
+}
+.tast_info{
+  border-radius:20rpx; 
+  box-shadow: 0px 2px 10px 0px #e1e5ee;
+  margin-bottom: 25rpx
+}
 .slider{
   background-color: #005bac;
   width: 700rpx;
+  position:fixed;
+  bottom:30rpx;
+  left: 0;
+  right: 0;
+}
+.tast_info_hed{
+  display: flex;
+  font-size: 28rpx;
+  .text{
+    margin-right: 20rpx;
+  }
+}
+.item_content {
+  display: flex;
+  justify-content: space-between;
+  &_left {
+    width: 65%;
+    flex: auto;
+  }
+  &_right {
+    height: 45rpx;
+    font-size:20rpx;
+    line-height: 1.4rem;
+    background: #015BAD;
+    color: #fff;
+    margin-top:30rpx;
+    padding: 5rpx 25rpx;
+    border-radius:10rpx; 
+  }
+}
+.child{
+  border-top: 1rpx solid #e1e1e1;
+}
+.steps{
+  background: #fff;
+  padding:25rpx 25rpx 100rpx;
+}
+.disable {
+  background:#d7d7d7;
+  color: #555555;
+  pointer-events: none;
 }
 </style>

@@ -47,7 +47,7 @@
                     :isReplaceTextarea="isReplaceTextarea"
                     @onChageData="onChageGoodsCode"></m-textarea> -->
         <div class="remarks">
-          <textarea v-model="detailApplyDo.memo"  placeholder="请输入备注" bindinput="onChageGoodsCode"  />
+          <textarea v-model="goodData.goodsCode"  placeholder="请输入物品名称" bindinput="onChageGoodsCode"  />
         </div>
       </div>
       <!-- goodsCodesDetail -->
@@ -102,6 +102,7 @@ wepy.page({
   data: {
     isInputWeight: 0,
     type: '',
+    index:'',
     goodData: {
       proCode: '',
       goodsType: '',
@@ -145,30 +146,35 @@ wepy.page({
       }
     }
   },
-  async onLoad({
-    type
-  }) {
-    this.type = type
-    if (this.type === 'query') {
-      this.goodData.proCode = this.detailApplyDo.proCode;
-      this.goodData.goodsCode = this.detailApplyDo.goodsCode;
-      this.goodData.goodsType = this.detailApplyDo.goodsType;
-      this.goodData.goodsWeight = this.detailApplyDo.goodsWeight;
-      this.goodData.proCode && this.getGoodsTypes();
-      this.goodData.goodsType && await this.getGoodsCodesAndOperatorType();
-    } else if (this.detailApplyDo.goodsId) {
-      for (let key in this.goodData) {
-        this.goodData[key] = this.detailApplyDo[key];
+  async onLoad(query) {
+    this.type = query.data
+    this.index = query.index
+    if(query.index == undefined){
+      // if (this.type === 'query') {
+      // this.goodData.proCode = this.detailApplyDo.proCode;
+      // this.goodData.goodsCode = this.detailApplyDo.goodsCode;
+      // this.goodData.goodsType = this.detailApplyDo.goodsType;
+      // this.goodData.goodsWeight = this.detailApplyDo.goodsWeight;
+      // this.goodData.proCode && this.getGoodsTypes();
+      // this.goodData.goodsType && await this.getGoodsCodesAndOperatorType();
+      // } else
+     if (this.detailApplyDo.goodsId) {
+        for (let key in this.goodData) {
+          this.goodData[key] = this.detailApplyDo[key];
+        }
+        this.goodData.proCode = this.detailApplyDo.goodsProCode;
+        this.goodData.goodsCode = this.detailApplyDo.goodsGoodsCode;
+        this.goodData.goodsWeight = Math.floor(Number(this.goodData.goodsWeight) / 1000);
+        this.getGoodsTypes();
+        await this.getGoodsCodesAndOperatorType();
+        if (this.goodData.operatorType === 1) {
+          this.getGoodsListByProCodeAndGoodsCode();
+        }
       }
-      this.goodData.proCode = this.detailApplyDo.goodsProCode;
-      this.goodData.goodsCode = this.detailApplyDo.goodsGoodsCode;
-      this.goodData.goodsWeight = Math.floor(Number(this.goodData.goodsWeight) / 1000);
-      this.getGoodsTypes();
-      await this.getGoodsCodesAndOperatorType();
-      if (this.goodData.operatorType === 1) {
-        this.getGoodsListByProCodeAndGoodsCode();
-      }
+    }else{
+      this.judgerole()
     }
+    
     this.getProCodes();
   },
   computed: {
@@ -180,14 +186,56 @@ wepy.page({
   },
   methods: {
     ...mapMutations(['setDetailApplyDo']),
+    /**
+     * 判断他是主任务还是子任务
+     */
+    async judgerole(){
+      var index = this.index
+      console.log(index)
+        console.log("这是子级任务")
+        var data = this.detailApplyDo.intermodalist[index]
+        console.log(data)
+        if(data.goodsProCode != undefined && data.goodsGoodsCode != undefined && data.goodsType != undefined && data.goodsWeight != undefined){
+            console.log("这是第二次进入子级任务")
+          for(let key in this.goodData){
+            this.goodData[key] = data[key]
+          }
+            this.goodData.proCode = data.goodsProCode;
+            this.goodData.goodsCode = data.goodsGoodsCode;
+            this.goodData.goodsWeight = Math.floor(Number(this.goodData.goodsWeight) / 1000);
+            this.getGoodsTypes();
+            await this.getGoodsCodesAndOperatorType();
+            if (this.goodData.operatorType === 1) {
+              this.getGoodsListByProCodeAndGoodsCode();
+            }
+        }else{
+          console.log("这是第次一进入子级任务")
+          this.goodData.goodsCode = ""
+          this.goodData.proCode = ''
+          this.goodData.goodsType = ''
+          this.goodData.goodsWeight = ''
+          this.goodData.operatorType = ''
+          console.log(this.goodData)
+
+        }
+    },
+    /**
+     * 当前输入的物品名称
+     */
     onChageGoodsCode(goodsCode) {
       this.goodData.goodsCode = goodsCode.$wx.detail.value;
     },
+    /**
+     * 获取工程编码列表
+     */
     getProCodes() {
       return wepy.$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {}).then((res) => {
         this.proCodes = res.proCode;
       });
     },
+    /**
+     * 获取类别列表
+     */
     getGoodsTypes() {
       return wepy
         .$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {
@@ -198,6 +246,9 @@ wepy.page({
           this.goodsTypes = res.goodsType;
         });
     },
+    /**
+     * 获取名称
+     */
     getGoodsCodesAndOperatorType() {
       return wepy
         .$api('appPlatform/goods/getGoodsProCodeAndGoodsCode', {
@@ -210,6 +261,9 @@ wepy.page({
           this.goodsCodes = res.goodsCodes;
         });
     },
+    /**
+     * 获取重量
+     */
     getGoodsListByProCodeAndGoodsCode() {
       let data = this.getSubmitData();
       return wepy.$api('appPlatform/goods/getGoodsListByProCodeAndGoodsCode', data).then((res) => {
@@ -222,9 +276,15 @@ wepy.page({
         }
       });
     },
+    /**
+     * 关闭弹出层
+     */
     colsePopUp(key) {
       this[key] = false;
     },
+    /**
+     * 显示弹出层
+     */
     hasPop(key) {
       if (key === 'hasGoodTypePop') {
         if (this.goodData.proCode) this[key] = true;
@@ -266,6 +326,7 @@ wepy.page({
       if (this.type !== 'query') valid = this.valid(data);
       if (valid) {
         if (this.type === 'query') {
+          console.log('query'+123)
           let {
             proCode,
             goodsCode,
@@ -290,6 +351,7 @@ wepy.page({
         }
       }
     },
+
     sendUpdateGoodsMessage() {
       let upData = JSON.parse(JSON.stringify(this.updateGoodsMessageData));
       for (let key in this.updateGoodsMessageData) {
@@ -338,20 +400,27 @@ wepy.page({
         this.detailApplyDo.startPositionGps = res.positionGps;
       });
     },
-    async submitSuccess() {
-      let {
-        proCode,
-        goodsCode,
-        goodsType,
-        goodsId,
-        goodsWeight
-      } = this.goodsCodesDetail;
-      await this.getGoodsPositionGps(goodsId);
-      this.detailApplyDo.goodsId = goodsId;
-      this.detailApplyDo.goodsProCode = proCode;
-      this.detailApplyDo.goodsType = goodsType;
-      this.detailApplyDo.goodsGoodsCode = goodsCode;
-      this.detailApplyDo.goodsWeight = goodsWeight;
+    submitSuccess() {
+      let { proCode , goodsCode , goodsType , goodsId , goodsWeight} = this.goodsCodesDetail;
+      let index = this.index
+      if(index == undefined){
+        // await this.getGoodsPositionGps(goodsId);
+        console.log("保存为主任务")
+        this.detailApplyDo.goodsId = goodsId;
+        this.detailApplyDo.goodsProCode = proCode;
+        this.detailApplyDo.goodsType = goodsType;
+        this.detailApplyDo.goodsGoodsCode = goodsCode;
+        this.detailApplyDo.goodsWeight = goodsWeight;
+      }else{
+        console.log("保存副任务")
+        this.detailApplyDo.intermodalist[index].goodsId = goodsId;
+        this.detailApplyDo.intermodalist[index].goodsProCode = proCode;
+        this.detailApplyDo.intermodalist[index].goodsType = goodsType;
+        this.detailApplyDo.intermodalist[index].goodsGoodsCode = goodsCode;
+        this.detailApplyDo.intermodalist[index].goodsWeight = goodsWeight;
+        this.detailApplyDo.intermodalist[index].lighterageStr = `${proCode}-${goodsType}-${goodsCode}`;
+      }
+
       this.setDetailApplyDo(this.detailApplyDo);
       wx.navigateBack();
     }

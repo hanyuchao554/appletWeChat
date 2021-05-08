@@ -1,13 +1,19 @@
 <template>
   <div class="pop_up_wrap">
     <div class="prop_up_title">
-      <div @click="">编制操作</div>
+      <div @click="aaa()">编制操作</div>
       <div class="font-32 prop_up_title_r" @click="close">x</div>
     </div>
     <div class="prop_up_item_group">
-      <div class="prop_up_item" @click="onSelect(item)" v-for="item in actionList">
-        <van-icon :name="item.icon" size="48rpx"></van-icon>
-        <div class="text">{{ item.text }}</div>
+      <div @click="onSelect(item)" v-for="(item,index) in actionList">
+        <div v-if="index !=7 && executestate ==0 " class="prop_up_item">
+          <van-icon :name="item.icon" size="48rpx"></van-icon>
+          <div class="text">{{ item.text }}</div>
+        </div>
+        <div v-if="executestate == 1" class="prop_up_item">
+          <van-icon :name="item.icon" size="48rpx"></van-icon>
+          <div class="text">{{ item.text }}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -21,6 +27,7 @@
         type: Array,
         default: [],
       },
+      executestate:String,
       currApplyId: {
         required: true,
       },
@@ -61,9 +68,25 @@
           icon: '/static/images/icon_ends.png',
           text: '添加衍生任务',
         },
+        {
+          id: 8,
+          icon: '/static/images/icon_new_task.png',
+          text: '新增驳运任务',
+        },
+        {
+          id: 9,
+          icon: '/static/images/icon_specified_position.png',
+          text: '移动至指定任务',
+        }
       ],
     },
+    mounted(){
+      console.log(123)
+    },
     methods: {
+      aaa(){
+        console.log(this.executestate)
+      },
       changeAllocatedTaskSort(targetApplyId) {
         wx.hideToast();
         wepy
@@ -179,6 +202,15 @@
               });
               break;
             case 7:
+              wx.navigateTo({
+                url: '/pages/addTask?requestType=衍生任务',
+              });
+              break;
+              // this.$emit('onSelect')
+            case 8:
+              this.$emit('onSelect',actionId)
+              break;
+            case 9:
               wx.navigateTo({
                 url: '/pages/addTask?requestType=衍生任务',
               });

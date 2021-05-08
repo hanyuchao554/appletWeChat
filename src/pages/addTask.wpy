@@ -5,47 +5,51 @@
         <van-cell title="申请部门" :value="detailApplyDo.requestDepartmentName" />
         <van-cell @click="hasPopUp('isDepartment')"required title="驳运部门" :value="detailApplyDo.transDeptName || '请选择'" />
       </van-cell-group>
+      <van-cell-group custom-class="item">
+        <van-cell @click="showcar"  title="车辆编号" :value="detailApplyDo.carNumber || '请选择'" />
+      </van-cell-group>
+
+      <!-- <van-cell-group custom-class="item">
+        <van-cell required @click="goToLighterage" title="驳运对象" :value="lighterageStr || '请选择'" />
+      </van-cell-group> -->
 
       <van-cell-group custom-class="item">
         <van-cell required @click="goToLighterage" title="驳运对象" :value="lighterageStr || '请选择'" />
-      </van-cell-group>
-
-      <van-cell-group custom-class="item">
-        <!-- <van-cell required @click="goToLighterage" title="驳运对象" :value="lighterageStr || '请选择'" /> -->
         <van-cell @click="goToPosition('startPositionId',1)" required title="起始地" :value="detailApplyDo.startPositionName || '请选择'" />
         <van-cell @click="goToPosition('endPositionId',2)" required title="目的地" :value="detailApplyDo.endPositionName || '请选择'" />
-        <!-- <van-cell @click="hasPopUp('isJobContent')" required title="工作内容" :value="detailApplyDo.jobContent || '请选择'" /> -->
+        <van-cell @click="hasPopUp('isJobContent')" required title="工作内容" :value="detailApplyDo.jobContent || '请选择'" />
       </van-cell-group>
 
-      <!-- <div class="items">
-        <div class="new_items delete_items">
-          <van-icon name="add-o"/>
+      <div class="items" v-for="(item,index) in detailApplyDo.intermodalist">
+        <div class="new_items delete_items" @click="deletetasks(index)">
+          <van-icon name="close" />
           <text>删除联运物品</text>
         </div>
         <van-cell-group custom-class="item">
-          <van-cell required @click="goToLighterage" title="驳运对象" :value="lighterageStr || '请选择'" />
-          <van-cell @click="goToPosition('startPositionId',1)" required title="起始地" :value="detailApplyDo.startPositionName || '请选择'" />
-          <van-cell @click="goToPosition('endPositionId',2)" required title="目的地" :value="detailApplyDo.endPositionName || '请选择'" />
-          <van-cell @click="hasPopUp('isJobContent')" required title="工作内容" :value="detailApplyDo.jobContent || '请选择'" />
+          <van-cell required @click="navgetto(index)" title="驳运对象" :value="item.lighterageStr || '请选择'" />
+          <van-cell @click="goToPosition('startPositionId',1,index)" required title="起始地" :value="item.startPositionName || '请选择'" />
+          <van-cell @click="goToPosition('endPositionId',2,index)" required title="目的地" :value="item.endPositionName || '请选择'"  />
+          <van-cell @click="JobContentPopUp(index)" required title="工作内容" :value="item.jobContent || '请选择'" />
         </van-cell-group>
-      </div> -->
+      </div>
       
-      <!-- <div class="new_items">
+      <div class="new_items" @click="addtasks">
         <van-icon name="add-o"/>
         <text>新增联运物品</text>
-      </div> -->
+      </div>
 
       <van-cell-group custom-class="item">
         <van-cell @click="hasPopUp('isStartTime')" required title="起始时间" :value="detailApplyDo._startTime || '请选择'" />
         <van-cell @click="hasPopUp('isEndTime')" required title="到达时间":value="detailApplyDo._endTime || '请选择'" />
       </van-cell-group>
       
-      <van-cell-group custom-class="item">
+      <!-- <van-cell-group custom-class="item">
         <van-cell @click="hasPopUp('isJobContent')"
                   required
                   title="工作内容"
                   :value="detailApplyDo.jobContent || '请选择'" />
-      </van-cell-group>
+      </van-cell-group> -->
+
       <van-cell-group custom-class="item">
         <van-cell @click="hasPopUp('isContacts')"
                   required
@@ -87,6 +91,7 @@
                @close="colsePopUp('isDepartment')">
       <app-department @onSelect="onSelect"></app-department>
     </van-popup>
+    <!-- 选择车辆编号 -->
     <!-- 起始时间 -->
     <van-popup v-if="popUpTypes.isStartTime"
                round
@@ -121,7 +126,7 @@
                position="bottom"
                :show="popUpTypes.isJobContent"
                @close="colsePopUp('isJobContent')">
-      <job-content @onSelect="onSelect"></job-content>
+      <job-content @onSelect="onSelect" :index="eleventh"></job-content>
     </van-popup>
     <!-- 联系人 -->
     <van-popup v-if="popUpTypes.isContacts"
@@ -131,7 +136,7 @@
                :close-on-click-overlay="false"
                :show="popUpTypes.isContacts"
                @close="colsePopUp('isContacts')">
-      <apply-contasts @onSelect="onSelect"></apply-contasts>
+      <apply-contasts @onSelect="onSelect" :Type="0"></apply-contasts>
     </van-popup>
     
     <van-popup v-if="popUpTypes.isImportance"
@@ -188,15 +193,21 @@ wepy.page({
     detailApplyDo: {},
     hasInput: false,
     goodsCodesDetail: null,
+    isshow:false,
+    list:[],                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+    eleventh:''//子任务的下标
   },
   onShow() {
     this.initDetailApplyDo();
     this.getApplyContasts();
     this.getDepartment()
+    if(this.detailApplyDo.intermodalist){
+      this.list = this.detailApplyDo.intermodalist
+    }
   },
   onLoad({ requestType }) {
     this.setTilte(requestType);
-  },
+  },                                                                                                                    
   onUnload() {
     this.setDetailApplyDoInit();
   },
@@ -219,6 +230,28 @@ wepy.page({
     ...mapMutations(['setDetailApplyDo', 'setDetailApplyDoInit']),
     valid() {
       return wepy.$valid.handleValid(rules, this.detailApplyDo);
+    },
+    showcar(){
+      wx.navigateTo({
+        url: `/pages/driverTask/selectCarnumber`,
+      });
+    },
+    /**
+     * 添加多个任务
+     */
+    addtasks(){
+      var obj = {
+        lighterageStr:'',//驳运对象,
+      }
+      this.list.push(obj)
+      this.$set(this.detailApplyDo, 'intermodalist',this.list)
+    },
+    /**
+     * 删除任务
+     */
+    deletetasks(index){
+      this.list.splice(index,1)
+      this.$set(this.detailApplyDo, 'intermodalist',this.list)
     },
     colseTime() {
       this.hasInput = false;
@@ -282,12 +315,32 @@ wepy.page({
      * 提交(下一步)
      */
     submitConfirm() {
-      this.$set(this.detailApplyDo, 'intermodalist',[])
+      let list = this.detailApplyDo.intermodalist
       if (this.valid()) {
-
-        wx.navigateTo({
-          url: `/pages/platformApply/confirm?requestType=${this.requestType}`,
-        });
+        if(list){
+          list.forEach((item)=>{
+            if(!item.goodsId){
+              wepy.$showToast('请选择副任务驳运对象')
+            }else if(!item.startPositionId){
+              wepy.$showToast('请选择副任务起始地')
+            }else if(!item.endPositionId){
+              wepy.$showToast('请选择副任务目的地')
+            }else if(!item.jobContent){
+              wepy.$showToast('请选择副任务工作内容')
+            }else{
+              console.log('子任务已经选择完成')
+              wx.navigateTo({
+                url: `/pages/platformApply/confirm?requestType=${this.requestType}`,
+              });
+            }
+          })
+        }else{
+          console.log('没有子任务')
+          wx.navigateTo({
+            url: `/pages/platformApply/confirm?requestType=${this.requestType}`,
+          });
+        }
+       
       }
     },
     submitDrafts() {
@@ -301,26 +354,54 @@ wepy.page({
           });
         });
     },
-    goToPosition(target, type) {
+    /**
+     * 跳转到起始地/目的地列表
+     */
+    goToPosition(target,type,index) { 
+      // console.log(target,type,index)
       wx.navigateTo({
-        url: `/pages/position/position?code=${target}&applyType=0&type=${type}`,
+        url: `/pages/position/position?code=${target}&applyType=0&type=${type}&index=${index}`,
       });
     },
+    /**
+     * 跳转到驳运对象选择页面(主任务)
+     */
     goToLighterage() {
-      let data =
-        this.goodsCodesDetail !== null
-          ? JSON.stringify(this.goodsCodesDetail)
-          : '';
+      // this.goodsCodesDetail = {index:'1',obj:'2'}
+      let data = this.goodsCodesDetail !== null ? JSON.stringify(this.goodsCodesDetail) : '';
       let url = `/pages/lighterage/lighterage`;
       wx.navigateTo({
         url: data ? url + `?data=${data}` : url,
       });
     },
+    /**
+     * 跳转到驳运对象选择页面(子任务)
+     */
+    navgetto(index){
+      wx.navigateTo({
+        url: `/pages/lighterage/lighterage?index=${index}`,
+      });
+      // console.log(index)
+    },
+    /**
+     * 关闭指定的弹出层
+     */
     onSelect() {
       this.hasInput = false;
       for (let key of Object.keys(this.popUpTypes))
         this.popUpTypes[key] = false;
+        if(this.detailApplyDo.intermodalist){
+          this.list = this.detailApplyDo.intermodalist
+        }
+        
     },
+    /**
+     * 打开子任务内容的弹出层
+     */
+    JobContentPopUp(eleventh){
+      this.popUpTypes.isJobContent = true
+      this.eleventh = eleventh
+    }
   },
 });
 </script>
@@ -338,7 +419,7 @@ wepy.page({
           "apply-contasts": "~@/components/pop-up/apply-contasts",
           "apply-important": "~@/components/pop-up/apply-important",
           "time-picker": "~@/components/pop-up/time-picker",
-           "van-icon": "module:@vant/weapp/dist/icon/index"
+          "van-icon": "module:@vant/weapp/dist/icon/index",
 
     }
 }

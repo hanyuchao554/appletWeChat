@@ -1,33 +1,19 @@
 <template>
   <div class="confirm_page">
     <div class="content">
-      <div class="wrap">
+      <div class="wrap padding">
         <div class="title margin_bottom_8">
-          <div class="tag" style="background:{{requestTypeBg}}">
-            {{ requestTypeStr }}
-          </div>
+          <div class="tag" style="background:{{requestTypeBg}}">{{ requestTypeStr }}</div>
+          <div class="tag tags">联</div>
           <div class="title_content">
-            {{ detailApplyDo.goodsProCode }}-{{detailApplyDo.goodsType}}-{{ detailApplyDo.goodsGoodsCode }} {{ detailApplyDo.jobContent }}
+            <div class="dep">驳运部门: {{ detailApplyDo.transDeptName }}</div>
+            <div>总重量：{{totalweight}}吨</div>
           </div>
         </div>
-        <div class="font-color-gray font-24 margin_bottom_8">
-          申请部门: {{ detailApplyDo.applyDeptName }} / 驳运部门: {{ detailApplyDo.transDeptName }}
+        <div class=" title_content">
+          <div class="name">{{detailApplyDo.goodsProCode }}-{{detailApplyDo.goodsType}}-{{ detailApplyDo.goodsGoodsCode }}</div>
+          <div>重量: {{ detailApplyDo.goodsWeight / 1000 }}吨</div>
         </div>
-        <div class="font-24">
-          选择分段: {{ detailApplyDo.goodsProCode }}-{{detailApplyDo.goodsType}}-{{ detailApplyDo.goodsGoodsCode }}; 重量: {{ detailApplyDo.goodsWeight / 1000 }}吨; 尺寸: ({{ detailApplyDo.goodsWidth }}*{{ detailApplyDo.goodsHigh }}*{{ detailApplyDo.goodsLength }}) (米)
-        </div>
-      </div>
-      <div class="wrap not-top-padding">
-        <div class="cell">
-          <div>起始时间</div>
-          <div>{{ detailApplyDo._startTime }}</div>
-        </div>
-        <div class="cell">
-          <div>到达时间</div>
-          <div>{{ detailApplyDo._endTime }}</div>
-        </div>
-      </div>
-      <div class="wrap">
         <div class="wrap_content">
           <div class="wrap_content_left">
             <div class="wrap_content_left_t"></div>
@@ -43,19 +29,45 @@
             </div>
           </div>
         </div>
-      </div>
-      <div class="wrap not-top-padding">
-        <div class="cell">
+        <div class="cell_linen">
           <div class="label">工作内容</div>
           <div>{{ detailApplyDo.jobContent || '' }}</div>
         </div>
+      </div>
+
+      <div class="wrap padding" v-for="item in detailApplyDo.intermodalist">
+        <div class="title_content">
+          <div class="name">{{ item.goodsProCode }}-{{item.goodsType}}-{{ item.goodsGoodsCode }}</div>
+          <div>重量: {{ item.goodsWeight / 1000 }}吨</div>
+        </div>
+        <div class="wrap_content">
+          <div class="wrap_content_left">
+            <div class="wrap_content_left_t"></div>
+            <div class="wrap_content_left_c"></div>
+            <div class="wrap_content_left_b"></div>
+          </div>
+          <div class="wrap_content_right">
+            <div class="ellipsis">
+              {{ item.startPositionName || '' }}
+            </div>
+            <div class="ellipsis">
+              {{ item.endPositionName || '' }}
+            </div>
+          </div>
+        </div>
+        <div class="cell_linen">
+          <div class="label">工作内容</div>
+          <div>{{ item.jobContent || '' }}</div>
+        </div>
+      </div>
+      <div class="wrap not-top-padding">
         <div class="cell">
-          <div class="label">重要程度</div>
-          <div style="color: #bea365">{{ detailApplyDo.important || '' }}</div>
+          <div>起始时间</div>
+          <div>{{ detailApplyDo._startTime }}</div>
         </div>
         <div class="cell">
-          <div class="label">申请备注</div>
-          <div style="min-height: 150rpx">{{ detailApplyDo.memo }}</div>
+          <div>到达时间</div>
+          <div>{{ detailApplyDo._endTime }}</div>
         </div>
       </div>
       <div class="wrap not-top-padding">
@@ -64,6 +76,14 @@
           <div @click="makePhoneCall(detailApplyDo.contastsPhone)">
             {{ detailApplyDo.contastsName || '' }} {{ detailApplyDo.contastsPhone || '' }}
           </div>
+        </div>
+        <div class="cell">
+          <div class="label">重要程度</div>
+          <div style="color: #bea365">{{ detailApplyDo.important || '' }}</div>
+        </div>
+        <div class="cell">
+          <div class="label">申请备注</div>
+          <div style="min-height: 150rpx">{{ detailApplyDo.memo }}</div>
         </div>
       </div>
     </div>
@@ -94,6 +114,7 @@
       requestType: '',
       requestTypeBg: '',
       showApplicationBtn: false,
+      totalweight:0,
     },
     onLoad({
       requestType
@@ -101,10 +122,25 @@
       this.requestType = requestType;
       this.getTagBgColor(requestType);
       this.setTilte(requestType);
+      this.Totalweight()
     },
     computed: mapState(['detailApplyDo']),
     methods: {
       ...mapMutations(['setDetailApplyDo']),
+      /**
+       *计算总重量
+       */
+      Totalweight(){
+        if(this.detailApplyDo.intermodalist){
+          let list = this.detailApplyDo.intermodalist 
+          this.totalweight = this.detailApplyDo.goodsWeight/1000
+          list.forEach(item =>{
+            this.totalweight += item.goodsWeight /1000
+          })
+        }else{
+          this.totalweight = this.detailApplyDo.goodsWeight / 1000
+        }
+      },
       submit() {
         if (this.isDisabled) return;
         this.isDisabled = true;
@@ -170,7 +206,7 @@
     .content {
       position: absolute;
       width: 100%;
-      top: 0;
+      top:20rpx;
       bottom: 150rpx;
       overflow-y: scroll;
     }
@@ -208,8 +244,11 @@
       border-radius: 5rpx;
       font-weight: 500;
     }
-    &_content {
+    .tags{
+      background: #70b603;
       margin-left: 10rpx;
+    }
+    &_content {
       font-size: 28rpx;
       font-weight: 500;
       color: #2b2b2b;
@@ -235,6 +274,9 @@
       .label {
         flex: none;
         padding-right: 25rpx;
+      }
+      .title{
+
       }
     }
     .cell:last-child {
@@ -276,5 +318,26 @@
         }
       }
     }
+  }
+  .title_content{
+    display: flex;
+    .dep{
+      margin:0 60rpx 0 20rpx; 
+    }
+    .name{
+      margin-right: 40rpx;
+    }
+  }
+  .cell_linen{
+    border-top:1rpx solid #efefef; 
+    display: flex;
+    justify-content:space-between;
+    font-size:28rpx;
+    padding: 25rpx 0; 
+    margin-top: 20rpx
+  }
+  .padding{
+    padding-bottom: 0;
+    padding-top:25rpx;
   }
 </style>

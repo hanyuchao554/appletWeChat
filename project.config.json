@@ -13,7 +13,7 @@
     "autoAudits": false,
     "showShadowRootInWxmlPanel": false,
     "scopeDataCheck": false,
-    "uglifyFileName": false,
+    "uglifyFileName": true,
     "checkInvalidKey": true,
     "checkSiteMap": true,
     "uploadWithSourceMap": true,
@@ -27,14 +27,14 @@
       "outputPath": ""
     },
     "enableEngineNative": false,
-    "bundle": false,
+    "bundle": true,
     "useIsolateContext": true,
     "useCompilerModule": false,
     "userConfirmedUseCompilerModuleSwitch": false,
-    "userConfirmedBundleSwitch": false,
+    "userConfirmedBundleSwitch": true,
     "packNpmManually": false,
     "packNpmRelationList": [],
-    "minifyWXSS": false
+    "minifyWXSS": true
   },
   "compileType": "miniprogram",
   "appid": "wxd28e192f572d5db9",

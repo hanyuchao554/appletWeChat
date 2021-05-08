@@ -116,7 +116,7 @@
           if(this.type == 0){
             this.queryForkliftTaskPlan()
           }
-          this.Timerefresh()
+          // this.Timerefresh()
         },
         fail(err) {
           wepy.$showToast('获取当前地理位置失败')
@@ -199,7 +199,7 @@
         wepy.$api('app/forkliftDriver/queryForkliftTaskPlan', {
           deptId: this.deptId || undefined
         }).then(res => {
-          if(res.length){
+          if(res){
              this.forkliftTaskPlanList = res || []
           }else{
             wx.showToast({

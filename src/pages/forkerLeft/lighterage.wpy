@@ -142,6 +142,7 @@
         console.log(this.type)
         this.txt.parenttxt = this.Parentlist[index].paramValue
         this.$set(this.detailApplyDo ,'goodsTypeName',this.txt.parenttxt)
+        this.$set(this.detailApplyDo, 'goodsType', id);
         this.confId = id
         this.type = 2
         if(this.type == 2){

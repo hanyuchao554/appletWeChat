@@ -1,103 +1,161 @@
 <template>
   <div class="taskList_page">
     <div class="header">
-      <van-dropdown-menu :z-index="99">
-        <van-dropdown-item id="time" :title="currTimeName" @open="getTimeList">
-          <div class="dropdown_item_cell" @click="onClickTime(undefined)">
-            所有班次
+      <van-checkbox v-if="ishasCheck" custom-class="v_checkBox"  checked-color="#005bac"  value="{{ allCheck }}"  @change="onChangeAllCheck"></van-checkbox>
+      <div class="header_left">
+          <div class="transfertime">
+            <div>驳运时间</div>
+            <text>请选择</text> ~
+            <text>请选择</text>
           </div>
-          <div class="dropdown_item_cell" v-for="item in timeList" @click="onClickTime(item)">
-            {{ item.startTimeStr }}
-          </div>
-        </van-dropdown-item>
-        <van-dropdown-item id="cart" @open="getDistributionCars" :title="currCartName">
-          <div class="dropdown_item_cell" @click="onClickCart(undefined)">
-            所有车辆
-          </div>
-          <div class="dropdown_item_cell" v-for="item in cartList" @click="onClickCart(item)">
-            <div class="tag_drop">
-              <div class="drop"></div>
-              {{ item.carNumber }}
-            </div>
-            <div>{{ item.carFullWeight / 1000 }}吨</div>
-          </div>
-        </van-dropdown-item>
-      </van-dropdown-menu>
+          <van-dropdown-menu :z-index="99">
+            <van-dropdown-item id="time" :title="currTimeName" @open="getTimeList">
+              <div class="dropdown_item_cell" @click="onClickTime(undefined)">所有班次</div>
+              <div class="dropdown_item_cell" v-for="item in timeList" @click="onClickTime(item)">{{ item.startTimeStr }}</div>
+            </van-dropdown-item>
+            <van-dropdown-item id="cart" @open="getDistributionCars" :title="currCartName">
+              <div class="dropdown_item_cell" @click="onClickCart(undefined)">所有车辆</div>
+              <div class="dropdown_item_cell" v-for="item in cartList" @click="onClickCart(item)">
+                <div class="tag_drop">{{ item.carNumber }}</div>
+                  <div>{{ item.carFullWeight / 1000 }}吨</div>
+              </div>
+            </van-dropdown-item>
+        </van-dropdown-menu>
+            <van-dropdown-menu :z-index="99">
+              <van-dropdown-item  :title="currTimeName" @open="getTimeList">
+                <div class="dropdown_item_cell" @click="onClickTime(undefined)">所有班次</div>
+                <div class="dropdown_item_cell" v-for="item in timeList" @click="onClickTime(item)">{{ item.startTimeStr }}</div>
+              </van-dropdown-item>
+              <van-dropdown-item  @open="getDistributionCars" :title="currCartName">
+                <div class="dropdown_item_cell" @click="onClickCart(undefined)">所有车辆</div>
+                <div class="dropdown_citem_cell" v-for="item in cartList" @click="onClickCart(item)">
+                  <div class="tag_drop">{{ item.carNumber }}</div>
+                    <div>{{ item.carFullWeight / 1000 }}吨</div>
+                </div>
+              </van-dropdown-item>
+        </van-dropdown-menu>
+      </div>
+      <div class="header_right">
+        <div class="button">算法编辑</div>
+        <div class="button">批量编辑</div>
+        <div class="button ">同步执行</div>
+      </div>
     </div>
     <div class="content">
-      <div class="car_wrap" v-for="item in list">
+      <div class="car_wrap" v-for="(item,index) in list">
         <div :class="{ not_task: item.task.length }" class="car_info item">
           <div>
-            <div class="tag_drop">
-              <div class="drop"></div>
-              {{ item.carNumber }}
-            </div>
+            <div class="tag_drop">{{ item.carNumber }}</div>
             <div class="font-color-gray">{{ item.carFullWeight / 1000 }}吨</div>
           </div>
           <div>
             <div class="car_info_s">
               <van-icon color="#8E9298" name="clock-o" size="26rpx" />
-              <div>用时:{{ item.totalTime }}小时</div>
+              <div>用时:{{ item.totalTime || 0.0}}小时</div>
             </div>
             <div class="car_info_s">
               <van-icon color="#8E9298" name="notes-o" size="26rpx" />
-              <div>任务:{{ item.carTaskCount }}个</div>
+              <div>任务:{{ item.carTaskCount  || 0}}个</div>
             </div>
           </div>
         </div>
-        <div class="item" :class="{ not_task_item: item.task.length }" v-for="subItem in item.task">
-          <div @click="goToDetail(subItem.applyId,1)">
-            <div class="item_header">
-              <div class="tag" style="background:{{subItem.requestTypeBg}}">
-                {{ subItem.reqStr }}
-              </div>
-              <div class="item_header_t">
-                <div>
-                  申请驳运时间: {{ subItem._applyTime }}
-                  <text style="padding-left: 10rpx">{{
-                      subItem.applyImportant
-                      }}</text>
-                </div>
-                <div class="font-color-deep-red">
-                  {{ subItem.isStartTask === 0 ? '执行中' : '' }}
-                </div>
-              </div>
+          <div class="item" v-for="(subItem,i) in item.task"  >
+            <div class="item_checkBox" v-if="hasCheck">
+              <van-checkbox custom-class="v_checkBox" checked-color="#005bac" value="{{ subItem.checked }}" @change="onChange(index,i)"></van-checkbox>
             </div>
-            <div class="font-26 item_header_tc">{{ subItem.listName }}</div>
-            <div class="contName" @tap.stop="conName(subItem.contPhone)">联系人:{{subItem.contName}}</div>
-            <div class="remark">备注：{{subItem.memo==null ? '': subItem.memo}}</div>
-            <div class="item_header_c">
-              {{ subItem.deptName }}/{{ subItem.goodsWeight / 1000 }}吨/{{ subItem._startTimeStamp }}至{{ subItem._endTimeStamp }}
+            <div class="item_wrap" :class="{'select_item_wrap' : !hasCheck}">
+              <div @click="goToDetail(subItem.applyId,1)">
+                <div class="item_header">
+                  <div class="tag" style="background:{{subItem.requestTypeBg}}">{{ subItem.reqStr }}</div>
+                  <div class="tag tags" v-if="subItem.isIntermodal">联</div>
+                  <div class="item_header_t">
+                    <div class="item_header_t_detailed" >
+                      <div class="txt">{{subItem.deptName}}</div>
+                      <div class="txt">{{subItem.goodsTotalWeight / 1000}}吨</div>
+                      <div class="txt">{{subItem.applyImportant || ''}}</div>
+                      <div class="contName" @tap.stop="conName(subItem.contPhon)">{{subItem.contName}}</div>
+                    </div>
+                    <div class="font-color-deep-red">{{ subItem.isStartTask === 0 ? '执行中' : '' }}</div>
+                  </div>
+                </div>
+                <div class="font-26 item_header_tc">{{ subItem.listName }}</div>
+                <div class="remark">备注：{{subItem.memo==null ? '': subItem.memo}}</div>
+                <div class="item_header_c">驳运时间：{{ subItem._startTimeStamp }}至{{ subItem._endTimeStamp }}</div>
+              </div>
+              <div class="item_content">
+                <div @click="goToDetail(subItem.applyId,1)" class="item_content_left">
+                  <div class="common_step">
+                    <div class="common_step_left">
+                      <div class="common_step_left_t"></div>
+                      <div class="common_step_left_c"></div>
+                      <div class="common_step_left_b"></div>
+                    </div>
+                    <div class="common_step_center">
+                      <div class="ellipsis">起始地：{{ subItem.startPositionName }}</div>
+                      <div class="ellipsis">目的地：{{ subItem.endPositionName }}</div>
+                    </div>
+                  </div>
+                </div>
+                <div @click="showAction(item.task, subItem.applyId, item, subItem)" class="item_content_right">
+                  <text class="font-color-blue">编制 ></text>
+                </div>
+              </div>
+              <div class="Subtasks" v-for="(k,j) in subItem.intermodalTaskVoList">
+                <div class="font-26">{{ k.listName }}</div>
+                <div class="item_content">
+                  <div @click="goToDetail(k.applyId,1)" class="item_content_left">
+                    <div class="common_step steps">
+                      <div class="common_step_left">
+                        <div class="common_step_left_t"></div>
+                        <div class="common_step_left_c"></div>
+                        <div class="common_step_left_b"></div>
+                      </div>
+                      <div class="common_step_center">
+                        <div class="ellipsis">起始地：{{ k.startPositionName }}</div>
+                        <div class="ellipsis">目的地：{{ k.endPositionName }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div @tap.stop="segmentationtasks(1,j,k.listName,k.id,subItem.applyId)" class="split">
+                    <text>拆分任务</text>
+                  </div>
+                </div>
+              </div>  
             </div>
           </div>
-          <div class="item_content">
-            <div @click="goToDetail(subItem.applyId,1)" class="item_content_left">
-              <div class="common_step">
-                <div class="common_step_left">
-                  <div class="common_step_left_t"></div>
-                  <div class="common_step_left_c"></div>
-                  <div class="common_step_left_b"></div>
-                </div>
-                <div class="common_step_center">
-                  <div class="ellipsis">
-                    起始地：{{ subItem.startPositionName }}
-                  </div>
-                  <div class="ellipsis">
-                    目的地：{{ subItem.endPositionName }}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div @click="showAction(item.task, subItem.applyId, item, subItem)" class="item_content_right">
-              <text class="font-color-blue">编制 ></text>
-            </div>
+      </div>
+    </div>
+    <div class="bottom" v-if="hasCheck">
+      <div class="cancel" @click="cancel">
+        <text>取消</text>
+      </div>
+      <div class="cancel confirm" @click="confirm">
+        <text>确定</text>
+      </div>
+    </div>
+    <!-- 编制列表选项 -->
+    <van-popup round  :show="showActionPopUp" position="bottom">
+      <action :tagTask="tagTask" :currApplyId="currApplyId" :executestate="state" @onSelect="onSelect" @close="closeAction"></action>
+    </van-popup>
+    <!-- 新增联运任务 -->
+    <van-popup :show="new_task" position="bottom" @close="new_task = false" round >
+      <div class="option">
+        <div class="option_header">
+          <text>新增联运任务</text>
+        </div>
+        <div class="option_item">
+          <div class="itme_selet" @click="existingtasks">
+            <van-icon name="description" />
+             <text>选择列表现有任务</text>
+          </div>
+          <div class="itme_selet" @click="addtask(2,j)">
+            <van-icon name="description" />
+             <text>新增联运物品</text>
           </div>
         </div>
       </div>
-    </div>
-    <van-popup v-if="showActionPopUp" round position="bottom" :show="showActionPopUp">
-      <action :tagTask="tagTask" :currApplyId="currApplyId" @onSelect="onSelect" @close="closeAction"></action>
     </van-popup>
+    <!-- 选择新增任务的选项 -->
   </div>
 </template>
 
@@ -113,9 +171,13 @@
     mixins: [CommonMixin],
     data: {
       currCartName: '选择车辆',
-      currTimeName: '选择班次',
+      currTimeName: '驳运类别',
       timeList: [],
       cartList: [],
+      allCheck:false,
+      ishasCheck:false,
+      hasCheck:false,
+      new_task:false,
       filterData: {
         carId: undefined,
         startTimeStamp: undefined
@@ -124,7 +186,9 @@
       currApplyId: undefined,
       list: [],
       showActionPopUp: false,
-      realTime:null
+      realTime:null,
+      carindex:'',
+      state:''
     },
     //监听用户下拉事件
     onPullDownRefresh(){
@@ -150,26 +214,22 @@
       });
     },
     onShow() {
+      
       let isSuccessCallBack = wx.getStorageSync('isSuccessCallBack');
+      console.log(isSuccessCallBack)
       if (isSuccessCallBack) {
         this.appGetOrganizationTaskList();
         wx.removeStorage({
           key: 'isSuccessCallBack'
         });
+      }else{
+        this.appGetOrganizationTaskList();
       }
       this.setCurrOrganizationData({
         currTag: {}
       });
       this.showActionPopUp = false;
-
-      //页面显示时触发每间隔一段时间就刷新数据
-      let that = this
-      this.realTime = setInterval(function(){
-      that.appGetOrganizationTaskList()
-        wx.showToast({
-          title: '数据已更新！'
-        })
-      },30000)
+      this.startcounting()
     },
     created() {
       this.appGetOrganizationTaskList();
@@ -181,6 +241,28 @@
     },
     methods: {
       ...mapMutations(['setCurrOrganizationData']),
+      //开始计时，30秒刷新一次
+      startcounting(){
+        //页面显示时触发每间隔一段时间就刷新数据
+        let that = this
+        this.realTime = setInterval(function(){
+        that.appGetOrganizationTaskList()
+          wx.showToast({
+            title: '数据已更新！'
+          })
+        },30000)
+      },
+      /**
+       * 拆分任务
+       */
+      // segmentationtasks(1,j,k.listName,k.id,subItem.applyId)
+      segmentationtasks(type,index,listName,id,applyId){
+        console.log(type,index,listName,id,applyId)
+        wx.navigateTo({
+          url:`/pages/taskList/new_task?type=${type}&index=${index}&listName=${listName}&id=${id}&applyId=${applyId}`,
+        })
+        // console.log(type,index)
+      },
       onClickCart(item) {
         this.filterData.carId = item ? item.carId : undefined;
         this.currCartName = item ? item.carNumber : '选择车辆';
@@ -218,9 +300,24 @@
           this.cartList = res.carDetailList;
         });
       },
-      onSelect() {
+      /**
+       * 编制列表选项
+       */
+      onSelect(e) {
         this.appGetOrganizationTaskList();
         this.closeAction();
+        if(e== 8){
+          this.new_task = true
+
+          // console.log(e)
+        }
+      },
+      addtask(type,index){
+        this.new_task = false
+        // console.log(this)
+        wx.navigateTo({
+            url: `/pages/taskList/new_task?type=${type}&index=${index}&applyId=${this.currApplyId}`,
+        });
       },
       showAction(tagTask, applyId, item, subitem) {
         this.tagTask = tagTask;
@@ -230,10 +327,12 @@
           currTag: subitem
         });
         this.showActionPopUp = true;
+        this.state = subitem.isStartTask;
+
       },
       closeAction() {
-        this.tagTask = [];
-        this.currApplyId = undefined;
+        // this.tagTask = [];
+        // this.currApplyId = undefined;
         this.showActionPopUp = false;
       },
       appGetOrganizationTaskList() {
@@ -248,6 +347,7 @@
                   subItem._startTimeStamp = this.getTime(subItem.startTimeStamp);
                   subItem._endTimeStamp = this.getTime(subItem.endTimeStamp);
                   subItem._applyTime = this.getTime(subItem.applyTime);
+                  subItem.checked = false
                 });
                 setTimeout(()=>{
                   wx.stopPullDownRefresh()
@@ -277,8 +377,98 @@
       },
       getTime(time) {
         return time ? formatTimeTwo(time * 1000, 'M-D h:m') : '';
-      }
-    }
+      },
+      //新增联运任务
+      appMergeTask(listid){
+        // var data = this.tagTask[0]
+        // console.log(data.applyId)
+        wepy.$api('/platform/distribution/appMergeTask',{
+          sourceApplyIdList:listid,
+          targetApplyId:this.currApplyId,
+          // goodsId:data.goodsId,
+          // jobContentId:data.jobContentId,
+          // jobContent:data.jobContent,
+          // startPositionId:data.startPositionId,
+          // endPositionId:data.endPositionId,
+        }).then(res=>{
+          this.cancel()
+        })
+      },
+       // 获取可以操作的列表
+      appMergeTaskList(){
+        wepy.$api('/platform/distribution/appMergeTaskList',{
+          applyId:this.currApplyId,
+        }).then(res=>{
+          if(res.length){
+            this.list = res.map((item) => {
+              item.totalTime = item.totalTime ? (item.totalTime / 60).toFixed(1) : '0.0';
+              if (item.task && item.task.length) {
+                item.task.forEach((subItem) => {
+                  this.setRequestType(subItem);
+                  subItem._startTimeStamp = this.getTime(subItem.startTimeStamp);
+                  subItem._endTimeStamp = this.getTime(subItem.endTimeStamp);
+                  subItem._applyTime = this.getTime(subItem.applyTime);
+                  subItem.reqStr = subItem.requestType.substring(0,1)
+                  if(subItem.requestType == "计划任务"){
+                      subItem.requestTypeBg = '#005BAC';
+                  }
+                  if(subItem.requestType == "临时任务"){
+                      subItem.requestTypeBg = '#EFA600';
+                  }
+                  subItem.checked = false
+                  this.hasCheck = true
+                });
+                setTimeout(()=>{
+                  wx.stopPullDownRefresh()
+                },1500)
+              } else {
+                item.task = [];
+              }
+              return item;
+            });
+            clearInterval(this.realTime)
+          }else{
+            this.list = [];
+            wepy.$showToast('未查询到数据');
+          }
+        })
+      },
+      //选择列表现有任务
+      existingtasks(){
+        this.new_task = false
+        this.appMergeTaskList()
+      },
+      onChange(index,i){
+        if(this.list[index].task[i].checked == false){
+          this.list[index].task[i].checked = true
+        }else{
+          this.list[index].task[i].checked = false
+        }
+      },
+      //点击取消
+      cancel(){
+        this.hasCheck = false 
+        this.appGetOrganizationTaskList()//请求所有列表
+        this.startcounting()//开始计时30秒刷新一次
+      },
+      //confirm 确定
+      confirm(){
+        var list = []
+        this.list.map(item =>{
+          item.task.forEach(subitem =>{
+            if(subitem.checked == true){
+              list.push(subitem.applyId)
+            }else{
+              console.log('请选择要新增的任务')
+            }
+          })
+        })
+        if(list.length){
+          this.appMergeTask(list)
+        }
+      },
+
+    },
   });
 </script>
 
@@ -291,8 +481,10 @@
     "van-dropdown-menu": "module:@vant/weapp/dist/dropdown-menu/index",
     "van-dropdown-item": "module:@vant/weapp/dist/dropdown-item/index",
     "van-popup": "module:@vant/weapp/dist/popup/index",
-    "action": "~@/components/pop-up/action"
-  }
+    "action": "~@/components/pop-up/action",
+    "van-checkbox": "module:@vant/weapp/dist/checkbox/index",
+    "van-checkbox-group": "module:@vant/weapp/dist/checkbox-group/index"
+    }
 }
 </config>
 
@@ -304,15 +496,89 @@
   }
   .header {
     position: fixed;
-    width: 100%;
+    display: flex;
+    justify-content:space-between;
+    // justify-content:sw;
+    align-items: center;
     z-index: 99;
+    background: #fff;
+    padding: 0 30rpx;
+    &_left{
+      width: 70%;
+      display:flex;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      overflow: hidden;
+      .transfertime{
+        display:flex;
+        align-items: center;
+        margin-left: 30rpx;
+        padding: 25rpx 0 15rpx;
+        text{
+          background: #f2f2f2;
+          color: #aaa;
+          padding: 10rpx 28rpx;
+          margin: 0 15rpx;
+          border-radius:15rpx; 
+          font-size: 24rpx;
+        }
+      }
+    }
+    &_right{
+      padding-top:25rpx ;
+      .button{
+        font-size: 24rpx;
+        padding: 10rpx 12rpx;
+        background: #005cad;
+        margin-bottom: 15rpx;
+        border-radius:15rpx; 
+        color: #fff;
+        text-align: center;
+        line-height: 1.2rem;
+      }
+    }
   }
   .content {
     position: absolute;
     width: 100%;
-    top: 100rpx;
+    top: 220rpx;
     overflow-y: scroll;
     z-index: 1;
+    padding: 0;
+  }
+  .bottom{
+    position: fixed;
+    justify-content:space-between;
+    bottom: 0;
+    left: 0;
+    right: 59;
+    z-index: 999;
+    display:flex;
+    background: #f4f5f7;
+    margin: 0 25rpx 0 25rpx;
+    width: 710rpx;
+    padding: 25rpx 0;
+    .cancel{
+      padding:25rpx 100rpx;
+      background: #fff;
+      margin-left: 30rpx;
+      border-radius:15rpx; 
+      // 005bac
+    }
+    .confirm{
+      background: #005bac;
+      color: #fff;
+      margin-right: 30rpx;
+    }
+  }
+  view .van-dropdown-menu{
+    height:60rpx;
+  }
+  .van-dropdown-menu__item{
+    width:170rpx;
+  }
+  .van-dropdown-menu__item:nth-child(1){
+     padding-right: 120rpx
   }
   .dropdown_item_cell {
     display: flex;
@@ -326,13 +592,15 @@
     width: 100%;
     display: flex;
     justify-content: space-between;
+    &_detailed{
+      display: flex;
+      .txt{
+        margin-right: 30rpx;
+      }
+    }
   }
   .item_header_tc {
     margin: 10rpx 0;
-  }
-  .contName{
-    font-size: 28rpx;
-    padding: 10rpx 0;
   }
   .remark{
       font-size: 28rpx;
@@ -340,6 +608,17 @@
   }
   .item {
     box-shadow: none !important;
+    display: flex;
+    align-items: center;
+    .item_checkBox{
+      width: 10%;
+    }
+    &_wrap{
+      width: 90%;
+    }
+    .select_item_wrap{
+      width: 100%;
+    }
   }
   .not_task {
     border-bottom-left-radius: 0 !important;
@@ -381,5 +660,66 @@
     border: 1rpx  solid #333 ;
     color: #000;
   }}
-
+  .tags{
+    background:#70b603;
+  }
+  .Subtasks{
+    border-top: 1rpx solid #efefef;
+    margin-top:10rpx;
+    padding-top:10rpx;
+  }
+  .steps{
+    margin: 0;
+  }
+  .split{
+    margin-top: 20rpx;
+    background:#005cad;
+    font-size: 24rpx;
+    color: #fff;
+    height: 40rpx;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    padding: 10rpx 20rpx;
+    border-radius: 15rpx;
+    text{
+      display: block;
+      line-height: 0;
+    }
+  }
+  .option{
+    border: 1rpx solid #000;
+    height: 300rpx;
+    padding: 35rpx 25rpx 25rpx 20rpx;
+    &_header{
+      padding: 20rpx 0;
+      font-weight: bold;
+      border-bottom: 1rpx solid #e1e1e1;
+    }
+    .itme_selet{
+      display: flex;
+      align-items: center;
+      padding: 30rpx 0;
+      border-bottom:1rpx solid #e1e1e1 
+    }
+  }
+  .form_selse{
+    height: 500rpx;
+    padding: 30rpx;
+    &_header{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text{
+        font-weight: bold;
+      }
+      .confirm{
+        background: #005bac;
+        color: #fff;
+        font-size: 24rpx;
+        padding: 10rpx 25rpx;
+        border-radius:15rpx; 
+      }
+    }
+  }
 </style>
